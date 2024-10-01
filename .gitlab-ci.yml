@@ -4,6 +4,7 @@ stages:
 tag_version:
   stage: tagging
   script:
+    - chmod 600 ${AGILEFLOW_KEY}
     - chmod +x ./agileflow # Make sure the script has execution permissions
     - ./agileflow --key ${AGILEFLOW_KEY}
   only:
