@@ -1,6 +1,6 @@
 # Agileflow
 
-![Agileflow workflow example](./diagram.jpg)
+![Agileflow workflow example](./diagram.png)
 
 ## Introduction
 
@@ -29,11 +29,11 @@ The Agileflow script can be executed manually or integrated with your CI/CD pipe
 
 - Initializing the deployment key: 
   ```bash
-  ./Agileflow --init
+  ./agileflow --init
   ```
 - Managing versioning automatically based on the branch and changes:
   ```bash
-  ./Agileflow --key <path_to_private_key>
+  ./agileflow --key <path_to_private_key>
   ```
 
 For detailed usage, refer to the "Version Tagging and Automation" section below.
