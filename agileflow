@@ -88,6 +88,16 @@ if ! cd "$DIRECTORY" >/dev/null 2>&1; then
     exit 1
 fi
 
+# Ensure the remote URL is using SSH instead of HTTPS
+REMOTE_URL=$(git remote get-url origin)
+if [[ "$REMOTE_URL" =~ ^https:// ]]; then
+    echo "[INFO] Converting remote URL to SSH format..."
+    SSH_URL="${REMOTE_URL/https:\/\/[^\/]*\//git@${REMOTE_URL#https://}}"
+    SSH_URL="${SSH_URL//\//:/}"  # Convert to the correct git@host:path/repo.git format
+    git remote set-url origin "$SSH_URL"
+    echo "[INFO] Remote URL converted to SSH: $SSH_URL"
+fi
+
 # Attempt to get the branch name using traditional Git methods
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 
