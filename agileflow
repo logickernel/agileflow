@@ -16,7 +16,7 @@ if [[ "$1" == "--init" ]]; then
     ssh-keygen -t ed25519 -C "agileflow-deploy-key" -f "$TEMP_DIR/agileflow-deploy-key" -N "" >/dev/null 2>&1
 
     # Display the keys
-    echo "SSH Key Pair Generated"
+    echo "[INFO] SSH Key Pair Generated"
     echo
     echo "Private Key:"
     cat "$TEMP_DIR/agileflow-deploy-key"
@@ -53,8 +53,9 @@ done
 
 # Validate that the private key file exists
 if [[ -n "$PRIVATE_KEY" ]]; then
+    echo "[INFO] Validating private key file..."
     if [[ ! -f "$PRIVATE_KEY" ]]; then
-        echo "Error: Private key file '$PRIVATE_KEY' does not exist."
+        echo "[ERROR] Private key file '$PRIVATE_KEY' does not exist."
         exit 1
     fi
 
@@ -64,6 +65,7 @@ if [[ -n "$PRIVATE_KEY" ]]; then
     fi
     DEPLOY_KEY_PATH="$PRIVATE_KEY"
 elif [[ -n "$DEPLOY_KEY_BASE64" ]]; then
+    echo "[INFO] Decoding the base64-encoded private key..."
     echo "$DEPLOY_KEY_BASE64" | base64 -d > "$TEMP_DIR/deploy_key"
     chmod 600 "$TEMP_DIR/deploy_key"
 
@@ -79,19 +81,45 @@ else
 fi
 
 # Change to the specified directory
+echo "[INFO] Changing to the specified directory: $DIRECTORY"
 if ! cd "$DIRECTORY" >/dev/null 2>&1; then
-    echo "Error: Unable to access directory $DIRECTORY."
+    echo "[ERROR] Unable to access directory $DIRECTORY."
     rm -rf "$TEMP_DIR"
     exit 1
 fi
 
-# Check if the branch name follows 'r/X.Y' or 'release/X.Y'
+# Attempt to get the branch name using traditional Git methods
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+# Check if the branch name is still 'HEAD', indicating a detached state
+if [[ "$BRANCH_NAME" == "HEAD" || -z "$BRANCH_NAME" ]]; then
+    echo "[INFO] Detected detached HEAD state. Checking CI environment variables..."
+    # Check for GitLab CI environment variable
+    if [[ -n "$CI_COMMIT_REF_NAME" ]]; then
+        BRANCH_NAME="$CI_COMMIT_REF_NAME"
+        echo "[INFO] Using GitLab CI_COMMIT_REF_NAME: $BRANCH_NAME"
+    # Check for GitHub Actions environment variable
+    elif [[ -n "$GITHUB_REF_NAME" ]]; then
+        BRANCH_NAME="$GITHUB_REF_NAME"
+        echo "[INFO] Using GitHub GITHUB_REF_NAME: $BRANCH_NAME"
+    elif [[ -n "$GITHUB_REF" ]]; then
+        BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+        echo "[INFO] Extracted branch name from GITHUB_REF: $BRANCH_NAME"
+    else
+        echo "[ERROR] Unable to determine branch name."
+        rm -rf "$TEMP_DIR"
+        exit 1
+    fi
+else
+    echo "[INFO] Branch name detected: $BRANCH_NAME"
+fi
+
+# Check if the branch name follows 'r/X.Y' or 'release/X.Y'
 if [[ ! "$BRANCH_NAME" =~ ^(r|release)/[0-9]+\.[0-9]+$ ]]; then
     if [[ "$BRANCH_NAME" =~ ^(r|release)/[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        echo "Error: Branch name '$BRANCH_NAME' should only include major and minor versions (r/X.Y or release/X.Y), not the full version (r/X.Y.Z or release/X.Y.Z). Please rename the branch."
+        echo "[ERROR] Branch name '$BRANCH_NAME' should only include major and minor versions (r/X.Y or release/X.Y), not the full version (r/X.Y.Z or release/X.Y.Z). Please rename the branch."
     else
-        echo "Error: Branch name '$BRANCH_NAME' does not match the required pattern 'r/X.Y' or 'release/X.Y'."
+        echo "[ERROR] Branch name '$BRANCH_NAME' does not match the required pattern 'r/X.Y' or 'release/X.Y'."
     fi
     rm -rf "$TEMP_DIR"
     exit 1
@@ -99,29 +127,36 @@ fi
 
 # Extract the X.Y version from the branch name
 VERSION="${BRANCH_NAME#*/}"
+echo "[INFO] Extracted version: $VERSION"
 
 # Find the latest tag that matches vX.Y.*
+echo "[INFO] Searching for the latest tag matching 'v$VERSION.*'"
 LATEST_TAG=$(git tag --list "v$VERSION.*" --sort=-v:refname | head -n 1)
 
 # Calculate the next version
 if [[ -z "$LATEST_TAG" ]]; then
     NEXT_VERSION="v${VERSION}.0"
+    echo "[INFO] No existing tags found. Next version set to: $NEXT_VERSION"
 else
     NEXT_VERSION=$(echo "$LATEST_TAG" | awk -F. -v OFS=. '{$NF+=1; print}')
+    echo "[INFO] Found latest tag: $LATEST_TAG. Incrementing to: $NEXT_VERSION"
 fi
 
 # Use the specified private key for SSH
 export GIT_SSH_COMMAND="ssh -i $DEPLOY_KEY_PATH -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
+echo "[INFO] Using deploy key for SSH authentication"
 
 # Create and push the tag
+echo "[INFO] Creating git tag: $NEXT_VERSION"
 git tag "$NEXT_VERSION"
 if ! git push origin "$NEXT_VERSION"; then
-    echo "Error: Failed to push the tag."
+    echo "[ERROR] Failed to push the tag."
     rm -rf "$TEMP_DIR"
     exit 1
 fi
 
-echo "Successfully tagged and pushed: $NEXT_VERSION"
+echo "[INFO] Successfully tagged and pushed: $NEXT_VERSION"
 
 # Clean up temporary directory
+echo "[INFO] Cleaning up temporary files..."
 rm -rf "$TEMP_DIR"
