@@ -93,14 +93,14 @@ REMOTE_URL=$(git remote get-url origin)
 echo "[DEBUG] The remote URL is: $REMOTE_URL"
 if [[ "$REMOTE_URL" =~ ^https:// ]]; then
     echo "[INFO] Converting remote URL to SSH format..."
-    # Extract the hostname and repo path correctly
-    SSH_URL="${REMOTE_URL#https://}"
-    SSH_URL="git@${SSH_URL%%/*}:${SSH_URL#*/}"
     
-    # Remove any credentials or extra paths in the URL
-    SSH_URL="${SSH_URL%.git}"
+    # Extract the host and repo path, ignoring any embedded username/password
+    SSH_URL=$(echo "$REMOTE_URL" | sed -E 's|https://[^@]+@([^/]+)/(.+)|git@\1:\2|')
     
-    # Construct the proper SSH URL
+    # Construct the proper SSH URL and ensure it ends with '.git'
+    SSH_URL="${SSH_URL%.git}.git"
+    
+    # Set the new SSH URL
     git remote set-url origin "$SSH_URL"
     echo "[INFO] Remote URL converted to SSH: $SSH_URL"
 fi
