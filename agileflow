@@ -3,15 +3,15 @@
 # Function to display usage
 usage() {
     echo "Usage: $0 [directory] --key <path_to_private_key>"
-    echo "       $0 --keys"
+    echo "       $0 --init"
     exit 1
 }
 
 # Get the OS temporary directory
 TEMP_DIR=$(mktemp -d)
 
-# Check if the --keys parameter is passed
-if [[ "$1" == "--keys" ]]; then
+# Check if the --init parameter is passed
+if [[ "$1" == "--init" ]]; then
     # Generate the SSH key pair in the temporary directory
     ssh-keygen -t ed25519 -C "agileflow-deploy-key" -f "$TEMP_DIR/agileflow-deploy-key" -N "" >/dev/null 2>&1
 
@@ -27,43 +27,6 @@ if [[ "$1" == "--keys" ]]; then
     echo "Base64-encoded Private Key:"
     base64 < "$TEMP_DIR/agileflow-deploy-key"
     echo
-
-    # Instructions for GitLab and GitHub
-    echo "Instructions:"
-    echo
-    echo "1. GitLab Deploy Key Setup:"
-    echo "   - Navigate to your project: Settings > Repository > Deploy Keys."
-    echo "   - Click 'Add deploy key'."
-    echo "   - Paste the public key (shown above) into the 'Key' field."
-    echo "   - Check 'Write access allowed'."
-    echo "   - Click 'Add key'."
-    echo
-    echo "2. GitHub Deploy Key Setup:"
-    echo "   - Navigate to your repository: Settings > Deploy keys."
-    echo "   - Click 'Add deploy key'."
-    echo "   - Paste the public key (shown above) into the 'Key' field."
-    echo "   - Check 'Allow write access'."
-    echo "   - Click 'Add key'."
-    echo
-    echo "3. Setting up the Private Key as a CI/CD Variable:"
-    echo
-    echo "   For GitLab CI/CD:"
-    echo "   - Go to Settings > CI/CD > Variables."
-    echo "   - Click 'Add variable'."
-    echo "   - Set the 'Key' as 'DEPLOY_KEY_FILE'."
-    echo "   - Paste the private key (shown above) in the 'Value' field."
-    echo "   - Mark 'Protected' and 'Masked' (if applicable) options."
-    echo "   - Set 'Variable type' to 'File'."
-    echo
-    echo "   For GitHub Actions:"
-    echo "   - Go to Settings > Secrets and variables > Actions > New repository secret."
-    echo "   - Click 'New repository secret'."
-    echo "   - Set the 'Name' as 'DEPLOY_KEY_BASE64'."
-    echo "   - Paste the base64-encoded private key (shown above) in the 'Secret' field."
-    echo "   - Click 'Add secret'."
-    echo
-    echo "Ensure that the GitLab CI/CD job or GitHub Actions workflow uses these variables correctly."
-    echo "In GitLab, the variable will be available as a file, while in GitHub, you'll need to decode it using base64."
 
     # Clean up and exit
     rm -rf "$TEMP_DIR"
@@ -88,9 +51,37 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Validate that the private key file exists
+if [[ -n "$PRIVATE_KEY" ]]; then
+    if [[ ! -f "$PRIVATE_KEY" ]]; then
+        echo "Error: Private key file '$PRIVATE_KEY' does not exist."
+        exit 1
+    fi
+
+    # Ensure the private key ends with an empty line
+    if [[ -n $(tail -c 1 "$PRIVATE_KEY") ]]; then
+        echo "" >> "$PRIVATE_KEY"
+    fi
+    DEPLOY_KEY_PATH="$PRIVATE_KEY"
+elif [[ -n "$DEPLOY_KEY_BASE64" ]]; then
+    echo "$DEPLOY_KEY_BASE64" | base64 -d > "$TEMP_DIR/deploy_key"
+    chmod 600 "$TEMP_DIR/deploy_key"
+
+    # Ensure the decoded private key ends with an empty line
+    if [[ -n $(tail -c 1 "$TEMP_DIR/deploy_key") ]]; then
+        echo "" >> "$TEMP_DIR/deploy_key"
+    fi
+    DEPLOY_KEY_PATH="$TEMP_DIR/deploy_key"
+else
+    echo "$NEXT_VERSION"
+    rm -rf "$TEMP_DIR"
+    exit 0
+fi
+
 # Change to the specified directory
 if ! cd "$DIRECTORY" >/dev/null 2>&1; then
     echo "Error: Unable to access directory $DIRECTORY."
+    rm -rf "$TEMP_DIR"
     exit 1
 fi
 
@@ -102,6 +93,7 @@ if [[ ! "$BRANCH_NAME" =~ ^(r|release)/[0-9]+\.[0-9]+$ ]]; then
     else
         echo "Error: Branch name '$BRANCH_NAME' does not match the required pattern 'r/X.Y' or 'release/X.Y'."
     fi
+    rm -rf "$TEMP_DIR"
     exit 1
 fi
 
@@ -116,19 +108,6 @@ if [[ -z "$LATEST_TAG" ]]; then
     NEXT_VERSION="v${VERSION}.0"
 else
     NEXT_VERSION=$(echo "$LATEST_TAG" | awk -F. -v OFS=. '{$NF+=1; print}')
-fi
-
-# If the deploy key is provided via environment variable, save it to a file
-if [[ -n "$PRIVATE_KEY" ]]; then
-    DEPLOY_KEY_PATH="$PRIVATE_KEY"
-elif [[ -n "$DEPLOY_KEY_BASE64" ]]; then
-    echo "$DEPLOY_KEY_BASE64" | base64 -d > "$TEMP_DIR/deploy_key"
-    chmod 600 "$TEMP_DIR/deploy_key"
-    DEPLOY_KEY_PATH="$TEMP_DIR/deploy_key"
-else
-    echo "$NEXT_VERSION"
-    rm -rf "$TEMP_DIR"
-    exit 0
 fi
 
 # Use the specified private key for SSH
