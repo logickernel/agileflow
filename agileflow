@@ -47,7 +47,7 @@ LATEST_TAG=$(git tag --list "v$VERSION.*" --sort=-v:refname | head -n 1)
 
 # Calculate the next version
 if [[ -z "$LATEST_TAG" ]]; then
-    NEXT_VERSION="${VERSION}.0"
+    NEXT_VERSION="v${VERSION}.0"
 else
     NEXT_VERSION=$(echo "$LATEST_TAG" | awk -F. -v OFS=. '{$NF+=1; print}')
 fi
