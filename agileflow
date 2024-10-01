@@ -2,17 +2,83 @@
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 [directory] --token <token>"
+    echo "Usage: $0 [directory] --key <path_to_private_key>"
+    echo "       $0 --keys"
     exit 1
 }
 
+# Get the OS temporary directory
+TEMP_DIR=$(mktemp -d)
+
+# Check if the --keys parameter is passed
+if [[ "$1" == "--keys" ]]; then
+    # Generate the SSH key pair in the temporary directory
+    ssh-keygen -t ed25519 -C "agileflow-deploy-key" -f "$TEMP_DIR/agileflow-deploy-key" -N "" >/dev/null 2>&1
+
+    # Display the keys
+    echo "SSH Key Pair Generated"
+    echo
+    echo "Private Key:"
+    cat "$TEMP_DIR/agileflow-deploy-key"
+    echo
+    echo "Public Key:"
+    cat "$TEMP_DIR/agileflow-deploy-key.pub"
+    echo
+    echo "Base64-encoded Private Key:"
+    base64 < "$TEMP_DIR/agileflow-deploy-key"
+    echo
+
+    # Instructions for GitLab and GitHub
+    echo "Instructions:"
+    echo
+    echo "1. GitLab Deploy Key Setup:"
+    echo "   - Navigate to your project: Settings > Repository > Deploy Keys."
+    echo "   - Click 'Add deploy key'."
+    echo "   - Paste the public key (shown above) into the 'Key' field."
+    echo "   - Check 'Write access allowed'."
+    echo "   - Click 'Add key'."
+    echo
+    echo "2. GitHub Deploy Key Setup:"
+    echo "   - Navigate to your repository: Settings > Deploy keys."
+    echo "   - Click 'Add deploy key'."
+    echo "   - Paste the public key (shown above) into the 'Key' field."
+    echo "   - Check 'Allow write access'."
+    echo "   - Click 'Add key'."
+    echo
+    echo "3. Setting up the Private Key as a CI/CD Variable:"
+    echo
+    echo "   For GitLab CI/CD:"
+    echo "   - Go to Settings > CI/CD > Variables."
+    echo "   - Click 'Add variable'."
+    echo "   - Set the 'Key' as 'DEPLOY_KEY_FILE'."
+    echo "   - Paste the private key (shown above) in the 'Value' field."
+    echo "   - Mark 'Protected' and 'Masked' (if applicable) options."
+    echo "   - Set 'Variable type' to 'File'."
+    echo
+    echo "   For GitHub Actions:"
+    echo "   - Go to Settings > Secrets and variables > Actions > New repository secret."
+    echo "   - Click 'New repository secret'."
+    echo "   - Set the 'Name' as 'DEPLOY_KEY_BASE64'."
+    echo "   - Paste the base64-encoded private key (shown above) in the 'Secret' field."
+    echo "   - Click 'Add secret'."
+    echo
+    echo "Ensure that the GitLab CI/CD job or GitHub Actions workflow uses these variables correctly."
+    echo "In GitLab, the variable will be available as a file, while in GitHub, you'll need to decode it using base64."
+
+    # Clean up and exit
+    rm -rf "$TEMP_DIR"
+    exit 0
+fi
+
+# Continue with the original script logic
+
 # Parse arguments
 DIRECTORY="."
-TOKEN=""
+PRIVATE_KEY=""
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --token)
-            TOKEN="$2"
+        --key)
+            PRIVATE_KEY="$2"
             shift 2
             ;;
         *)
@@ -23,18 +89,18 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Change to the specified directory
-if ! cd "$DIRECTORY"; then
+if ! cd "$DIRECTORY" >/dev/null 2>&1; then
     echo "Error: Unable to access directory $DIRECTORY."
     exit 1
 fi
 
-# Check the current branch name
+# Check if the branch name follows 'r/X.Y' or 'release/X.Y'
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-if [[ ! "$BRANCH_NAME" =~ ^(release|r)/[0-9]+\.[0-9]+$ ]]; then
-    if [[ "$BRANCH_NAME" =~ ^(release|r)/[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        echo "Error: Branch name '$BRANCH_NAME' should only include major and minor versions (release/X.Y or r/X.Y), not the full version (release/X.Y.Z or r/X.Y.Z). Please rename the branch."
+if [[ ! "$BRANCH_NAME" =~ ^(r|release)/[0-9]+\.[0-9]+$ ]]; then
+    if [[ "$BRANCH_NAME" =~ ^(r|release)/[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "Error: Branch name '$BRANCH_NAME' should only include major and minor versions (r/X.Y or release/X.Y), not the full version (r/X.Y.Z or release/X.Y.Z). Please rename the branch."
     else
-        echo "Error: Branch name '$BRANCH_NAME' does not match the required pattern 'release/X.Y' or 'r/X.Y'."
+        echo "Error: Branch name '$BRANCH_NAME' does not match the required pattern 'r/X.Y' or 'release/X.Y'."
     fi
     exit 1
 fi
@@ -52,27 +118,31 @@ else
     NEXT_VERSION=$(echo "$LATEST_TAG" | awk -F. -v OFS=. '{$NF+=1; print}')
 fi
 
-# If no token is provided, just display the next version
-if [[ -z "$TOKEN" ]]; then
+# If the deploy key is provided via environment variable, save it to a file
+if [[ -n "$PRIVATE_KEY" ]]; then
+    DEPLOY_KEY_PATH="$PRIVATE_KEY"
+elif [[ -n "$DEPLOY_KEY_BASE64" ]]; then
+    echo "$DEPLOY_KEY_BASE64" | base64 -d > "$TEMP_DIR/deploy_key"
+    chmod 600 "$TEMP_DIR/deploy_key"
+    DEPLOY_KEY_PATH="$TEMP_DIR/deploy_key"
+else
     echo "$NEXT_VERSION"
+    rm -rf "$TEMP_DIR"
     exit 0
 fi
 
-# Get the remote URL and handle different formats
-REMOTE_URL=$(git remote get-url origin)
-if [[ "$REMOTE_URL" =~ ^git@ ]]; then
-    # Convert 'git@' style URL to 'https://'
-    REMOTE_URL=$(echo "$REMOTE_URL" | sed -e 's#^git@#https://#' -e 's#:#/#')
-fi
-
-# Remove trailing .git if it exists
-REMOTE_URL="${REMOTE_URL%.git}"
+# Use the specified private key for SSH
+export GIT_SSH_COMMAND="ssh -i $DEPLOY_KEY_PATH -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
 
 # Create and push the tag
-git tag "v$NEXT_VERSION"
-if ! git push "https://${TOKEN}@${REMOTE_URL#https://}" "v$NEXT_VERSION"; then
+git tag "$NEXT_VERSION"
+if ! git push origin "$NEXT_VERSION"; then
     echo "Error: Failed to push the tag."
+    rm -rf "$TEMP_DIR"
     exit 1
 fi
 
-echo "Successfully tagged and pushed: v$NEXT_VERSION"
+echo "Successfully tagged and pushed: $NEXT_VERSION"
+
+# Clean up temporary directory
+rm -rf "$TEMP_DIR"
