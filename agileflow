@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# Function to display usage
+usage() {
+    echo "Usage: $0 [directory] --token <token>"
+    exit 1
+}
+
+# Parse arguments
+DIRECTORY="."
+TOKEN=""
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --token)
+            TOKEN="$2"
+            shift 2
+            ;;
+        *)
+            DIRECTORY="$1"
+            shift
+            ;;
+    esac
+done
+
+# Change to the specified directory
+if ! cd "$DIRECTORY"; then
+    echo "Error: Unable to access directory $DIRECTORY."
+    exit 1
+fi
+
+# Check the current branch name
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+if [[ ! "$BRANCH_NAME" =~ ^(release|r)/[0-9]+\.[0-9]+$ ]]; then
+    if [[ "$BRANCH_NAME" =~ ^(release|r)/[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "Error: Branch name '$BRANCH_NAME' should only include major and minor versions (release/X.Y or r/X.Y), not the full version (release/X.Y.Z or r/X.Y.Z). Please rename the branch."
+    else
+        echo "Error: Branch name '$BRANCH_NAME' does not match the required pattern 'release/X.Y' or 'r/X.Y'."
+    fi
+    exit 1
+fi
+
+# Extract the X.Y version from the branch name
+VERSION="${BRANCH_NAME#*/}"
+
+# Find the latest tag that matches vX.Y.*
+LATEST_TAG=$(git tag --list "v$VERSION.*" --sort=-v:refname | head -n 1)
+
+# Calculate the next version
+if [[ -z "$LATEST_TAG" ]]; then
+    NEXT_VERSION="${VERSION}.0"
+else
+    NEXT_VERSION=$(echo "$LATEST_TAG" | awk -F. -v OFS=. '{$NF+=1; print}')
+fi
+
+# If no token is provided, just display the next version
+if [[ -z "$TOKEN" ]]; then
+    echo "$NEXT_VERSION"
+    exit 0
+fi
+
+# Get the remote URL and handle different formats
+REMOTE_URL=$(git remote get-url origin)
+if [[ "$REMOTE_URL" =~ ^git@ ]]; then
+    # Convert 'git@' style URL to 'https://'
+    REMOTE_URL=$(echo "$REMOTE_URL" | sed -e 's#^git@#https://#' -e 's#:#/#')
+fi
+
+# Remove trailing .git if it exists
+REMOTE_URL="${REMOTE_URL%.git}"
+
+# Create and push the tag
+git tag "v$NEXT_VERSION"
+if ! git push "https://${TOKEN}@${REMOTE_URL#https://}" "v$NEXT_VERSION"; then
+    echo "Error: Failed to push the tag."
+    exit 1
+fi
+
+echo "Successfully tagged and pushed: v$NEXT_VERSION"
