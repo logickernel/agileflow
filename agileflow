@@ -90,6 +90,7 @@ fi
 
 # Ensure the remote URL is using SSH instead of HTTPS
 REMOTE_URL=$(git remote get-url origin)
+echo "[DEBUG] The remote URL is: $REMOTE_URL"
 if [[ "$REMOTE_URL" =~ ^https:// ]]; then
     echo "[INFO] Converting remote URL to SSH format..."
     # Extract the hostname and repo path correctly
