@@ -1,7 +1,7 @@
 stages:
   - tagging
 
-tag_version:
+agileflow:
   stage: tagging
   script:
     - chmod 600 ${AGILEFLOW_KEY}
