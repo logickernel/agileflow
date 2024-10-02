@@ -4,11 +4,9 @@ stages:
 agileflow:
   stage: tagging
   script:
-    - chmod 600 ${AGILEFLOW_KEY}
     - chmod +x ./agileflow # Make sure the script has execution permissions
+    - chmod 600 ${AGILEFLOW_KEY}
     - ./agileflow --key ${AGILEFLOW_KEY}
   only:
     - /^release\/[0-9]+\.[0-9]+$/ # Adjust this pattern if needed
     - /^r\/[0-9]+\.[0-9]+$/ # Adjust this pattern if needed
-  variables:
-    DEPLOY_KEY_FILE: $CI_JOB_FILE_DEPLOY_KEY

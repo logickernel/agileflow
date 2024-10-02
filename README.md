@@ -1,64 +1,75 @@
-![Agileflow Icon](./media/agileflow_icon_128.png)
+![Agileflow icon](./media/agileflow_icon.svg)
 
 # Agileflow
 
-![Agileflow workflow example](./media/example.png)
+In the fast-paced world of software development, maintaining clarity, consistency, and efficiency in the release process is crucial. 
 
-## Introduction
+Agileflow is a robust yet simple versioning system, branching strategy, and CD/CI tool designed to be used by all types of software and technology projects. 
 
-In the fast-paced world of software development, maintaining clarity, consistency, and efficiency in the release process is crucial. Agileflow is a robust yet simple versioning, branching strategy and CD/CI tool designed to be used software engineering projects of all types and with any level of complexity.
+The versioning rules enforce [Semantic Versioning](https://semver.org), the branching strategy is robust and contemplates development and deployment procedures, and the tool integrates seamlessly with [GitLab CI](https://docs.gitlab.com/ee/ci/) and [GitHub Actions](https://github.com/features/actions) CI/CD pipelines and source control systems, ensuring a structured and efficient development lifecycle.
 
- The versioning rules enforce [Semantic Versioning](https://semver.org), the branching strategy is compatible with iterative and linear projects and the tool integrates seamlessly with CI/CD pipelines and source control systems, ensuring a structured and efficient development lifecycle.
+## Principles
 
-## Installing Agileflow
+In summary, Agileflow recommends using: 
+
+- A strict [versioning system](#versioning]).
+- Releases for iterations of the project during development and feature releases after v1.0.0.
+- A [Release Branch](#release-branches) per release naming it after each MAJOR.MINOR version of the code, e.g.: `release/0.1`, `release/0.2`, `release/1.0`, `release/1.20`, etc.
+- Developers contribute with code in branches `fix/*`, `feat/*`, `dev/*` or `hotfix/*`
+
+![Agileflow workflow example](./media/example_diagram.png)
+
+### Versioning
+
+Agileflow adheres strictly to [semantic versioning](https://semver.org), with `X` representing major versions, `Y` for minor versions, and `Z` for patches.
+- **Automated Patch Management**: Patches are automatically incremented, ensuring consistent and accurate versioning without manual intervention.
+
+### Branching Strategy
+
+#### Release Branches
+
+Represents the major and minor versions. Protected and used for stabilizing features before release. They are usually created and protected by code maintainers.
+
+#### Development Branches
+
+2. **Feature Branches (`feat/*`)**: For developing new functionality. Merge back into the appropriate `release/X.Y`.
+3. **Bug Fix Branches (`fix/*`)**: Created for resolving bugs, merged back into the respective `release/X.Y`.
+4. **Hotfix Branches (`hotfix/*`)**: For urgent production fixes, providing a mechanism to apply critical patches without risking additional contributions. Merged into their respective `release/X.Y` after the release has been wrapped up and .
+
+#### Main Branch
+
+5. **Main Branch**: Represents the latest, stable version, integrating validated changes from release branches.
+
+### Tool
 
 To implement Agileflow in your project, you need to set up the necessary script to manage versioning and branching automatically. We provide a simple installation script that you can use to get started:
 
-### Quick Installation
+### Auto Install
 
 Run the following command to install Agileflow in your project directory:
 
 ```bash
-curl -s https://URL/install.sh | bash -s /path/to/your/project --init
+curl -s https://URL/install.sh | bash --init
 ```
 
-- Replace `/path/to/your/project` with the actual path where you want to install Agileflow.
-- The `--init` flag will initialize the deployment keys and set up the versioning automation for your project.
+Once installed, the `Agileflow` script will be placed in the project directory and will be used by the CD/CI engine to manage your branching and versioning strategy automatically.
 
-Once installed, the `Agileflow` script will be placed in the specified directory and can be used to manage your branching and versioning strategy automatically.
 
-### Usage
+### Manual Install
 
-The Agileflow script can be executed manually or integrated with your CI/CD pipelines. Common usage includes:
+Download the `agileflow` script and place it in the root directory of your project.
 
-- Initializing the deployment key: 
-  ```bash
-  ./agileflow --init
-  ```
-- Managing versioning automatically based on the branch and changes:
-  ```bash
-  ./agileflow --key <path_to_private_key>
-  ```
+```sh
+curl https://code.logickernel.com/kernel/agileflow/-/raw/release/0.1/agileflow?ref_type=heads
+chmod a+x agileflow
+```
 
-For detailed usage, refer to the "Version Tagging and Automation" section below.
+#### GitLab
 
-## The Agileflow Strategy
 
-### Core Principles
+#### GitHub
 
-- **Semantic Versioning (vX.Y.Z)**: Agileflow adheres strictly to semantic versioning, with `X` representing major versions, `Y` for minor versions, and `Z` for patches.
-- **Automated Patch Management**: Patches are automatically incremented, ensuring consistent and accurate versioning without manual intervention.
-- **Structured Branching Model**: Clear branch naming conventions guide the development process, making it easy to identify the purpose of each branch.
 
-### Branching Strategy
-
-Agileflow's branching model ensures clear separation between feature development, bug fixing, and release management:
-
-1. **Release Branches (`release/X.Y`)**: Represents the major and minor versions. Protected and used for stabilizing features before release.
-2. **Feature Branches (`feat/*`)**: For developing new functionality. Merge back into the appropriate `release/X.Y`.
-3. **Bug Fix Branches (`fix/*`)**: Created for resolving bugs, merged back into the respective `release/X.Y`.
-4. **Hotfix Branches (`hotfix/*`)**: For urgent production fixes, providing a mechanism to apply critical patches without risking additional contributions.
-5. **Main Branch**: Represents the latest, stable version, integrating validated changes from release branches.
 
 ### Workflow
 
@@ -82,6 +93,3 @@ The `Agileflow` script automates version tagging:
 
 For backward-incompatible changes, a new major branch (`release/2.0`) is created. Older branches are maintained for minor updates or patches until deprecation.
 
-## Conclusion
-
-Agileflow provides a disciplined and efficient approach to versioning and release management, ensuring projects stay organized, consistent, and ready for deployment. By installing and integrating the Agileflow script, you ensure your software development process aligns with best practices and remains scalable as your project evolves.
