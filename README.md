@@ -1,10 +1,14 @@
+![Agileflow Icon](./media/agileflow_icon_128.png)
+
 # Agileflow
 
-![Agileflow workflow example](./diagram.png)
+![Agileflow workflow example](./media/example.png)
 
 ## Introduction
 
-In the fast-paced world of software development, maintaining clarity, consistency, and efficiency in the release process is crucial. Agileflow is a robust versioning and branching strategy that enforces **Semantic Versioning** while streamlining development workflows. It integrates seamlessly with CI/CD pipelines and source control systems, ensuring a structured and efficient development lifecycle.
+In the fast-paced world of software development, maintaining clarity, consistency, and efficiency in the release process is crucial. Agileflow is a robust yet simple versioning, branching strategy and CD/CI tool designed to be used software engineering projects of all types and with any level of complexity.
+
+ The versioning rules enforce [Semantic Versioning](https://semver.org), the branching strategy is compatible with iterative and linear projects and the tool integrates seamlessly with CI/CD pipelines and source control systems, ensuring a structured and efficient development lifecycle.
 
 ## Installing Agileflow
 
