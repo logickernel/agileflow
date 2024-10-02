@@ -2,8 +2,8 @@
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 --key <path_to_private_key>"
-    echo "       $0 --init"
+    echo "Usage: $0 tag --key <path_to_private_key>"
+    echo "       $0 init"
     exit 1
 }
 
@@ -15,28 +15,33 @@ fi
 # Get the OS temporary directory
 TEMP_DIR=$(mktemp -d)
 
-# Check if the --init parameter is passed
-if [[ "$1" == "--init" ]]; then
+# Check if the 'init' parameter is passed
+if [[ "$1" == "init" ]]; then
     # Generate the SSH key pair in the temporary directory
     ssh-keygen -t ed25519 -C "agileflow-deploy-key" -f "$TEMP_DIR/agileflow-deploy-key" -N "" >/dev/null 2>&1
 
     # Display the keys
-    echo "[INFO] SSH Key Pair Generated"
     echo
     echo "Private Key:"
     cat "$TEMP_DIR/agileflow-deploy-key"
     echo
-    echo "Public Key:"
-    cat "$TEMP_DIR/agileflow-deploy-key.pub"
-    echo
     echo "Base64-encoded Private Key:"
     base64 < "$TEMP_DIR/agileflow-deploy-key"
+    echo
+    echo "Public Key:"
+    cat "$TEMP_DIR/agileflow-deploy-key.pub"
     echo
 
     # Clean up and exit
     rm -rf "$TEMP_DIR"
     exit 0
 fi
+
+# Check if the 'tag' parameter is passed
+if [[ "$1" != "tag" ]]; then
+    usage
+fi
+shift # Move past 'tag'
 
 # Parse arguments
 PRIVATE_KEY=""
@@ -52,23 +57,27 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Ensure a private key was provided
+if [[ -z "$PRIVATE_KEY" ]]; then
+    echo "[ERROR] --key is required when using 'tag'."
+    usage
+fi
+
 # Validate that the private key file exists or decode from base64
-if [[ -n "$PRIVATE_KEY" ]]; then
-    echo "[INFO] Validating private key file..."
-    if [[ ! -f "$PRIVATE_KEY" ]]; then
-        echo "[INFO] Provided key is not a file, trying to decode as base64..."
-        echo "$PRIVATE_KEY" | base64 -d > "$TEMP_DIR/deploy_key" 2>/dev/null
-        if [[ $? -ne 0 ]]; then
-            echo "[ERROR] Provided string is not a valid file or base64-encoded key."
-            rm -rf "$TEMP_DIR"
-            exit 1
-        fi
-        chmod 600 "$TEMP_DIR/deploy_key"
-        DEPLOY_KEY_PATH="$TEMP_DIR/deploy_key"
-    else
-        chmod 600 "$PRIVATE_KEY"
-        DEPLOY_KEY_PATH="$PRIVATE_KEY"
+echo "[INFO] Validating private key file..."
+if [[ ! -f "$PRIVATE_KEY" ]]; then
+    echo "[INFO] Provided key is not a file, trying to decode as base64..."
+    echo "$PRIVATE_KEY" | base64 -d > "$TEMP_DIR/deploy_key" 2>/dev/null
+    if [[ $? -ne 0 ]]; then
+        echo "[ERROR] Provided string is not a valid file or base64-encoded key."
+        rm -rf "$TEMP_DIR"
+        exit 1
     fi
+    chmod 600 "$TEMP_DIR/deploy_key"
+    DEPLOY_KEY_PATH="$TEMP_DIR/deploy_key"
+else
+    chmod 600 "$PRIVATE_KEY"
+    DEPLOY_KEY_PATH="$PRIVATE_KEY"
 fi
 
 # Ensure the remote URL is using SSH instead of HTTPS
