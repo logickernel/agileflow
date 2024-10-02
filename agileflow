@@ -2,7 +2,7 @@
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 [directory] --key <path_to_private_key>"
+    echo "Usage: $0 --key <path_to_private_key>"
     echo "       $0 --init"
     exit 1
 }
@@ -39,7 +39,6 @@ if [[ "$1" == "--init" ]]; then
 fi
 
 # Parse arguments
-DIRECTORY="."
 PRIVATE_KEY=""
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -48,8 +47,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         *)
-            DIRECTORY="$1"
-            shift
+            usage
             ;;
     esac
 done
@@ -71,14 +69,6 @@ if [[ -n "$PRIVATE_KEY" ]]; then
         chmod 600 "$PRIVATE_KEY"
         DEPLOY_KEY_PATH="$PRIVATE_KEY"
     fi
-fi
-
-# Change to the specified directory
-echo "[INFO] Changing to the specified directory: $DIRECTORY"
-if ! cd "$DIRECTORY" >/dev/null 2>&1; then
-    echo "[ERROR] Unable to access directory $DIRECTORY."
-    rm -rf "$TEMP_DIR"
-    exit 1
 fi
 
 # Ensure the remote URL is using SSH instead of HTTPS
@@ -167,6 +157,6 @@ fi
 
 echo "[INFO] Successfully tagged and pushed: $NEXT_VERSION"
 
-# Clean up temporary directory
+# Clean up temporary files
 echo "[INFO] Cleaning up temporary files..."
 rm -rf "$TEMP_DIR"
