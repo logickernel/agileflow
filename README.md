@@ -1,29 +1,29 @@
 ![Agileflow icon](./media/agileflow_icon.svg)
 
-# **AgileFlow**
+# **Agileflow**
 
-In the fast-paced world of software development, maintaining clarity, consistency, and efficiency in the release process is crucial. AgileFlow is a robust yet simple versioning system, branching strategy, and CI/CD tool designed for all types of software and technology projects.
+In the fast-paced world of software development, maintaining clarity, consistency, and efficiency in the release process is crucial. Agileflow is a robust yet simple versioning system, branching strategy, and CI/CD tool designed for all types of software and technology projects.
 
-AgileFlow enforces [Semantic Versioning](https://semver.org), employs a robust branching strategy for development and deployment, and integrates seamlessly with [GitLab CI](https://docs.gitlab.com/ee/ci/) and [GitHub Actions](https://github.com/features/actions) CI/CD pipelines. It ensures a structured and efficient development lifecycle, making AgileFlow an essential tool for both small projects and large-scale software deployments.
+Agileflow enforces [Semantic Versioning](https://semver.org), employs a robust branching strategy for development and deployment, and integrates seamlessly with [GitLab CI](https://docs.gitlab.com/ee/ci/) and [GitHub Actions](https://github.com/features/actions) CI/CD pipelines. It ensures a structured and efficient development lifecycle, making Agileflow an essential tool for both small projects and large-scale software deployments.
 
 ## **Core Principles**
 
-AgileFlow provides structure through its core principles:
+Agileflow provides structure through its core principles:
 
-- **Strict Versioning System**: AgileFlow strictly follows [Semantic Versioning](#versioning), simplifying release management.
+- **Strict Versioning System**: Agileflow strictly follows [Semantic Versioning](#versioning), simplifying release management.
 - **Clear Release Strategy**: Releases are tagged for development iterations and feature releases post `v1.0.0`.
 - **Release Branches**: Each major and minor version is represented by a dedicated [release branch](#release-branches) (e.g., `release/0.1`, `release/1.0`, `release/2.0`).
 - **Development Branches**: Developers contribute through branches like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*`, ensuring code organization and efficient merging.
 
-AgileFlow streamlines the workflow, ensuring that every branch and version tag has a clear purpose and aligns with semantic versioning rules.
+Agileflow streamlines the workflow, ensuring that every branch and version tag has a clear purpose and aligns with semantic versioning rules.
 
-![AgileFlow workflow example](./media/example_diagram.png)
+![Agileflow workflow example](./media/example_diagram.png)
 
 ---
 
 ## **Versioning**
 
-AgileFlow enforces strict [Semantic Versioning](https://semver.org), which breaks down version numbers as follows:
+Agileflow enforces strict [Semantic Versioning](https://semver.org), which breaks down version numbers as follows:
 - **Major Versions (X.0.0)**: Introduces breaking changes or significant shifts in functionality.
 - **Minor Versions (0.Y.0)**: Represents new features, improvements, or non-breaking changes.
 - **Patch Versions (0.0.Z)**: Denotes bug fixes or minor tweaks. Patch versions are automatically incremented within the release branches to reduce manual intervention.
@@ -36,7 +36,7 @@ Patches are incremented automatically upon validated merges to the release branc
 
 ## **Branching Strategy**
 
-AgileFlow's branching model ensures that development and bug fixes are handled in a structured, scalable way.
+Agileflow's branching model ensures that development and bug fixes are handled in a structured, scalable way.
 
 ### **Release Branches**
 
@@ -77,28 +77,28 @@ The **main** branch represents the latest stable version of the software:
 
 ## **Tool**
 
-The AgileFlow tool manages versioning and branching automatically. Once installed, it integrates with your CI/CD pipelines, ensuring that versioning and branch management follow the strategy defined here.
+The Agileflow tool manages versioning and branching automatically. Once installed, it integrates with your CI/CD pipelines, ensuring that versioning and branch management follow the strategy defined here.
 
 ### **Auto Install**
 
-To install AgileFlow in your project directory, run:
+To install Agileflow in your project directory, run:
 
 ```bash
 curl -s https://URL/install.sh | bash --init
 ```
 
-This script initializes AgileFlow, creates the required deployment keys, and sets up the project for automated versioning and tagging.
+This script initializes Agileflow, creates the required deployment keys, and sets up the project for automated versioning and tagging.
 
 ### **Manual Install**
 
-Alternatively, you can manually download and set up AgileFlow by running:
+Alternatively, you can manually download and set up Agileflow by running:
 
 ```bash
 curl https://code.logickernel.com/kernel/agileflow/-/raw/release/0.1/agileflow?ref_type=heads
 chmod a+x agileflow
 ```
 
-Once installed, AgileFlow can be used to automatically manage the versioning, branching, and deployment processes.
+Once installed, Agileflow can be used to automatically manage the versioning, branching, and deployment processes.
 
 ---
 
@@ -121,7 +121,7 @@ Once installed, AgileFlow can be used to automatically manage the versioning, br
 
 ## **Version Tagging and Automation**
 
-AgileFlow uses CI/CD scripts to automate version tagging:
+Agileflow uses CI/CD scripts to automate version tagging:
 - It ensures the patch version (`Z`) is incremented automatically with each validated change.
 - Merges into `release/X.Y` result in version tags (`vX.Y.Z`) being created automatically, ensuring that every change is traceable and versioned appropriately.
 
@@ -137,7 +137,7 @@ When significant, backward-incompatible changes are introduced:
 
 ## **GitLab CI Integration**
 
-To integrate AgileFlow into GitLab, follow these steps:
+To integrate Agileflow into GitLab, follow these steps:
 
 1. Add the `agileflow` script to your repository (see installation above).
 2. Add a GitLab CI/CD job to execute the `agileflow` script in your `.gitlab-ci.yml` file:
@@ -149,7 +149,7 @@ To integrate AgileFlow into GitLab, follow these steps:
     tag_version:
       stage: tag
       script:
-        - ./agileflow tag --key $AGILEFLOW_KEY
+        - ./agileflow tag --key $AGILEfLOW_KEY
     ```
 
 3. Ensure you store the deploy key as a **file** in the GitLab CI/CD variables.
@@ -158,7 +158,7 @@ To integrate AgileFlow into GitLab, follow these steps:
 
 ## **GitHub Actions Integration**
 
-To integrate AgileFlow with GitHub Actions:
+To integrate Agileflow with GitHub Actions:
 
 1. Add the `agileflow` script to your repository (see installation above).
 2. Create a GitHub Actions workflow to execute the `agileflow` script in your `.github/workflows/tag.yml`:
@@ -176,8 +176,8 @@ To integrate AgileFlow with GitHub Actions:
         runs-on: ubuntu-latest
         steps:
           - uses: actions/checkout@v2
-          - name: Run AgileFlow
-            run: ./agileflow tag --key ${{ secrets.AGILEFLOW_KEY }}
+          - name: Run Agileflow
+            run: ./agileflow tag --key ${{ secrets.AGILEfLOW_KEY }}
     ```
 
 3. Ensure you store the deploy key in your GitHub repository secrets as `DEPLOY_KEY`.
