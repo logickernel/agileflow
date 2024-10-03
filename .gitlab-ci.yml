@@ -4,8 +4,8 @@ stages:
 agileflow:
   stage: tagging
   script:
-    - chmod +x ./agileflow # Make sure the script has execution permissions
-    - ./agileflow tag --key ${AGILEFLOW_KEY} # Run the script with the key so the tag can be pushed
+    - ./agileflow tag --key ${AGILEFLOW_KEY}
   only:
     - /^release\/[0-9]+\.[0-9]+$/
-    - /^r\/[0-9]+\.[0-9]+$/
+  tags:
+    - agileflow
