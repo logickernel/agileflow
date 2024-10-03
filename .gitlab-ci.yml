@@ -1,0 +1,11 @@
+stages:
+  - tagging
+
+agileflow:
+  stage: tagging
+  script:
+    - ./agileflow tag --key ${AGILEFLOW_KEY}
+  only:
+    - /^release\/[0-9]+\.[0-9]+$/
+  tags:
+    - agileflow

@@ -1,93 +1,176 @@
+![Agileflow icon](./media/agileflow_icon.svg)
+
 # Agileflow
 
+In today’s fast-paced software development landscape, maintaining clarity, consistency, and efficiency in the release process is essential. Agileflow is a streamlined yet powerful versioning system, branching strategy, and CI/CD tool designed for software teams of all sizes and projects of any scale.
+
+Agileflow enforces **Semantic Versioning** and integrates a robust branching strategy for development and deployment. It seamlessly works with **GitLab CI** and **GitHub Actions** CI/CD pipelines to ensure a structured, efficient, and predictable development lifecycle. Whether for small projects or large-scale deployments, Agileflow is an indispensable tool that simplifies versioning and release management.
 
 
-## Getting started
+## How to Use It
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- **Install Agileflow** by configuring the necessary deploy keys. This enables the tool to automate tagging and the release process.
+- **Use Semantic Versioning** to manage your product versions, starting with `v0.1.0` for new projects. Ensure that each version clearly identifies the **MAJOR**, **MINOR**, and **PATCH** numbers.
+- **Create a Release Branch** using the product's current **MAJOR** and **MINOR** version numbers. For example, `release/0.1` for new projects.
+- **Create Development Branches** for contributors, following the naming conventions like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
+- **Automatically Tag** each product version when there’s a merge into a release branch, with the patch number incremented based on the latest identifiable version in the branch.
+- **Create New Release Branches** for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+![Agileflow workflow example diagram](./media/diagram.png)
 
-## Add your files
+## Install
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+Agileflow can be installed automatically in any software project using a utility script or manually copying the necessary files in the project's directory.
 
+### Auto Install
+
+```bash
+curl -s https://URL/install.sh | bash --init
 ```
-cd existing_repo
-git remote add origin https://code.logickernel.com/kernel/agileflow.git
-git branch -M main
-git push -uf origin main
+
+## Versioning
+
+Agileflow enforces strict [Semantic Versioning](https://semver.org), which breaks down version numbers as follows:
+- **Major Versions (X.0.0)**: Introduces breaking changes or significant shifts in functionality.
+- **Minor Versions (0.Y.0)**: Represents new features, improvements, or non-breaking changes.
+- **Patch Versions (0.0.Z)**: Denotes bug fixes or minor tweaks. Patch versions are automatically incremented within the release branches to reduce manual intervention.
+
+### Automated Patch Management
+
+Patches are incremented automatically upon validated merges to the release branches. This keeps versioning consistent and transparent, making it easier to track small changes or bug fixes.
+
+
+
+## Branching Strategy
+
+Agileflow's branching model ensures that development and bug fixes are handled in a structured, scalable way.
+
+### Release Branches
+
+- **`release/X.Y`** branches represent each major and minor version.
+- These branches are created by maintainers and are **protected** to ensure stability.
+- Code is merged into these branches via merge requests or pull requests to prevent accidental or unvalidated changes.
+  
+Examples:
+- `release/0.1` for the first release iteration.
+- `release/1.0` for the first stable feature release.
+- `release/1.20` for a significant feature set under the same major version.
+
+### Development Branches
+
+Development branches are used for feature additions and bug fixes. They branch off the release branch they intend to merge into and follow these naming conventions:
+  
+1. **Feature Branches (`feat/*`)**: For developing new features. Merges back into the corresponding release branch when features are ready. Example: `feat/new-login`.
+
+2. **Bug Fix Branches (`fix/*`)**: For fixing bugs. These are also merged into the relevant release branch. Example: `fix/login-error`.
+
+3. **Hotfix Branches (`hotfix/*`)**: For urgent fixes in production. They allow applying critical patches without interfering with other in-progress development. Once resolved, these branches are merged back into their release branch, typically after the release has already been finalized, preventing any further contributions.
+    - Merging strategies like **cherry-picking** or **rebasing** can be used to apply these fixes cleanly into other branches if necessary.
+
+4. **Development Branches (`dev/*`)**: Generic development branches for large changes, specially useful before `1.0.0`.
+
+### Main Branch
+
+The **main** branch represents the latest stable version of the software:
+- All validated changes from the release branches are merged here.
+- The main branch always contains the most recent production-ready version.
+- Version tags (`vX.Y.Z`) are automatically generated when changes from the release branch are merged into `main`.
+
+## Tool
+
+The Agileflow tool manages versioning and branching automatically. Once installed, it integrates with your CI/CD pipelines, ensuring that versioning and branch management follow the strategy defined here.
+
+### Auto Install
+
+To install Agileflow in your project directory, run:
+
+```bash
+curl -s https://URL/install.sh | bash --init
 ```
 
-## Integrate with your tools
+This script initializes Agileflow, creates the required deployment keys, and sets up the project for automated versioning and tagging.
 
-- [ ] [Set up project integrations](https://code.logickernel.com/kernel/agileflow/-/settings/integrations)
+### Manual Install
 
-## Collaborate with your team
+Alternatively, you can manually download and set up Agileflow by running:
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+```bash
+curl https://code.logickernel.com/kernel/agileflow/-/raw/release/0.1/agileflow?ref_type=heads
+chmod a+x agileflow
+```
 
-## Test and Deploy
+Once installed, Agileflow can be used to automatically manage the versioning, branching, and deployment processes.
 
-Use the built-in continuous integration in GitLab.
+## Workflow
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+1. **Starting a New Release**:
+   - Create a release branch: for example, `release/0.1`.
+   - Develop features (`feat/*`) and fixes (`fix/*`) in separate branches, merging them back into the release branch.
+  
+2. **Developing & Testing**:
+   - Use CI pipelines to validate each feature or bug fix merge into `release/X.Y`.
+  
+3. **Validating & Tagging**:
+   - Once all changes in the release branch are stable, the `main` branch is updated, and the version tag (`vX.Y.0`) is generated.
 
-***
+4. **Handling Hotfixes**:
+   - If urgent issues arise post-release, create a `hotfix/*` branch. These branches are merged back using **cherry-picking** or **rebasing** and can be merged into other release branches if necessary.
 
-# Editing this README
+## Version Tagging and Automation
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Agileflow uses CI/CD scripts to automate version tagging:
+- It ensures the patch version (`Z`) is incremented automatically with each validated change.
+- Merges into `release/X.Y` result in version tags (`vX.Y.Z`) being created automatically, ensuring that every change is traceable and versioned appropriately.
 
-## Suggestions for a good README
+## Managing Breaking Changes
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+When significant, backward-incompatible changes are introduced:
+- A new major release branch (`release/2.0`) is created.
+- Older release branches continue to be maintained for minor updates or patches, ensuring stability until the deprecation of older versions is necessary.
 
-## Name
-Choose a self-explaining name for your project.
+## GitLab CI Integration
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+To integrate Agileflow into GitLab, follow these steps:
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+1. Add the `agileflow` script to your repository (see installation above).
+2. Add a GitLab CI/CD job to execute the `agileflow` script in your `.gitlab-ci.yml` file:
+      
+    ```yaml
+    stages:
+        - tagging
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+    agileflow:
+        stage: tagging
+        script:
+        - ./agileflow tag --key ${AGILEFLOW_KEY}
+        only:
+        - /^release\/[0-9]+\.[0-9]+$/
+    ```
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+3. Ensure you store the deploy key as a **file** in the GitLab CI/CD variables.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+## GitHub Actions Integration
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+To integrate Agileflow with GitHub Actions:
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+1. Add the `agileflow` script to your repository (see installation above).
+2. Create a GitHub Actions workflow to execute the `agileflow` script in your `.github/workflows/tag.yml`:
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+    ```yaml
+    name: Tag Version
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+    on:
+      push:
+        branches:
+          - 'release/*'
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+    jobs:
+      tag_version:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v2
+          - name: Run Agileflow
+            run: ./agileflow tag --key ${{ secrets.AGILEfLOW_KEY }}
+    ```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+3. Ensure you store the deploy key in your GitHub repository secrets as `DEPLOY_KEY`.
