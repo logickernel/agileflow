@@ -25,7 +25,7 @@ Agileflow can be installed automatically in any software project using a utility
 ### Auto Install
 
 ```bash
-curl -s https://URL/install.sh | bash --init
+curl -s https://URL/install.sh | bash init
 ```
 
 ## Versioning
@@ -85,7 +85,7 @@ The Agileflow tool manages versioning and branching automatically. Once installe
 To install Agileflow in your project directory, run:
 
 ```bash
-curl -s https://URL/install.sh | bash --init
+curl -s https://code.logickernel.com/kernel/agileflow/-/raw/HEAD/install.sh | bash init
 ```
 
 This script initializes Agileflow, creates the required deployment keys, and sets up the project for automated versioning and tagging.
