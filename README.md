@@ -24,7 +24,7 @@ Agileflow can be installed automatically in any software project using a utility
 ### Auto Install
 
 ```bash
-curl -s https://URL/install.sh | bash init
+/bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/HEAD/install.sh)"
 ```
 
 ## Versioning
