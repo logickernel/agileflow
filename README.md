@@ -38,11 +38,17 @@ Release Branches are a main concept in the AgileFlow framework. They are meant t
 - Use `release/0.1` for new projects.
 - Use `release/1.0` or a greater **MAJOR** number if the project is already being used in production.
 
-Once the tool is [installed](#install), you can use the following command to create the first release branch or to increase the **MAJOR** or **MINOR** numbers
+Once the tool is [installed](#install), you can use the following command to create the first release branch or to increase the **MAJOR** or **MINOR** numbers.
 
 ```bash
+# Create the first release for your project or perform a minor release
 ./agileflow release
+
+# Create the first release for your project or perform a minor release
+./agileflow release --major
 ```
+
+> Hint: You can use the flag `--print` to only show the next release calculated.
 
 ## Versioning
 
