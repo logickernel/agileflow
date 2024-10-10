@@ -127,17 +127,24 @@ release_command() {
     git fetch --all
 
     MAJOR_RELEASE=false
+    PRINT_VERSION=false
+
     while [[ $# -gt 0 ]]; do
         case $1 in
             --major)
                 MAJOR_RELEASE=true
-                shift
+                ;;
+            --print)
+                PRINT_VERSION=true
                 ;;
             *)
                 usage
+                exit 1
                 ;;
         esac
+        shift
     done
+
     BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
     if [[ "$BRANCH_NAME" == "HEAD" || -z "$BRANCH_NAME" ]]; then
         if [[ -n "$CI_COMMIT_REF_NAME" ]]; then
@@ -173,6 +180,11 @@ release_command() {
     if git show-ref --verify --quiet "refs/heads/$NEXT_RELEASE"; then
         echo "[ERROR] Branch '$NEXT_RELEASE' already exists."
         exit 1
+    fi
+
+    if $PRINT_VERSION; then
+        echo "$NEXT_RELEASE"
+        exit 0
     fi
 
     git checkout -b "$NEXT_RELEASE"
