@@ -1,8 +1,5 @@
-stages:
-  - tagging
-
 agileflow:
-  stage: tagging
+  stage: deploy
   script:
     - ./agileflow tag --key ${AGILEFLOW_KEY}
   only:

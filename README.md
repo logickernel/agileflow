@@ -27,6 +27,8 @@ Agileflow can be installed automatically in any software project using a utility
 /bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/HEAD/install.sh)"
 ```
 
+Select the CD/CI engine to view instructions to configure the automatic tagging and release options.
+
 ## Versioning
 
 Agileflow enforces strict [Semantic Versioning](https://semver.org), which breaks down version numbers as follows:
