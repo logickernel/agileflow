@@ -12,7 +12,7 @@ AgileFlow enforces **Semantic Versioning** and integrates a robust branching str
 You require repository maintainer or owner equivalent permissions.
 
 - [Install the AgileFlow tool](#install) in your project. It is recommended to configure the necessary Deploy Keys in the CD/CI engine to automate the tagging and release processes.
-- [Create a Release Branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers.
+- [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers.
 - **Create Development Branches** for contributors, following the naming conventions like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
 - **Automatically Tag** each product version when there’s a merge into a release branch, with the patch number incremented based on the latest identifiable version in the branch.
 - **Create New Release Branches** for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
@@ -33,11 +33,16 @@ Select the CD/CI engine to view instructions to configure the automatic tagging 
 
 ## Release Branches
 
-Release Branches are a main concept in the AgileFlow framework. They are meant to group the product versions. Their name is composed by `release/` followed by the **MAJOR** and **MINOR** numbers of the versions they contain, i.e. use the current product version number in the form `release/<MAJOR>.<MINOR>`. In case there's no version number specified:
+Release Branches are a main concept in the AgileFlow framework. They are meant to group the product versions. Their name is composed by `release/` followed by the **MAJOR** and **MINOR** numbers of the versions they contain. Use the current product version number in the form `release/<MAJOR>.<MINOR>`, or for still unversioned projects:
 
 - Use `release/0.1` for new projects.
 - Use `release/1.0` or a greater **MAJOR** number if the project is already being used in production.
 
+Once the tool is [installed](#install), you can use the following command to create the first release branch or to increase the **MAJOR** or **MINOR** numbers
+
+```bash
+./agileflow release
+```
 
 ## Versioning
 
@@ -55,17 +60,6 @@ Patches are incremented automatically upon validated merges to the release branc
 ## Branching Strategy
 
 AgileFlow's branching model ensures that development and bug fixes are handled in a structured, scalable way.
-
-### Release Branches
-
-- **`release/X.Y`** branches represent each major and minor version.
-- These branches are created by maintainers and are **protected** to ensure stability.
-- Code is merged into these branches via merge requests or pull requests to prevent accidental or unvalidated changes.
-  
-Examples:
-- `release/0.1` for the first release iteration.
-- `release/1.0` for the first stable feature release.
-- `release/1.20` for a significant feature set under the same major version.
 
 ### Development Branches
 
