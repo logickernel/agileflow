@@ -188,7 +188,8 @@ release_command() {
     fi
 
     git checkout -b "$NEXT_RELEASE"
-    echo "[INFO] Next release branch: $NEXT_RELEASE"
+    git push origin "$NEXT_RELEASE" --set-upstream || exit 1
+    echo "[INFO] Pushed release branch: $NEXT_RELEASE"
 }
 
 # Function to handle 'tag' command
