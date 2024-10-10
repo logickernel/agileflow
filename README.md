@@ -11,8 +11,8 @@ AgileFlow enforces **Semantic Versioning** and integrates a robust branching str
 
 You require repository maintainer or owner equivalent permissions.
 
-- [Install the AgileFlow tool](#install) in your project and configure the necessary Deploy Keys in the CD/CI engine. This enables the tool to automate the tagging and release processes.
-- Create a Release Branch using the product's current **MAJOR** and **MINOR** version numbers. Use `release/0.1` for new projects or `release/1.0` or upper if the project is already serving users in production.
+- [Install the AgileFlow tool](#install) in your project. It is recommended to configure the necessary Deploy Keys in the CD/CI engine to automate the tagging and release processes.
+- [Create a Release Branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers.
 - **Create Development Branches** for contributors, following the naming conventions like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
 - **Automatically Tag** each product version when there’s a merge into a release branch, with the patch number incremented based on the latest identifiable version in the branch.
 - **Create New Release Branches** for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
@@ -30,6 +30,14 @@ AgileFlow can be installed automatically in any software project using a utility
 ```
 
 Select the CD/CI engine to view instructions to configure the automatic tagging and release options.
+
+## Release Branches
+
+Release Branches are a main concept in the AgileFlow framework. They are meant to group the product versions. Their name is composed by `release/` followed by the **MAJOR** and **MINOR** numbers of the versions they contain, i.e. use the current product version number in the form `release/<MAJOR>.<MINOR>`. In case there's no version number specified:
+
+- Use `release/0.1` for new projects.
+- Use `release/1.0` or a greater **MAJOR** number if the project is already being used in production.
+
 
 ## Versioning
 
