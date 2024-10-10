@@ -9,9 +9,8 @@ Agileflow enforces **Semantic Versioning** and integrates a robust branching str
 
 ## How to Use It
 
-- **Install the Agileflow tool** in your project and configure the necessary Deploy Keys in the CD/CI engine. This enables the tool to automate tagging the and release processes.
-- **Use Semantic Versioning** to manage your product versions, starting with `v0.1.0` for new projects. Ensure that each version clearly identifies the **MAJOR**, **MINOR**, and **PATCH** numbers.
-- **Create a Release Branch** using the product's current **MAJOR** and **MINOR** version numbers. For example, `release/0.1` for new projects.
+- [Install the Agileflow tool](#install) in your project and configure the necessary Deploy Keys in the CD/CI engine. This enables the tool to automate the tagging and release processes.
+- Create a Release Branch using the product's current **MAJOR** and **MINOR** version numbers. Use `release/0.1` for new projects or `release/1.0` or upper if the project is already serving users in production.
 - **Create Development Branches** for contributors, following the naming conventions like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
 - **Automatically Tag** each product version when there’s a merge into a release branch, with the patch number incremented based on the latest identifiable version in the branch.
 - **Create New Release Branches** for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
