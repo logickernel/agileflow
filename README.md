@@ -9,7 +9,7 @@ Agileflow enforces **Semantic Versioning** and integrates a robust branching str
 
 ## How to Use It
 
-- **Install Agileflow** by configuring the necessary deploy keys. This enables the tool to automate tagging and the release process.
+- **Install the Agileflow tool** in your project and configure the necessary Deploy Keys in the CD/CI engine. This enables the tool to automate tagging the and release processes.
 - **Use Semantic Versioning** to manage your product versions, starting with `v0.1.0` for new projects. Ensure that each version clearly identifies the **MAJOR**, **MINOR**, and **PATCH** numbers.
 - **Create a Release Branch** using the product's current **MAJOR** and **MINOR** version numbers. For example, `release/0.1` for new projects.
 - **Create Development Branches** for contributors, following the naming conventions like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
@@ -76,28 +76,6 @@ The **main** branch represents the latest stable version of the software:
 - The main branch always contains the most recent production-ready version.
 - Version tags (`vX.Y.Z`) are automatically generated when changes from the release branch are merged into `main`.
 
-## Tool
-
-The Agileflow tool manages versioning and branching automatically. Once installed, it integrates with your CI/CD pipelines, ensuring that versioning and branch management follow the strategy defined here.
-
-### Auto Install
-
-To install Agileflow in your project directory, run:
-
-```bash
-curl -s https://code.logickernel.com/kernel/agileflow/-/raw/HEAD/install.sh | bash init
-```
-
-This script initializes Agileflow, creates the required deployment keys, and sets up the project for automated versioning and tagging.
-
-### Manual Install
-
-Alternatively, you can manually download and set up Agileflow by running:
-
-```bash
-curl https://code.logickernel.com/kernel/agileflow/-/raw/release/0.1/agileflow?ref_type=heads
-chmod a+x agileflow
-```
 
 Once installed, Agileflow can be used to automatically manage the versioning, branching, and deployment processes.
 
