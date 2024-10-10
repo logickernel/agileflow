@@ -50,6 +50,11 @@ Once the tool is [installed](#install), you can use the following command to cre
 
 > Hint: You can use the flag `--print` to only show the next release calculated.
 
+
+---
+
+# Work in Progress
+
 ## Versioning
 
 AgileFlow enforces strict [Semantic Versioning](https://semver.org), which breaks down version numbers as follows:
