@@ -10,5 +10,5 @@ curl -O "$URL"
 
 chmod +x "$FILENAME"
 
-# Execute the file with --init flag
-./"$FILENAME" init
+# Execute the file install command
+./"$FILENAME" install
