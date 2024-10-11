@@ -7,14 +7,36 @@ In today’s fast-paced software development landscape, maintaining clarity, con
 AgileFlow enforces **Semantic Versioning** and integrates a robust branching strategy for development and deployment. It seamlessly works with **GitLab CI** and **GitHub Actions** CI/CD pipelines to ensure a structured, efficient, and predictable development lifecycle. Whether for small projects or large-scale deployments, AgileFlow is an indispensable tool that simplifies versioning and release management.
 
 
+- [AgileFlow](#agileflow)
+  - [How to Use It](#how-to-use-it)
+  - [Install](#install)
+    - [Auto Install](#auto-install)
+    - [Manual Install](#manual-install)
+      - [GitLab](#gitlab)
+        - [GitLab Keys Setup](#gitlab-keys-setup)
+      - [GitHub](#github)
+        - [GitHub Keys Setup](#github-keys-setup)
+  - [Release Branches](#release-branches)
+  - [Development Branches](#development-branches)
+- [Work in Progress](#work-in-progress)
+  - [Versioning](#versioning)
+    - [Automated Patch Management](#automated-patch-management)
+    - [Main Branch](#main-branch)
+  - [Workflow](#workflow)
+  - [Version Tagging and Automation](#version-tagging-and-automation)
+  - [Managing Breaking Changes](#managing-breaking-changes)
+  - [GitLab CI Integration](#gitlab-ci-integration)
+  - [GitHub Actions Integration](#github-actions-integration)
+
+
 ## How to Use It
 
 You require repository maintainer or owner equivalent permissions.
 
 - [Install the AgileFlow tool](#install) in your project. It is recommended to configure the necessary Deploy Keys in the CD/CI engine to automate the tagging and release processes.
-- [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers.
-- [Create Development Branches](#development-branches) for contributors, following the naming conventions like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
-- **Automatically Tag** each product version when there’s a merge into a release branch, with the patch number incremented based on the latest identifiable version in the branch.
+- [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers, e.g. `release/0.1`, `release/1.0`, `release/1.1`, etc.
+- [Create development branches](#development-branches) for contributors, following the naming conventions like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
+- [Version](#versioning) each contribution when there’s a merge into a release branch, with the patch number incremented based on the latest identifiable version in the branch.
 - **Create New Release Branches** for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
 
 ![AgileFlow workflow example diagram](./media/diagram.jpg)
@@ -26,10 +48,46 @@ AgileFlow can be installed automatically in any software project using a utility
 ### Auto Install
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/AgileFlow/-/raw/HEAD/install.sh)"
+/bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/release/0.2/install.sh)"
 ```
 
-Select the CD/CI engine to view instructions to configure the automatic tagging and release options.
+Select the CD/CI engine to view instructions to set up the keys to enable automatic release and tagging commands in [GitLab](#gitlab-keys-setup) or [GitHub](#github-keys-setup). If completed successfully, CD/CI scripts will be created or updated automatically so the engine uses AgileFlow to version the product.
+
+### Manual Install
+
+#### GitLab
+
+
+##### GitLab Keys Setup
+
+The following instructions will allow the CD/CI scripts to automatically version and push the corresponding tag to the GitLab repository.
+
+<details>
+<summary>Click to expand</summary>
+
+1. Go to your project's Settings > Repository > Deploy Keys
+2. Add the public key as a deploy key making sure to grant it write access
+3. Go to your project's Settings > CI/CD > Variables
+4. Add a new variable called AGILEFLOW_KEY with type "file" and paste the generated private key
+
+</details>
+
+#### GitHub
+
+
+##### GitHub Keys Setup
+
+The following instructions will allow the CD/CI scripts to automatically version and push the corresponding tag to the GitHub repository.
+
+<details>
+<summary>Click to expand</summary>
+
+1. Go to your repository's settings
+2. Add the public key as a deploy key
+3. Go to your repository's settings > Secrets
+4. Add a new secret called AGILEFLOW_KEY_BASE64 and paste the private key
+
+</details>
 
 ## Release Branches
 
@@ -57,46 +115,52 @@ Development branches are used for feature additions and bug fixes. They branch o
   
 1. **Generic Development Branches (`dev/*`)**: Generic development branches for large changes. Specially useful before `1.0.0`.
 
-2. **Feature Branches (`feat/*`)**: For developing new features. Merges back into the corresponding release branch when features are ready. Example: `feat/new-login`.
-
-3. **Bug Fix Branches (`fix/*`)**: For fixing bugs. These are also merged into the relevant release branch. Example: `fix/login-error`.
-
-4. **Hotfix Branches (`hotfix/*`)**: For urgent fixes in production. They allow applying critical patches without interfering with other in-progress development. Once resolved, these branches are merged back into their release branch, typically after the release has already been finalized.
-
-   > Merging strategies like **cherry-picking** or **rebasing** can be used to apply these fixes cleanly into other branches if necessary.
-
-Create the dev branches using regular git commands:
-
 ```bash
 # Create a Generic Development Branch
 git checkout -b dev/generic-development-branch-name
+```
 
+2. **Feature Branches (`feat/*`)**: For developing new features. Merges back into the corresponding release branch when features are ready. Example: `feat/new-login`.
+
+```bash
 # Create a Feature Branch
 git checkout -b feat/feature-branch-name
+```
 
+3. **Bug Fix Branches (`fix/*`)**: For fixing bugs. These are also merged into the relevant release branch. Example: `fix/login-error`.
+
+```bash
 # Create a Bug Fix Branch
 git checkout -b fix/bug-fix-branch-name
+```
 
+4. **Hotfix Branches (`hotfix/*`)**: For urgent fixes in production. They allow applying critical patches without interfering with other in-progress development. Once resolved, these branches are merged back into their release branch, typically after the release has already been finalized.
+
+   Merging strategies like **cherry-picking** or **rebasing** must be used to apply these fixes cleanly into current branches.
+
+```bash
 # Create a Hotfix Branch
 git checkout -b hotfix/hotfix-branch-name
 ```
 
----
 
-# Work in Progress
+After the contribution is ready, the development branch is merged into it's origin Release Branch, preferrably using a [Merge Request](https://docs.gitlab.com/ee/user/project/merge_requests/), a [Pull Request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests), or similar.
 
 ## Versioning
 
-AgileFlow enforces strict [Semantic Versioning](https://semver.org), which breaks down version numbers as follows:
+Create a new version every time there's a merge into a release branch. AgileFlow enforces strict [Semantic Versioning](https://semver.org), which breaks down version numbers as follows:
+
 - **Major Versions (X.0.0)**: Introduces breaking changes or significant shifts in functionality.
 - **Minor Versions (0.Y.0)**: Represents new features, improvements, or non-breaking changes.
-- **Patch Versions (0.0.Z)**: Denotes bug fixes or minor tweaks. Patch versions are automatically incremented within the release branches to reduce manual intervention.
+- **Patch Versions (0.0.Z)**: Denotes bug fixes or minor tweaks.
 
 ### Automated Patch Management
 
 Patches are incremented automatically upon validated merges to the release branches. This keeps versioning consistent and transparent, making it easier to track small changes or bug fixes.
 
+---
 
+# Work in Progress
 
 ### Main Branch
 

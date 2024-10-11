@@ -71,13 +71,12 @@ install_command() {
         GitLab)
             echo "Follow these steps to add the deploy key to your GitLab repository:"
             echo "  1) Go to your project's Settings > Repository > Deploy Keys"
-            echo "  2) Copy the public key below and paste it in the 'Key' field:"
+            echo "  2) Add the public key below as a deploy key making sure to grant it write access:"
             echo
             echo "$(cat "$TEMP_DIR/agileflow-deploy-key.pub")"
             echo
-            echo "  3) Add a deploy key with the key you just copied making sure to grant write access"
-            echo "  4) Go to your project's Settings > CI/CD > Variables"
-            echo "  5) Add a new variable called AGILEFLOW_KEY with type \"file\" and paste the private key below:"
+            echo "  3) Go to your project's Settings > CI/CD > Variables"
+            echo "  4) Add a new variable called AGILEFLOW_KEY with type \"file\" and paste the private key below:"
             echo
             cat "$TEMP_DIR/agileflow-deploy-key"
             echo
