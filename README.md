@@ -51,19 +51,20 @@ AgileFlow can be installed automatically in any software project using a utility
 /bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/release/0.2/install.sh)"
 ```
 
-Select the CD/CI engine to view instructions to set up the keys to enable automatic release and tagging commands in [GitLab](#gitlab-keys-setup) or [GitHub](#github-keys-setup). If completed successfully, CD/CI scripts will be created or updated automatically so the engine uses AgileFlow to version the product.
+Select the CD/CI engine to view the keys and instructions to set them up in [GitLab](#gitlab-keys-setup) or [GitHub](#github-keys-setup). If completed successfully, CD/CI scripts will be created or updated automatically so the engine uses AgileFlow to version the product.
 
 ### Manual Install
 
 #### GitLab
+
+<details>
+<summary>Click to expand</summary>
 
 
 ##### GitLab Keys Setup
 
 The following instructions will allow the CD/CI scripts to automatically version and push the corresponding tag to the GitLab repository.
 
-<details>
-<summary>Click to expand</summary>
 
 1. Go to your project's Settings > Repository > Deploy Keys
 2. Add the public key as a deploy key making sure to grant it write access
@@ -74,13 +75,12 @@ The following instructions will allow the CD/CI scripts to automatically version
 
 #### GitHub
 
+<details>
+<summary>Click to expand</summary>
 
 ##### GitHub Keys Setup
 
 The following instructions will allow the CD/CI scripts to automatically version and push the corresponding tag to the GitHub repository.
-
-<details>
-<summary>Click to expand</summary>
 
 1. Go to your repository's settings
 2. Add the public key as a deploy key
