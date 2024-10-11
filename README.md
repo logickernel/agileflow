@@ -13,11 +13,11 @@ You require repository maintainer or owner equivalent permissions.
 
 - [Install the AgileFlow tool](#install) in your project. It is recommended to configure the necessary Deploy Keys in the CD/CI engine to automate the tagging and release processes.
 - [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers.
-- **Create Development Branches** for contributors, following the naming conventions like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
+- [Create Development Branches](#development-branches) for contributors, following the naming conventions like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
 - **Automatically Tag** each product version when there’s a merge into a release branch, with the patch number incremented based on the latest identifiable version in the branch.
 - **Create New Release Branches** for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
 
-![AgileFlow workflow example diagram](./media/diagram.png)
+![AgileFlow workflow example diagram](./media/diagram.jpg)
 
 ## Install
 
@@ -44,12 +44,42 @@ Once the tool is [installed](#install), you can use the following command to cre
 # Create the first release for your project or perform a minor release
 ./agileflow release
 
-# Create the first release for your project or perform a minor release
+# Create the first release for your project or perform a major release
 ./agileflow release --major
 ```
 
 > Hint: You can use the flag `--print` to only show the next release calculated.
 
+
+## Development Branches
+
+Development branches are used for feature additions and bug fixes. They branch off the release branch they intend to merge into and follow these naming conventions:
+  
+1. **Generic Development Branches (`dev/*`)**: Generic development branches for large changes. Specially useful before `1.0.0`.
+
+2. **Feature Branches (`feat/*`)**: For developing new features. Merges back into the corresponding release branch when features are ready. Example: `feat/new-login`.
+
+3. **Bug Fix Branches (`fix/*`)**: For fixing bugs. These are also merged into the relevant release branch. Example: `fix/login-error`.
+
+4. **Hotfix Branches (`hotfix/*`)**: For urgent fixes in production. They allow applying critical patches without interfering with other in-progress development. Once resolved, these branches are merged back into their release branch, typically after the release has already been finalized.
+
+   > Merging strategies like **cherry-picking** or **rebasing** can be used to apply these fixes cleanly into other branches if necessary.
+
+Create the dev branches using regular git commands:
+
+```bash
+# Create a Generic Development Branch
+git checkout -b dev/generic-development-branch-name
+
+# Create a Feature Branch
+git checkout -b feat/feature-branch-name
+
+# Create a Bug Fix Branch
+git checkout -b fix/bug-fix-branch-name
+
+# Create a Hotfix Branch
+git checkout -b hotfix/hotfix-branch-name
+```
 
 ---
 
@@ -67,23 +97,6 @@ AgileFlow enforces strict [Semantic Versioning](https://semver.org), which break
 Patches are incremented automatically upon validated merges to the release branches. This keeps versioning consistent and transparent, making it easier to track small changes or bug fixes.
 
 
-
-## Branching Strategy
-
-AgileFlow's branching model ensures that development and bug fixes are handled in a structured, scalable way.
-
-### Development Branches
-
-Development branches are used for feature additions and bug fixes. They branch off the release branch they intend to merge into and follow these naming conventions:
-  
-1. **Feature Branches (`feat/*`)**: For developing new features. Merges back into the corresponding release branch when features are ready. Example: `feat/new-login`.
-
-2. **Bug Fix Branches (`fix/*`)**: For fixing bugs. These are also merged into the relevant release branch. Example: `fix/login-error`.
-
-3. **Hotfix Branches (`hotfix/*`)**: For urgent fixes in production. They allow applying critical patches without interfering with other in-progress development. Once resolved, these branches are merged back into their release branch, typically after the release has already been finalized, preventing any further contributions.
-    - Merging strategies like **cherry-picking** or **rebasing** can be used to apply these fixes cleanly into other branches if necessary.
-
-4. **Development Branches (`dev/*`)**: Generic development branches for large changes, specially useful before `1.0.0`.
 
 ### Main Branch
 
