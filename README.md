@@ -51,41 +51,97 @@ AgileFlow can be installed automatically in any software project using a utility
 /bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/release/0.2/install.sh)"
 ```
 
-Select the CD/CI engine to view the keys and instructions to set them up in [GitLab](#gitlab-keys-setup) or [GitHub](#github-keys-setup). If completed successfully, CD/CI scripts will be created or updated automatically so the engine uses AgileFlow to version the product.
+Select the CD/CI engine to view the keys and instructions to set them up. If completed successfully, CD/CI scripts will be created or updated automatically so the engine uses AgileFlow to version the product.
 
 ### Manual Install
 
-#### GitLab
+Download and place the AgileFlow tool script in your project's root directory. Give it execution permissions.
+
+```bash
+curl https://code.logickernel.com/kernel/agileflow/-/raw/release/0.2/agileflow
+chmod +x agileflow
+```
+
+#### CD/CI Set Up
+
+The following instructions will allow your CD/CI engine to automatically version and push the corresponding tag to the repository.
 
 <details>
-<summary>Click to expand</summary>
+<summary><strong>GitLab</strong></summary>
 
+Run the following command to generate a new pair of keys, see setup instructions and to create or update the `.gitlab-ci.yml` file:
+
+```bash
+./agileflow install --gitlab
+```
+
+Alternatively, you can create a pair of keys and configure GitLab manually:
+
+```bash
+./agileflow install --generate
+```
 
 ##### GitLab Keys Setup
 
-The following instructions will allow the CD/CI scripts to automatically version and push the corresponding tag to the GitLab repository.
-
-
-1. Go to your project's Settings > Repository > Deploy Keys
+1. Go to your project's **Settings > Repository > Deploy Keys**
 2. Add the public key as a deploy key making sure to grant it write access
-3. Go to your project's Settings > CI/CD > Variables
-4. Add a new variable called AGILEFLOW_KEY with type "file" and paste the generated private key
+3. Go to your project's **Settings > CI/CD > Variables**
+4. Add a new variable called `AGILEFLOW_KEY` with type "file" and paste the generated private key
+
+##### GitLab CI Setup
+
+```yml
+agileflow:
+  stage: deploy
+  script:
+    - ./agileflow tag --key ${AGILEFLOW_KEY}
+  only:
+    - /^release\/[0-9]+\.[0-9]+$/
+```
 
 </details>
 
-#### GitHub
-
 <details>
-<summary>Click to expand</summary>
+<summary><strong>GitHub -Unverified-</strong></summary>
+
+Run the following command to generate a new pair of keys, see setup instructions and to create or update the `.github/workflows/agileflow.yml` file:
+
+```bash
+./agileflow install --github
+```
+
+Alternatively, you can create a pair of keys and configure GitLab manually:
+
+```bash
+./agileflow install --generate
+```
 
 ##### GitHub Keys Setup
-
-The following instructions will allow the CD/CI scripts to automatically version and push the corresponding tag to the GitHub repository.
 
 1. Go to your repository's settings
 2. Add the public key as a deploy key
 3. Go to your repository's settings > Secrets
 4. Add a new secret called AGILEFLOW_KEY_BASE64 and paste the private key
+
+
+##### GitHub Actions Setup
+
+```yaml
+name: AgileFlow Tag Version
+
+on:
+  push:
+    branches:
+      - 'release/*'
+
+jobs:
+  tag_version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run AgileFlow
+        run: ./agileflow tag --key ${{ secrets.AGILEFLOW_KEY_BASE64 }}
+```
 
 </details>
 

@@ -26,7 +26,7 @@ install_command() {
                 CI_CD_ENGINE="GitHub"
                 shift
                 ;;
-            --local)
+            --generate)
                 CI_CD_ENGINE="None"
                 shift
                 ;;
@@ -41,17 +41,13 @@ install_command() {
         echo "Select your CI/CD engine:"
         echo "  1) GitLab"
         echo "  2) GitHub"
-        echo "  3) None"
-        read -p "Enter choice [1-3]: " choice
+        read -p "Enter choice [1-2]: " choice
         case $choice in
             1)
                 CI_CD_ENGINE="GitLab"
                 ;;
             2)
                 CI_CD_ENGINE="GitHub"
-                ;;
-            3)
-                CI_CD_ENGINE="None"
                 ;;
             *)
                 echo "[ERROR] Invalid choice."
@@ -63,9 +59,6 @@ install_command() {
     # Create temporary directory and generate SSH key pair
     TEMP_DIR=$(mktemp -d)
     ssh-keygen -t ed25519 -C "agileflow-deploy-key" -f "$TEMP_DIR/agileflow-deploy-key" -N "" >/dev/null 2>&1
-
-    # Depending on the CI/CD engine, display the appropriate instructions
-    echo 
     
     case $CI_CD_ENGINE in
         GitLab)
@@ -78,7 +71,7 @@ install_command() {
             echo "  3) Go to your project's Settings > CI/CD > Variables"
             echo "  4) Add a new variable called AGILEFLOW_KEY with type \"file\" and paste the private key below:"
             echo
-            cat "$TEMP_DIR/agileflow-deploy-key"
+            echo "$(cat "$TEMP_DIR/agileflow-deploy-key")"
             echo
 
             # Add GitLab CI/CD configuration to automatically tag releases
@@ -106,14 +99,16 @@ install_command() {
             echo "  3) Go to your repository's settings > Secrets"
             echo "  4) Add a new secret called AGILEFLOW_KEY_BASE64 and paste the private key below:"
             echo
-            base64 < "$TEMP_DIR/agileflow-deploy-key"
+            echo "$(base64 < "$TEMP_DIR/agileflow-deploy-key")"
             echo
             ;;
 
         None)
-            echo "Follow these steps to add the deploy key to your repository:"
-            echo "  1) Go to your repository's settings"
-            echo "  2) Add the public key below as a deploy key"
+            echo "Public key:"
+            echo "$(cat "$TEMP_DIR/agileflow-deploy-key.pub")"
+            echo
+            echo "Private key:"
+            echo "$(cat "$TEMP_DIR/agileflow-deploy-key")"
             ;;
     esac
 
