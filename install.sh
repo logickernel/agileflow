@@ -22,5 +22,6 @@ if [ "$FILE_EXISTED_BEFORE" = false ]; then
   echo "Running $FILENAME..."
   ./"$FILENAME" install
 else
-  echo "AgileFlow was already installed so it was just updated. To perform a fresh install, please remove the existing installation and run the script again."
+  echo "AgileFlow was already installed so it was just updated."
+  echo "To perform a fresh install, please remove the existing installation and run the script again."
 fi
