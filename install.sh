@@ -6,10 +6,8 @@ FILENAME=$(basename "$URL")
 
 # Check if the file exists before downloading
 if [ -f "$FILENAME" ]; then
-  echo "$FILENAME already exists. Updating..."
   FILE_EXISTED_BEFORE=true
 else
-  echo "$FILENAME does not exist. Downloading and installing..."
   FILE_EXISTED_BEFORE=false
 fi
 
