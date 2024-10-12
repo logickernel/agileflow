@@ -123,15 +123,15 @@ release_command() {
     git fetch --all
 
     MAJOR_RELEASE=false
-    PRINT_VERSION=false
+    DRY_RUN=false
 
     while [[ $# -gt 0 ]]; do
         case $1 in
             --major)
                 MAJOR_RELEASE=true
                 ;;
-            --print)
-                PRINT_VERSION=true
+            --dry-run)
+                DRY_RUN=true
                 ;;
             *)
                 usage
@@ -178,7 +178,7 @@ release_command() {
         exit 1
     fi
 
-    if $PRINT_VERSION; then
+    if $DRY_RUN; then
         echo "$NEXT_RELEASE"
         exit 0
     fi

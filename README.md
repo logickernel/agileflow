@@ -36,7 +36,7 @@ You require repository maintainer or owner equivalent permissions.
 - [Install the AgileFlow tool](#install) in your project. It is recommended to configure the necessary Deploy Keys in the CD/CI engine to automate the tagging and release processes.
 - [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers, e.g. `release/0.1`, `release/1.0`, `release/1.1`, etc.
 - [Create development branches](#development-branches) for contributors, following the naming conventions like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
-- [Version](#versioning) each contribution when there’s a merge into a release branch, with the patch number incremented based on the latest identifiable version in the branch.
+- [Create a new version](#versioning) every time there’s a merge into a release branch, incrementing the patch number based on the latest identifiable version in the branch.
 - **Create New Release Branches** for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
 
 ![AgileFlow workflow example diagram](./media/diagram.jpg)
@@ -160,12 +160,9 @@ Once the tool is [installed](#install), you can use the following command to cre
 ```bash
 # Create the first release for your project or perform a minor release
 ./agileflow release
-
-# Create the first release for your project or perform a major release
-./agileflow release --major
 ```
 
-> Hint: You can use the flag `--print` to only show the next release calculated.
+> Hint: You can use the flag `--dry-run` to only show the next release calculated without applying any changes.
 
 
 ## Development Branches

@@ -14,7 +14,7 @@ else
 fi
 
 # Download the file using curl and overwrite if it exists
-curl -O "$URL"
+curl -s -O "$URL"
 
 # Ensure the file has execution permissions
 chmod +x "$FILENAME"
