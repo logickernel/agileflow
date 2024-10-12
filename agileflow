@@ -175,6 +175,10 @@ release_command() {
 
     NEXT_RELEASE="release/$MAJOR.$MINOR"
 
+    # Obtain the list of branches from the remote repository starting with 'release/'
+    REMOTE_BRANCHES=$(git branch -r | grep -E "^ *origin/(r|release)/[0-9]+\.[0-9]+$" | sed -E 's| *origin/||')
+
+
     if git show-ref --verify --quiet "refs/heads/$NEXT_RELEASE"; then
         echo "[ERROR] Release branch '$NEXT_RELEASE' already exists."
         exit 1
@@ -196,11 +200,16 @@ tag_command() {
 
     # Parse arguments
     PRIVATE_KEY=""
+    DRY_RUN=false
     while [[ $# -gt 0 ]]; do
         case $1 in
             --key)
                 PRIVATE_KEY="$2"
                 shift 2
+                ;;
+            --dry-run)
+                DRY_RUN=true
+                shift
                 ;;
             *)
                 usage
@@ -208,39 +217,39 @@ tag_command() {
         esac
     done
 
-    if [[ -z "$PRIVATE_KEY" ]]; then
-        echo "[ERROR] --key is required for the 'tag' command."
-        usage
-    fi
-
-    echo "[INFO] Validating private key..."
-    if [[ ! -f "$PRIVATE_KEY" ]]; then
-        echo "[INFO] Provided key is not a file, trying to decode as base64..."
-        echo "$PRIVATE_KEY" | base64 -d > "$TEMP_DIR/deploy_key" 2>/dev/null
-        if [[ $? -ne 0 ]]; then
-            echo "[ERROR] Invalid file or base64-encoded key."
-            rm -rf "$TEMP_DIR"
-            exit 1
+    # Handle private key if provided
+    if [[ -n "$PRIVATE_KEY" ]]; then
+        echo "[INFO] Validating private key..."
+        if [[ ! -f "$PRIVATE_KEY" ]]; then
+            echo "[INFO] Provided key is not a file, trying to decode as base64..."
+            echo "$PRIVATE_KEY" | base64 -d > "$TEMP_DIR/deploy_key" 2>/dev/null
+            if [[ $? -ne 0 ]]; then
+                echo "[ERROR] Invalid file or base64-encoded key."
+                rm -rf "$TEMP_DIR"
+                exit 1
+            fi
+            chmod 600 "$TEMP_DIR/deploy_key"
+            DEPLOY_KEY_PATH="$TEMP_DIR/deploy_key"
+        else
+            chmod 600 "$PRIVATE_KEY"
+            DEPLOY_KEY_PATH="$PRIVATE_KEY"
         fi
-        chmod 600 "$TEMP_DIR/deploy_key"
-        DEPLOY_KEY_PATH="$TEMP_DIR/deploy_key"
-    else
-        chmod 600 "$PRIVATE_KEY"
-        DEPLOY_KEY_PATH="$PRIVATE_KEY"
-    fi
+        export GIT_SSH_COMMAND="ssh -i $DEPLOY_KEY_PATH -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
 
-    REMOTE_URL=$(git remote get-url origin)
-    if [[ "$REMOTE_URL" =~ ^https:// ]]; then
-        SSH_URL=$(echo "$REMOTE_URL" | sed -E 's|https://[^@]+@([^/]+)/(.+)|git@\1:\2|')
-        SSH_URL="${SSH_URL%.git}.git"
-        git remote set-url origin "$SSH_URL"
-        echo "[INFO] Converted remote URL to SSH: $SSH_URL"
+        # Convert remote URL to SSH if a private key is provided
+        REMOTE_URL=$(git remote get-url origin)
+        if [[ "$REMOTE_URL" =~ ^https:// ]]; then
+            SSH_URL=$(echo "$REMOTE_URL" | sed -E 's|https://[^@]+@([^/]+)/(.+)|git@\1:\2|')
+            SSH_URL="${SSH_URL%.git}.git"
+            git remote set-url origin "$SSH_URL"
+            echo "[INFO] Converted remote URL to SSH: $SSH_URL"
+        fi
     fi
 
     get_branch_name
 
     if [[ ! "$BRANCH_NAME" =~ ^(r|release)/[0-9]+\.[0-9]+$ ]]; then
-        echo "[ERROR] Branch name '$BRANCH_NAME' does not match 'r/X.Y' or 'release/X.Y'."
+        echo "[ERROR] Release branch not detected. Branch name '$BRANCH_NAME' does not match 'r/X.Y' or 'release/X.Y'."
         rm -rf "$TEMP_DIR"
         exit 1
     fi
@@ -254,9 +263,15 @@ tag_command() {
         NEXT_VERSION=$(echo "$LATEST_TAG" | awk -F. -v OFS=. '{$NF+=1; print}')
     fi
 
-    export GIT_SSH_COMMAND="ssh -i $DEPLOY_KEY_PATH -o IdentitiesOnly=yes -o StrictHostKeyChecking=no"
+    if $DRY_RUN; then
+        echo "$NEXT_VERSION"
+        exit 0
+    fi
+
     git tag "$NEXT_VERSION"
-    if ! git push origin "$NEXT_VERSION"; then
+    git push origin "$NEXT_VERSION"
+
+    if [[ $? -ne 0 ]]; then
         echo "[ERROR] Failed to push tag."
         rm -rf "$TEMP_DIR"
         exit 1
