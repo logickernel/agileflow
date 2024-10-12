@@ -4,11 +4,25 @@
 URL="https://code.logickernel.com/kernel/agileflow/-/raw/HEAD/agileflow"
 FILENAME=$(basename "$URL")
 
-# Download the file using curl
-echo "Downloading $FILENAME from $URL..."
+# Check if the file exists before downloading
+if [ -f "$FILENAME" ]; then
+  echo "$FILENAME already exists. Updating..."
+  FILE_EXISTED_BEFORE=true
+else
+  echo "$FILENAME does not exist. Downloading and installing..."
+  FILE_EXISTED_BEFORE=false
+fi
+
+# Download the file using curl and overwrite if it exists
 curl -O "$URL"
 
+# Ensure the file has execution permissions
 chmod +x "$FILENAME"
 
-# Execute the file install command
-./"$FILENAME" install
+# Only execute the file if it did not exist before
+if [ "$FILE_EXISTED_BEFORE" = false ]; then
+  echo "Running $FILENAME..."
+  ./"$FILENAME" install
+else
+  echo "AgileFlow was already installed so it was just updated. To perform a fresh install, please remove the existing installation and run the script again."
+fi

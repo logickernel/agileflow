@@ -63,15 +63,17 @@ install_command() {
     case $CI_CD_ENGINE in
         GitLab)
             echo "Follow these steps to add the deploy key to your GitLab repository:"
-            echo "  1) Go to your project's Settings > Repository > Deploy Keys"
-            echo "  2) Add the public key below as a deploy key making sure to grant it write access:"
+            echo "  1) Go to your project's Settings > Repository > Deploy keys"
+            echo "  2) Add the generated public key as a deploy key making sure to grant it write permissions:"
             echo
             echo "$(cat "$TEMP_DIR/agileflow-deploy-key.pub")"
             echo
             echo "  3) Go to your project's Settings > CI/CD > Variables"
-            echo "  4) Add a new variable called AGILEFLOW_KEY with type \"file\" and paste the private key below:"
+            echo "  4) Add a new variable of type File, key AGILEFLOW_KEY and as value the generated private key:"
             echo
             echo "$(cat "$TEMP_DIR/agileflow-deploy-key")"
+            echo
+            echo "  It is recommended to protect the variable so that it's only available in pipelines controlled by an authorized user"
             echo
 
             # Add GitLab CI/CD configuration to automatically tag releases
@@ -97,7 +99,7 @@ install_command() {
             echo "$(cat "$TEMP_DIR/agileflow-deploy-key.pub")"
             echo
             echo "  3) Go to your repository's settings > Secrets"
-            echo "  4) Add a new secret called AGILEFLOW_KEY_BASE64 and paste the private key below:"
+            echo "  4) Add a new secret called AGILEFLOW_KEY and paste the private key below:"
             echo
             echo "$(base64 < "$TEMP_DIR/agileflow-deploy-key")"
             echo
