@@ -158,10 +158,10 @@ Release Branches are a main concept in the AgileFlow framework. They are meant t
 Once the tool is [installed](#install), you can use the following command to create the first release branch or to increase the **MAJOR** or **MINOR** numbers.
 
 ```bash
-# Use the --dry-run flag to see the new branch name before altering the remote repo
+# Use the --dry-run flag to see the new branch name before altering the remote origin
 ./agileflow release --dry-run
 
-# Create the first release for your project or perform a minor release
+# Create the first release for your project or perform a minor release, create a branch and push it to the origin
 ./agileflow release
 ```
 
@@ -218,7 +218,11 @@ The installed CD/CI Patches are incremented automatically upon validated merges 
 
 Use the following command in case no CD/CI is configured or a version tag needs to be created manually:
 
-```
+```bash
+# Use the --dry-run flag to see the next version/tag name before altering the remote origin
+./agileflow tag --dry-run
+
+# Calculate the next version name, create a tag and push it to the remote origin
 ./agileflow tag
 ```
 
