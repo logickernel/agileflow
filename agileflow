@@ -27,6 +27,26 @@ get_branch_name() {
     fi
 }
 
+check_latest_release() {
+    get_branch_name
+
+    # Obtain the list of branches from the remote repository starting with 'release/'
+    REMOTE_BRANCHES=$(git branch -r | grep -E "^ *origin/(r|release)/[0-9]+\.[0-9]+$" | sed -E 's| *origin/||')
+
+    # Sort the branches
+    SORTED_BRANCHES=$(echo "$REMOTE_BRANCHES" | sort -V)
+
+    # Get the latest branch
+    LATEST_BRANCH=$(echo "$SORTED_BRANCHES" | tail -n 1)
+
+    # Check if the current branch is the latest release branch
+    if [[ "$BRANCH_NAME" == "$LATEST_BRANCH" ]]; then
+        IS_LATEST_RELEASE=true
+    else
+        IS_LATEST_RELEASE=false
+    fi
+}
+
 # Function to handle 'install' command
 install_command() {
     CI_CD_ENGINE=""
@@ -263,6 +283,14 @@ tag_command() {
         NEXT_VERSION=$(echo "$LATEST_TAG" | awk -F. -v OFS=. '{$NF+=1; print}')
     fi
 
+    check_latest_release
+
+    if $IS_LATEST_RELEASE; then
+        echo "[INFO] This is the latest release branch."
+    else
+        echo "[INFO] This is not the latest release branch. The latest release branch is '$LATEST_BRANCH'."
+    fi
+
     if $DRY_RUN; then
         echo "$NEXT_VERSION"
         exit 0
@@ -278,6 +306,7 @@ tag_command() {
     fi
 
     echo "[INFO] Successfully tagged and pushed: $NEXT_VERSION"
+
     rm -rf "$TEMP_DIR"
 }
 

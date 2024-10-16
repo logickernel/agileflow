@@ -7,39 +7,42 @@ In today’s fast-paced software development landscape, maintaining clarity, con
 AgileFlow enforces **Semantic Versioning** and integrates a robust branching strategy for development and deployment. It seamlessly works with **GitLab CI** and **GitHub Actions** CI/CD pipelines to ensure a structured, efficient, and predictable development lifecycle. Whether for small projects or large-scale deployments, AgileFlow is an indispensable tool that simplifies versioning and release management.
 
 
-- [AgileFlow](#agileflow)
-  - [How to Use It](#how-to-use-it)
-  - [Install](#install)
-    - [Auto Install](#auto-install)
-    - [Manual Install](#manual-install)
-      - [GitLab](#gitlab)
-        - [GitLab Keys Setup](#gitlab-keys-setup)
-      - [GitHub](#github)
-        - [GitHub Keys Setup](#github-keys-setup)
-  - [Release Branches](#release-branches)
-  - [Development Branches](#development-branches)
-- [Work in Progress](#work-in-progress)
-  - [Versioning](#versioning)
-    - [Automated Patch Management](#automated-patch-management)
-    - [Main Branch](#main-branch)
-  - [Workflow](#workflow)
-  - [Version Tagging and Automation](#version-tagging-and-automation)
-  - [Managing Breaking Changes](#managing-breaking-changes)
-  - [GitLab CI Integration](#gitlab-ci-integration)
-  - [GitHub Actions Integration](#github-actions-integration)
-
-
-## How to Use It
+## Quick Start
 
 You require repository maintainer or owner equivalent permissions.
 
-- [Install the AgileFlow tool](#install) in your project. It is recommended to configure the necessary Deploy Keys in the CD/CI engine to automate the tagging and release processes.
-- [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers, e.g. `release/0.1`, `release/1.0`, `release/1.1`, etc.
-- [Create development branches](#development-branches) for contributors, following the naming conventions like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
-- [Create a new version](#versioning) every time there’s a merge into a release branch, incrementing the patch number based on the latest identifiable version in the branch.
-- **Create New Release Branches** for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
+1. [Install the AgileFlow tool](#install) in your project. It is recommended to configure the necessary Deploy Keys in the CD/CI engine to automate the tagging and release processes.
+
+  ```bash
+  /bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/release/0.2/install.sh)"
+  ```
+
+2. [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers, e.g. `release/0.1`, `release/1.0`, `release/1.1`, etc.
+3. [Create development branches](#development-branches) for contributors, following the naming conventions like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
+4. [Create a new version](#versioning) every time there’s a merge into a release branch, incrementing the patch number based on the latest identifiable version in the branch.
+5. [Create New Release Branches](#create-new-release-branches) for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
 
 ![AgileFlow workflow example diagram](./media/diagram.jpg)
+
+## Contents
+
+- [AgileFlow](#agileflow)
+  - [Quick Start](#quick-start)
+  - [Contents](#contents)
+  - [Install](#install)
+    - [Auto Install](#auto-install)
+    - [Manual Install](#manual-install)
+      - [CD/CI Set Up](#cdci-set-up)
+        - [GitLab](#gitlab)
+      - [GitHub](#github)
+  - [Release Branches](#release-branches)
+  - [Development Branches](#development-branches)
+  - [Versioning](#versioning)
+    - [Tagging](#tagging)
+      - [Auto Tagging](#auto-tagging)
+      - [Manual Tagging](#manual-tagging)
+  - [Create New Release Branches](#create-new-release-branches)
+  - [Main Branch](#main-branch)
 
 ## Install
 
@@ -67,7 +70,11 @@ chmod +x agileflow
 The following instructions will allow your CD/CI engine to automatically version and push the corresponding tag to the repository.
 
 <details>
-<summary><strong>GitLab</strong></summary>
+<summary>
+
+##### GitLab
+
+</summary>
 
 Run the following command to generate a new pair of keys, see setup instructions and to create or update the `.gitlab-ci.yml` file:
 
@@ -81,7 +88,7 @@ Alternatively, you can create a pair of keys and configure GitLab manually:
 ./agileflow install --generate
 ```
 
-##### GitLab Keys Setup
+**GitLab Keys Setup**
 
 1. Go to your project's **Settings > Repository > Deploy keys**
 2. Add the generated public key as a deploy key making sure to grant it write permissions
@@ -89,7 +96,7 @@ Alternatively, you can create a pair of keys and configure GitLab manually:
 4. Add a new variable of type **File**, key `AGILEFLOW_KEY` and as value the generated private key. 
    It is recommended to protect the variable so that it's only available in pipelines controlled by an authorized user.
 
-##### GitLab CI Setup
+**GitLab CI Setup**
 
 Add the following job to the `.gitlab-ci.yml` file to automatically tag a new version every time there's a push to a release branch: 
 
@@ -101,11 +108,13 @@ agileflow:
   only:
     - /^release\/[0-9]+\.[0-9]+$/
 ```
-
 </details>
-
 <details>
-<summary><strong>GitHub -Unverified-</strong></summary>
+<summary>
+
+##### GitHub
+
+</summary>
 
 Run the following command to generate a new pair of keys, see setup instructions and to create or update the `.github/workflows/agileflow.yml` file:
 
@@ -119,7 +128,7 @@ Alternatively, you can create a pair of keys and configure GitLab manually:
 ./agileflow install --generate
 ```
 
-##### GitHub Keys Setup
+**GitHub Keys Setup**
 
 1. Go to your repository's settings
 2. Add the public key as a deploy key
@@ -127,7 +136,7 @@ Alternatively, you can create a pair of keys and configure GitLab manually:
 4. Add a new secret called AGILEFLOW_KEY and paste the private key
 
 
-##### GitHub Actions Setup
+**GitHub Actions Setup**
 
 ```yaml
 name: AgileFlow Tag Version
@@ -158,7 +167,7 @@ Release Branches are a main concept in the AgileFlow framework. They are meant t
 Once the tool is [installed](#install), you can use the following command to create the first release branch or to increase the **MAJOR** or **MINOR** numbers.
 
 ```bash
-# Use the --dry-run flag to see the new branch name before altering the remote origin
+# Use the --dry-run flag to see the new release branch name before altering the remote origin
 ./agileflow release --dry-run
 
 # Create the first release for your project or perform a minor release, create a branch and push it to the origin
@@ -210,11 +219,15 @@ Create a new version every time there's a merge into a release branch. AgileFlow
 - **Minor Versions (0.Y.0)**: Represents new features, improvements, or non-breaking changes.
 - **Patch Versions (0.0.Z)**: Denotes bug fixes or minor tweaks.
 
-### Automated Tagging
+### Tagging
 
-The installed CD/CI Patches are incremented automatically upon validated merges to the release branches. This keeps versioning consistent and transparent, making it easier to track small changes or bug fixes.
+#### Auto Tagging
 
-### Manual Tagging
+The installed CD/CI script calculates the next version number by increasing the patch number from the previous tag in the branch upon validated merges to the release branches. This keeps versioning consistent and transparent, making it easier to track small changes or bug fixes.
+
+The version number is released with 
+
+#### Manual Tagging
 
 Use the following command in case no CD/CI is configured or a version tag needs to be created manually:
 
@@ -226,27 +239,32 @@ Use the following command in case no CD/CI is configured or a version tag needs 
 ./agileflow tag
 ```
 
-## Create New Major Versions
+## Create New Release Branches
+
+Per [Semantic Versioning](https://semver.org), before the product is deployed and used the **MAJOR** version is kept as `0`. 
 
 
+After the product is used by real users for the first time, it increases the **MAJOR** version to `1` resetting the **MINOR** and **PATCH** value to `0`. Then, when significant, backward-incompatible changes are introduced:
 
----
-
-# Work in Progress
-
-### Main Branch
-
-The **main** branch represents the latest stable version of the software:
-- All validated changes from the release branches are merged here.
-- The main branch always contains the most recent production-ready version.
-- Version tags (`vX.Y.Z`) are automatically generated when changes from the release branch are merged into `main`.
-
-
-Once installed, AgileFlow can be used to automatically manage the versioning, branching, and deployment processes.
-
-
-## Managing Breaking Changes
-
-When significant, backward-incompatible changes are introduced:
-- A new major release branch (`release/2.0`) is created.
+- A new major release branch (e.g. `release/2.0`) is created.
 - Older release branches continue to be maintained for minor updates or patches, ensuring stability until the deprecation of older versions is necessary.
+
+Use the Agileflow tool to easily release a major version:
+
+```bash
+# Use the --dry-run flag to see the new release branch name before altering the remote origin
+./agileflow release --major --dry-run
+
+# Create the next major version, create a branch and push it to the origin
+./agileflow release --major
+```
+
+/*** reWrite this block to be consistent with the rest of the text
+
+## Main Branch
+
+The **main** branch represents the latest build of the software. To handle this the release branch containing the development version is set as the default branch and the CD/CI is configured so that there's a merge to main whenever there's a push to the default branch.
+
+The AgileFlow tool has a utility command that can be used for this purpose. Although the plugin is designed to be executed by the CD/CI engine. It could be invoked manually 
+
+***/
