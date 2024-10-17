@@ -239,6 +239,21 @@ Use the following command in case no CD/CI is configured or a version tag needs 
 ./agileflow tag
 ```
 
+
+## Main Branch
+
+The main branch represents the latest build of the software. To handle this the release branch containing the latest available release.
+
+The AgileFlow tool's tag command detects automatically if the current release branch is the latest release branch available in the repo and if so it merges it with the main branch after creating a tag.
+
+If for some reason this behavior needs to be skipped use the flag `--skip-main`.
+
+```bash
+# Calculate the next version name, create a tag and push it to the remote origin
+./agileflow tag --skip-main
+```
+
+
 ## Create New Release Branches
 
 Per [Semantic Versioning](https://semver.org), before the product is deployed and used the **MAJOR** version is kept as `0`. 
@@ -258,11 +273,3 @@ Use the Agileflow tool to easily release a major version:
 # Create the next major version, create a branch and push it to the origin
 ./agileflow release --major
 ```
-
-## Main Branch
-
-The **main** branch represents the latest build of the software. To handle this the release branch containing the latest available release.
-
-The AgileFlow tool has a utility command that can be used for this purpose. Although the plugin is designed to be executed by the CD/CI engine. It could be invoked manually 
-
-The latest branch is usually set as the default branch in the CD/CI engine.

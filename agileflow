@@ -28,8 +28,9 @@ get_branch_name() {
 }
 
 check_latest_release() {
-    get_branch_name
-
+    if [[ -z "$BRANCH_NAME" ]]; then
+        get_branch_name
+    fi
     # Obtain the list of branches from the remote repository starting with 'release/'
     REMOTE_BRANCHES=$(git branch -r | grep -E "^ *origin/(r|release)/[0-9]+\.[0-9]+$" | sed -E 's| *origin/||')
 
@@ -221,6 +222,7 @@ tag_command() {
     # Parse arguments
     PRIVATE_KEY=""
     DRY_RUN=false
+    SKIP_MAIN=false
     while [[ $# -gt 0 ]]; do
         case $1 in
             --key)
@@ -229,6 +231,10 @@ tag_command() {
                 ;;
             --dry-run)
                 DRY_RUN=true
+                shift
+                ;;
+            --skip-main)
+                SKIP_MAIN=true
                 shift
                 ;;
             *)
@@ -267,6 +273,7 @@ tag_command() {
     fi
 
     get_branch_name
+    check_latest_release
 
     if [[ ! "$BRANCH_NAME" =~ ^(r|release)/[0-9]+\.[0-9]+$ ]]; then
         echo "[ERROR] Release branch not detected. Branch name '$BRANCH_NAME' does not match 'r/X.Y' or 'release/X.Y'."
@@ -285,6 +292,9 @@ tag_command() {
 
     if $DRY_RUN; then
         echo "$NEXT_VERSION"
+        if ! $SKIP_MAIN && $IS_LATEST_RELEASE; then
+            echo "* It will be merged into main."
+        fi
         exit 0
     fi
 
@@ -299,7 +309,6 @@ tag_command() {
 
     echo "[INFO] Successfully tagged and pushed: $NEXT_VERSION"
 
-    check_latest_release
 
     if $IS_LATEST_RELEASE; then
         echo "[INFO] This is the latest release branch. Merging tag to main branch..."
