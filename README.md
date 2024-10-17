@@ -51,7 +51,7 @@ AgileFlow can be installed automatically in any software project using a utility
 ### Auto Install
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/release/0.2/install.sh)"
+/bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/main/install.sh)"
 ```
 
 Select the CD/CI engine to view the keys and instructions to set them up. If completed successfully, CD/CI scripts will be created or updated automatically so the engine uses AgileFlow to version the product.
@@ -61,7 +61,7 @@ Select the CD/CI engine to view the keys and instructions to set them up. If com
 Download and place the AgileFlow tool script in your project's root directory. Give it execution permissions.
 
 ```bash
-curl https://code.logickernel.com/kernel/agileflow/-/raw/release/0.2/agileflow
+curl https://code.logickernel.com/kernel/agileflow/-/raw/main/agileflow
 chmod +x agileflow
 ```
 
