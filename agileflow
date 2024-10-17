@@ -283,14 +283,6 @@ tag_command() {
         NEXT_VERSION=$(echo "$LATEST_TAG" | awk -F. -v OFS=. '{$NF+=1; print}')
     fi
 
-    check_latest_release
-
-    if $IS_LATEST_RELEASE; then
-        echo "[INFO] This is the latest release branch."
-    else
-        echo "[INFO] This is not the latest release branch. The latest release branch is '$LATEST_BRANCH'."
-    fi
-
     if $DRY_RUN; then
         echo "$NEXT_VERSION"
         exit 0
@@ -306,6 +298,19 @@ tag_command() {
     fi
 
     echo "[INFO] Successfully tagged and pushed: $NEXT_VERSION"
+
+    check_latest_release
+
+    if $IS_LATEST_RELEASE; then
+        echo "[INFO] This is the latest release branch. Merging tag to main branch..."
+        git checkout main
+        git pull origin main
+        git merge "$NEXT_VERSION"
+        git push origin main
+        echo "[INFO] Merged tag to main branch."
+    else
+        echo "[INFO] This is not the latest release branch. The latest release branch is '$LATEST_BRANCH'."
+    fi
 
     rm -rf "$TEMP_DIR"
 }

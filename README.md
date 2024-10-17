@@ -4,7 +4,7 @@
 
 In today’s fast-paced software development landscape, maintaining clarity, consistency, and efficiency in the release process is essential. AgileFlow is a streamlined yet powerful versioning system, branching strategy, and CI/CD tool designed for software teams of all sizes and projects of any scale.
 
-AgileFlow enforces **Semantic Versioning** and integrates a robust branching strategy for development and deployment. It seamlessly works with **GitLab CI** and **GitHub Actions** CI/CD pipelines to ensure a structured, efficient, and predictable development lifecycle. Whether for small projects or large-scale deployments, AgileFlow is an indispensable tool that simplifies versioning and release management.
+AgileFlow enforces Semantic Versioning and integrates a robust branching strategy for development and deployment. It seamlessly works with GitLab CI and GitHub Actions CI/CD pipelines to ensure a structured, efficient, and predictable development lifecycle. Whether for small projects or large-scale deployments, AgileFlow is an indispensable tool that simplifies versioning and release management.
 
 
 ## Quick Start
@@ -34,7 +34,7 @@ You require repository maintainer or owner equivalent permissions.
     - [Manual Install](#manual-install)
       - [CD/CI Set Up](#cdci-set-up)
         - [GitLab](#gitlab)
-      - [GitHub](#github)
+        - [GitHub](#github)
   - [Release Branches](#release-branches)
   - [Development Branches](#development-branches)
   - [Versioning](#versioning)
@@ -201,7 +201,7 @@ git switch -c fix/bug-fix-branch-name
 
 4. **Hotfix Branches (hotfix/*)**: For urgent fixes in production. They allow applying critical patches without interfering with other in-progress development. Once resolved, these branches are merged back into their release branch, typically after the release has already been finalized.
 
-   Merging strategies like **cherry-picking** or **rebasing** must be used to apply these fixes cleanly into current branches.
+   Merging strategies like **cherry-picking** or **rebasing** must be used to apply these fixes cleanly into active release branches.
 
 ```bash
 # Create a Hotfix Branch
@@ -259,12 +259,10 @@ Use the Agileflow tool to easily release a major version:
 ./agileflow release --major
 ```
 
-/*** reWrite this block to be consistent with the rest of the text
-
 ## Main Branch
 
-The **main** branch represents the latest build of the software. To handle this the release branch containing the development version is set as the default branch and the CD/CI is configured so that there's a merge to main whenever there's a push to the default branch.
+The **main** branch represents the latest build of the software. To handle this the release branch containing the latest available release.
 
 The AgileFlow tool has a utility command that can be used for this purpose. Although the plugin is designed to be executed by the CD/CI engine. It could be invoked manually 
 
-***/
+The latest branch is usually set as the default branch in the CD/CI engine.
