@@ -170,8 +170,8 @@ install_command() {
 }
 
 release_command() {
-    # git fetch all the branches from the remotes
-    git fetch --all
+    # git fetch all and prune the deleted branches
+    git fetch --all --prune
 
     MAJOR_RELEASE=false
     DRY_RUN=false
@@ -231,9 +231,9 @@ release_command() {
 
 # Function to handle 'tag' command
 tag_command() {
-    # git fetch all the branches from the remotes
-    git fetch --all
-    
+    # git fetch all and prune the deleted branches
+    git fetch --all --prune
+
     TEMP_DIR=$(mktemp -d)
 
     # Parse arguments
