@@ -36,9 +36,11 @@ check_latest_release() {
 
     # Sort the branches
     SORTED_BRANCHES=$(echo "$REMOTE_BRANCHES" | sort -V)
+    echo "Sorted branches:\n$SORTED_BRANCHES"
 
     # Get the latest branch
     LATEST_BRANCH=$(echo "$SORTED_BRANCHES" | tail -n 1)
+    echo "Latest branch:\n$LATEST_BRANCH"
 
     # Check if the current branch is the latest release branch
     if [[ "$BRANCH_NAME" == "$LATEST_BRANCH" ]]; then
