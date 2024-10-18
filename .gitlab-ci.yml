@@ -1,17 +1,3 @@
-build:
-  stage: build
-  script:
-    - sed -i "s/VERSION=.*/VERSION=${CI_COMMIT_TAG}/" agileflow
-  only:
-    - tags
-    - /^v[0-9]+\.[0-9]+\.[0-9]+$/
-  artifacts:
-    name: "agileflow${CI_COMMIT_TAG}"
-    paths:
-      - agileflow
-    when: on_success
-    expire_in: "30 days"
-
 agileflow:
   stage: deploy
   script:
@@ -20,3 +6,17 @@ agileflow:
     - /^release\/[0-9]+\.[0-9]+$/
   tags:
     - agileflow
+
+release:
+  stage: release
+  script:
+    - sed -i "s/VERSION=.*/VERSION=${CI_COMMIT_TAG}/" agileflow
+  only:
+    - tags
+    - /^v[0-9]+\.[0-9]+\.[0-9]+$/
+  artifacts:
+    name: "agileflow_${CI_COMMIT_TAG}"
+    paths:
+      - agileflow
+    when: on_success
+    expire_in: "30 days"
