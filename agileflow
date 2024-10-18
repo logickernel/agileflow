@@ -94,6 +94,10 @@ check_latest_release() {
     fi
 }
 
+version_command() {
+    echo $AGILEFLOW_VERSION
+}
+
 # Function to handle 'install' command
 install_command() {
     CI_CD_ENGINE=""
