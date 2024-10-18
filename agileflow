@@ -1,4 +1,32 @@
 #!/bin/bash
+# 
+# MIT License
+# 
+# Copyright (c) 2024 LKMX Software Development S de RL de CV - https://lkmx.io
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# AgileFlow
+# A simple tool to automate the release process in Git repositories.
+# https://code.logickernel.com/kernel/agileflow
+
+VERSION=
 
 # Function to display usage
 usage() {
@@ -7,7 +35,11 @@ usage() {
     echo "These are AgileFlow commands used in common situations:"
     echo
     echo "  install     Install AgileFlow in the current project"
+    echo "  release     Create a new release branch"
     echo "  tag         Tag the current commit with the next version"
+    echo "  version     Display the version of AgileFlow"
+    echo
+    echo "For more information, see https://code.logickernel.com/kernel/agileflow"
     exit 1
 }
 
@@ -32,7 +64,7 @@ check_latest_release() {
         get_branch_name
     fi
     # Obtain the list of branches from the remote repository starting with 'release/'
-    REMOTE_BRANCHES=$(git branch -r | grep -E "^ *origin/(r|release)/[0-9]+\.[0-9]+$" | sed -E 's| *origin/||')
+    REMOTE_BRANCHES=$(git branch -r | grep -E "^ *origin/release/[0-9]+\.[0-9]+$" | sed -E 's| *origin/||')
 
     # Sort the branches
     SORTED_BRANCHES=$(echo "$REMOTE_BRANCHES" | sort -V)
@@ -211,7 +243,7 @@ release_command() {
     NEXT_RELEASE="release/$MAJOR.$MINOR"
 
     # Obtain the list of branches from the remote repository starting with 'release/'
-    REMOTE_BRANCHES=$(git branch -r | grep -E "^ *origin/(r|release)/[0-9]+\.[0-9]+$" | sed -E 's| *origin/||')
+    REMOTE_BRANCHES=$(git branch -r | grep -E "^ *origin/release/[0-9]+\.[0-9]+$" | sed -E 's| *origin/||')
 
 
     if git show-ref --verify --quiet "refs/heads/$NEXT_RELEASE"; then
@@ -297,7 +329,7 @@ tag_command() {
     get_branch_name
     check_latest_release
 
-    if [[ ! "$BRANCH_NAME" =~ ^(r|release)/[0-9]+\.[0-9]+$ ]]; then
+    if [[ ! "$BRANCH_NAME" =~ ^release/[0-9]+\.[0-9]+$ ]]; then
         echo "[ERROR] Release branch not detected. Branch name '$BRANCH_NAME' does not match 'r/X.Y' or 'release/X.Y'."
         rm -rf "$TEMP_DIR"
         exit 1
@@ -371,6 +403,9 @@ case "$COMMAND" in
         ;;
     tag)
         tag_command "$@"
+        ;;
+    version)
+        version_command "$@"
         ;;
     *)
         usage

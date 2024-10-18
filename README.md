@@ -9,18 +9,18 @@ AgileFlow enforces Semantic Versioning and integrates a robust branching strateg
 
 ## Quick Start
 
-You require repository maintainer or owner equivalent permissions.
-
-1. [Install the AgileFlow tool](#install) in your project. It is recommended to configure the necessary Deploy Keys in the CI/CD engine to automate the tagging and release processes.
+[Install AgileFlow](#install) in your repo with the following command. It requires repository maintainer or owner equivalent permissions. 
 
   ```bash
   /bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/release/0.2/install.sh)"
   ```
 
-2. [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers, e.g. `release/0.1`, `release/1.0`, `release/1.1`, etc.
-3. [Create development branches](#development-branches) for contributors, following the naming conventions like `dev/*`, `feat/*`, `fix/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
-4. [Create a new version](#versioning) every time there’s a merge into a release branch, incrementing the patch number based on the latest identifiable version in the branch.
-5. [Create New Release Branches](#create-new-release-branches) for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
+After completing the command and instructions successfully, AgileFlow will be integrated with the CI/CD engine to [create automatically a new version](#versioning) every time there’s a merge into a release branch, incrementing the patch number based on the latest identifiable version in the branch.
+
+1. [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers, e.g. `release/0.1`, `release/1.0`, `release/1.1`, etc.
+2. [Create development branches](#development-branches) for contributors, following the naming conventions like `dev/*`, `feat/*`, `fix/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
+3. [Create new release branches](#create-new-release-branches) for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
+
 
 ![AgileFlow workflow example diagram](./media/diagram.jpg)
 
