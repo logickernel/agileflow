@@ -9,7 +9,7 @@ AgileFlow enforces Semantic Versioning and integrates a robust branching strateg
 
 ## Quick Start
 
-[Install AgileFlow](#install) in your repo with the following command. It requires repository maintainer or owner equivalent permissions. 
+[Install AgileFlow](#install) in your repo with the following command. It requires repository maintainer or owner equivalent permissions in your origin remote.
 
   ```bash
   /bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/release/0.2/install.sh)"
