@@ -13,3 +13,6 @@ agileflow:
       - agileflow
     when: on_success
     expire_in: "30 days"
+  release:
+    tag_name: "$CI_COMMIT_TAG"
+    description: "$CI_COMMIT_TAG"
