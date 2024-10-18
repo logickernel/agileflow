@@ -36,11 +36,23 @@ check_latest_release() {
 
     # Sort the branches
     SORTED_BRANCHES=$(echo "$REMOTE_BRANCHES" | sort -V)
-    echo "Sorted branches:\n$SORTED_BRANCHES"
+
+    # If DEBUG is enabled, print the sorted branches
+    if $DEBUG; then
+        echo "[DEBUG] Sorted branches:"
+        echo $SORTED_BRANCHES
+        echo
+    fi
 
     # Get the latest branch
     LATEST_BRANCH=$(echo "$SORTED_BRANCHES" | tail -n 1)
-    echo "Latest branch:\n$LATEST_BRANCH"
+
+    # If DEBUG is enabled, print the latest branch
+    if $DEBUG; then
+        echo "[DEBUG] Latest branch:"
+        echo $LATEST_BRANCH
+        echo
+    fi
 
     # Check if the current branch is the latest release branch
     if [[ "$BRANCH_NAME" == "$LATEST_BRANCH" ]]; then
@@ -219,12 +231,16 @@ release_command() {
 
 # Function to handle 'tag' command
 tag_command() {
+    # git fetch all the branches from the remotes
+    git fetch --all
+    
     TEMP_DIR=$(mktemp -d)
 
     # Parse arguments
     PRIVATE_KEY=""
     DRY_RUN=false
     SKIP_MAIN=false
+    DEBUG=false
     while [[ $# -gt 0 ]]; do
         case $1 in
             --key)
@@ -237,6 +253,10 @@ tag_command() {
                 ;;
             --skip-main)
                 SKIP_MAIN=true
+                shift
+                ;;
+            --debug)
+                DEBUG=true
                 shift
                 ;;
             *)
