@@ -11,14 +11,14 @@ AgileFlow enforces Semantic Versioning and integrates a robust branching strateg
 
 You require repository maintainer or owner equivalent permissions.
 
-1. [Install the AgileFlow tool](#install) in your project. It is recommended to configure the necessary Deploy Keys in the CD/CI engine to automate the tagging and release processes.
+1. [Install the AgileFlow tool](#install) in your project. It is recommended to configure the necessary Deploy Keys in the CI/CD engine to automate the tagging and release processes.
 
   ```bash
   /bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/release/0.2/install.sh)"
   ```
 
 2. [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers, e.g. `release/0.1`, `release/1.0`, `release/1.1`, etc.
-3. [Create development branches](#development-branches) for contributors, following the naming conventions like `feat/*`, `fix/*`, `dev/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
+3. [Create development branches](#development-branches) for contributors, following the naming conventions like `dev/*`, `feat/*`, `fix/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
 4. [Create a new version](#versioning) every time there’s a merge into a release branch, incrementing the patch number based on the latest identifiable version in the branch.
 5. [Create New Release Branches](#create-new-release-branches) for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
 
@@ -32,7 +32,7 @@ You require repository maintainer or owner equivalent permissions.
   - [Install](#install)
     - [Auto Install](#auto-install)
     - [Manual Install](#manual-install)
-      - [CD/CI Set Up](#cdci-set-up)
+      - [CI/CD Set Up](#cicd-set-up)
         - [GitLab](#gitlab)
         - [GitHub](#github)
   - [Release Branches](#release-branches)
@@ -41,8 +41,8 @@ You require repository maintainer or owner equivalent permissions.
     - [Tagging](#tagging)
       - [Auto Tagging](#auto-tagging)
       - [Manual Tagging](#manual-tagging)
-  - [Create New Release Branches](#create-new-release-branches)
   - [Main Branch](#main-branch)
+  - [Create New Release Branches](#create-new-release-branches)
 
 ## Install
 
@@ -54,7 +54,7 @@ AgileFlow can be installed automatically in any software project using a utility
 /bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/main/install.sh)"
 ```
 
-Select the CD/CI engine to view the keys and instructions to set them up. If completed successfully, CD/CI scripts will be created or updated automatically so the engine uses AgileFlow to version the product.
+Select the CI/CD engine to view the keys and instructions to set them up. If completed successfully, AgileFlow’s CI/CD scripts will automatically version the product.
 
 ### Manual Install
 
@@ -65,9 +65,9 @@ curl https://code.logickernel.com/kernel/agileflow/-/raw/main/agileflow
 chmod +x agileflow
 ```
 
-#### CD/CI Set Up
+#### CI/CD Set Up
 
-The following instructions will allow your CD/CI engine to automatically version and push the corresponding tag to the repository.
+The following instructions will allow your CI/CD engine to automatically version and push the corresponding tag to the repository.
 
 <details>
 <summary>
@@ -170,7 +170,7 @@ Once the tool is [installed](#install), you can use the following command to cre
 # Use the --dry-run flag to see the new release branch name before altering the remote origin
 ./agileflow release --dry-run
 
-# Create the first release for your project or perform a minor release, create a branch and push it to the origin
+# Create the first release for your project or perform a MINOR release, create a branch and push it to the origin
 ./agileflow release
 ```
 
@@ -209,7 +209,7 @@ git switch -c hotfix/hotfix-branch-name
 ```
 
 
-After the contribution is ready, the development branch is merged into it's origin Release Branch, preferrably using a [Merge Request](https://docs.gitlab.com/ee/user/project/merge_requests/), a [Pull Request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests), or similar.
+After the contribution is ready, the development branch is merged into its origin Release Branch, preferrably using a [Merge Request](https://docs.gitlab.com/ee/user/project/merge_requests/), a [Pull Request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests), or similar.
 
 ## Versioning
 
@@ -223,13 +223,11 @@ Create a new version every time there's a merge into a release branch. AgileFlow
 
 #### Auto Tagging
 
-The installed CD/CI script calculates the next version number by increasing the patch number from the previous tag in the branch upon validated merges to the release branches. This keeps versioning consistent and transparent, making it easier to track small changes or bug fixes.
-
-The version number is released with 
+The installed CI/CD script calculates the next version number by increasing the patch number from the previous tag in the branch upon validated merges to the release branches. This keeps versioning consistent and transparent, making it easier to track small changes or bug fixes.
 
 #### Manual Tagging
 
-Use the following command in case no CD/CI is configured or a version tag needs to be created manually:
+Use the following command in case no CI/CD is configured or a version tag needs to be created manually:
 
 ```bash
 # Use the --dry-run flag to see the next version/tag name before altering the remote origin
@@ -242,7 +240,7 @@ Use the following command in case no CD/CI is configured or a version tag needs 
 
 ## Main Branch
 
-The main branch represents the latest build of the software. To handle this the release branch containing the latest available release.
+The main branch represents the latest build of the software. The release branch containing the latest available release is merged into the main branch.
 
 The AgileFlow tool's tag command detects automatically if the current release branch is the latest release branch available in the repo and if so it merges it with the main branch after creating a tag.
 
