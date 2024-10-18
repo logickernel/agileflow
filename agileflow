@@ -206,19 +206,32 @@ install_command() {
 }
 
 release_command() {
+    # Check that there's not untracked files in the working directory otherwise abort
+    if [[ -n $(git status --porcelain) ]]; then
+        echo "[ERROR] There are untracked files in the working directory. Commit, stash, or discard them before creating a release branch."
+        exit 1
+    fi
+
     # git fetch all and prune the deleted branches
     git fetch --all --prune
 
     MAJOR_RELEASE=false
     DRY_RUN=false
+    CONFIRMED=false
 
     while [[ $# -gt 0 ]]; do
         case $1 in
             --major)
                 MAJOR_RELEASE=true
+                shift
                 ;;
             --dry-run)
                 DRY_RUN=true
+                shift
+                ;;
+            --yes)
+                CONFIRMED=true
+                shift
                 ;;
             *)
                 usage
@@ -260,6 +273,14 @@ release_command() {
         exit 0
     fi
 
+    if ! $CONFIRMED; then
+        read -p "Create a new release branch '$NEXT_RELEASE'? [y/N] " response
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            echo "Aborted."
+            exit 0
+        fi
+    fi
+
     git checkout -b "$NEXT_RELEASE"
     git push origin "$NEXT_RELEASE" --set-upstream || exit 1
     echo "[INFO] Pushed release branch: $NEXT_RELEASE"
@@ -267,6 +288,12 @@ release_command() {
 
 # Function to handle 'tag' command
 tag_command() {
+    # Check that there's not untracked files in the working directory otherwise abort
+    if [[ -n $(git status --porcelain) ]]; then
+        echo "[ERROR] There are untracked files in the working directory. Commit, stash, or discard them before creating a new version."
+        exit 1
+    fi
+
     # git fetch all and prune the deleted branches
     git fetch --all --prune
 
@@ -277,6 +304,7 @@ tag_command() {
     DRY_RUN=false
     SKIP_MAIN=false
     DEBUG=false
+    CONFIRMED=false
     while [[ $# -gt 0 ]]; do
         case $1 in
             --key)
@@ -289,6 +317,10 @@ tag_command() {
                 ;;
             --skip-main)
                 SKIP_MAIN=true
+                shift
+                ;;
+            --yes)
+                CONFIRMED=true
                 shift
                 ;;
             --debug)
@@ -364,6 +396,15 @@ tag_command() {
             echo "* It will be merged into main."
         fi
         exit 0
+    fi
+
+    if ! $CONFIRMED; then
+        read -p "Tag the current commit with '$NEXT_VERSION'? [y/N] " response
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            echo "Aborted."
+            rm -rf "$TEMP_DIR"
+            exit 0
+        fi
     fi
 
     git tag "$NEXT_VERSION"
