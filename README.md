@@ -18,7 +18,7 @@ AgileFlow enforces Semantic Versioning and integrates a robust branching strateg
 After completing the command and instructions successfully, AgileFlow will be integrated with the CI/CD engine to [create automatically a new version](#versioning) every time there’s a merge into a release branch, incrementing the patch number based on the latest identifiable version in the branch.
 
 1. [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers, e.g. `release/0.1`, `release/1.0`, `release/1.1`, etc.
-2. [Create development branches](#development-branches) for contributors, following the naming conventions like `dev/*`, `feat/*`, `fix/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
+2. [Create development branches](#development-branches) for contributors, following the naming conventions `dev/*`, `feat/*`, `fix/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
 3. [Create new release branches](#create-new-release-branches) for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
 
 
