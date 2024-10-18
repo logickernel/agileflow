@@ -1,19 +1,12 @@
 agileflow:
   stage: deploy
   script:
+    - sed -i "s/VERSION=.*/VERSION=${CI_COMMIT_TAG}/" agileflow
     - ./agileflow tag --key ${AGILEFLOW_KEY} --debug
   only:
     - /^release\/[0-9]+\.[0-9]+$/
   tags:
     - agileflow
-
-release:
-  stage: release
-  script:
-    - sed -i "s/VERSION=.*/VERSION=${CI_COMMIT_TAG}/" agileflow
-  only:
-    - tags
-    - /^v[0-9]+\.[0-9]+\.[0-9]+$/
   artifacts:
     name: "agileflow_${CI_COMMIT_TAG}"
     paths:
