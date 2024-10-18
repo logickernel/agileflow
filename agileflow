@@ -26,7 +26,7 @@
 # A simple tool to automate the release process in Git repositories.
 # https://code.logickernel.com/kernel/agileflow
 
-VERSION=
+AGILEFLOW_VERSION=
 
 # Function to display usage
 usage() {
