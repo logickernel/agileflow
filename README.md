@@ -247,7 +247,7 @@ The AgileFlow tool's tag command detects automatically if the current release br
 If for some reason this behavior needs to be skipped use the flag `--skip-main`.
 
 ```bash
-# Calculate the next version name, create a tag and push it to the remote origin
+# Perform the version tag operations without merging the release branch with the main branch
 ./agileflow tag --skip-main
 ```
 

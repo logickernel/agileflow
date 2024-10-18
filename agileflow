@@ -336,7 +336,15 @@ tag_command() {
         echo "[INFO] This is the latest release branch. Merging tag to main branch..."
         git checkout main
         git pull origin main
-        git merge "$NEXT_VERSION"
+
+        # Merge the tag to main branch with fast-forward
+        git merge --ff-only "$NEXT_VERSION"
+        # If the merge failed, exit with an error
+        if [[ $? -ne 0 ]]; then
+            echo "[ERROR] Failed to merge tag to main branch. Merge manually or try the --skip-main flag."
+            rm -rf "$TEMP_DIR"
+            exit 1
+        fi
         git push origin main
         echo "[INFO] Merged tag to main branch."
     else
