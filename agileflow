@@ -336,12 +336,22 @@ tag_command() {
     fi
 
     VERSION="${BRANCH_NAME#*/}"
+
     LATEST_TAG=$(git tag --list "v$VERSION.*" --sort=-v:refname | head -n 1)
 
     if [[ -z "$LATEST_TAG" ]]; then
         NEXT_VERSION="v${VERSION}.0"
     else
         NEXT_VERSION=$(echo "$LATEST_TAG" | awk -F. -v OFS=. '{$NF+=1; print}')
+    fi
+
+
+    if $DEBUG; then
+        echo "[DEBUG] Branch name: $BRANCH_NAME"
+        echo "[DEBUG] Version: $VERSION"
+        echo "[DEBUG] Is latest release: $IS_LATEST_RELEASE"
+        echo "[DEBUG] Latest tag: $LATEST_TAG"
+        echo "[DEBUG] Next version: $NEXT_VERSION"
     fi
 
     if $DRY_RUN; then
