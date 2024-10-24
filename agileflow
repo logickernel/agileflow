@@ -165,6 +165,7 @@ install_command() {
 
             # Add GitLab CI/CD configuration to automatically tag releases
             if ! grep -q "agileflow:" .gitlab-ci.yml; then
+                echo >> .gitlab-ci.yml
                 echo "agileflow:" >> .gitlab-ci.yml
                 echo "  stage: deploy" >> .gitlab-ci.yml
                 echo "  script:" >> .gitlab-ci.yml
