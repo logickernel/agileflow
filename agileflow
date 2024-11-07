@@ -371,7 +371,7 @@ tag_command() {
     check_latest_release
 
     if [[ ! "$BRANCH_NAME" =~ ^release/[0-9]+\.[0-9]+$ ]]; then
-        echo "[ERROR] Release branch not detected. Branch name '$BRANCH_NAME' does not match 'r/X.Y' or 'release/X.Y'."
+        echo "[ERROR] Release branch not detected. Branch name '$BRANCH_NAME' does not match 'release/X.Y'."
         # Set remote URL back to original if it was converted to SSH
         if [[ -n "$SSH_URL" ]]; then
             git remote set-url origin "$REMOTE_URL"
@@ -436,7 +436,7 @@ tag_command() {
     echo "[INFO] Successfully tagged and pushed: $NEXT_VERSION"
 
 
-    if $IS_LATEST_RELEASE; then
+    if ! $SKIP_MAIN && $IS_LATEST_RELEASE; then
         echo "[INFO] This is the latest release branch. Merging tag to main branch..."
         git checkout main
         git pull origin main
