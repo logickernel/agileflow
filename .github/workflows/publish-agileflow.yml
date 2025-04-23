@@ -18,15 +18,6 @@ jobs:
         run: sed "s/AGILEFLOW_VERSION=.*/AGILEFLOW_VERSION=${VERSION}/" agileflow
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Release Artifact
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: agileflow
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
