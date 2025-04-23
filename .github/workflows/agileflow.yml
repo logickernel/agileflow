@@ -1,0 +1,14 @@
+name: AgileFlow Tag Version
+
+on:
+  push:
+    branches:
+      - "release/*"
+
+jobs:
+  tag_version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run AgileFlow
+        run: ./agileflow tag --key ${{ secrets.AGILEFLOW_KEY }} --yes
