@@ -122,7 +122,7 @@ Run the following command to generate a new pair of keys, see setup instructions
 ./agileflow install --github
 ```
 
-Alternatively, you can create a pair of keys and configure GitLab manually:
+Alternatively, you can create a pair of keys and configure GitHub manually:
 
 ```bash
 ./agileflow install --generate
@@ -138,6 +138,8 @@ Alternatively, you can create a pair of keys and configure GitLab manually:
 
 **GitHub Actions Setup**
 
+Create a file `./.github/workflows/agileflow.yml`:
+
 ```yaml
 name: AgileFlow Tag Version
 
@@ -152,7 +154,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run AgileFlow
-        run: ./agileflow tag --key ${{ secrets.AGILEFLOW_KEY }}
+        run: ./agileflow tag --key ${{ secrets.AGILEFLOW_KEY }} --yes
 ```
 
 </details>

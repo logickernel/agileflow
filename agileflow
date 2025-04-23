@@ -183,15 +183,7 @@ install_command() {
             echo "Follow these steps to add the deploy key to your GitHub repository:"
             echo "  1) Go to your repository's settings"
             echo "  2) Add the public key below as a deploy key, making sure it has write access:"
-            # infer the repository name from the remote URL and build something like https://github.com/logickernel/agileflow/settings/keys/new
-            REMOTE_URL=$(git remote get-url origin)
-            if [[ "$REMOTE_URL" =~ ^https://([^/]+)/([^/]+)/(.+)(\.git)?$ ]]; then
-                HOST="${BASH_REMATCH[1]}"
-                OWNER="${BASH_REMATCH[2]}"
-                REPO="${BASH_REMATCH[3]}"
-                DEPLOY_KEY_URL="https://$HOST/$OWNER/$REPO/settings/keys/new"
-                echo "     $DEPLOY_KEY_URL"
-            fi
+            echo "     https://github.com/logickernel/agileflow/settings/keys/new"
             echo
             echo "$(cat "$TEMP_DIR/agileflow-deploy-key.pub")"
             echo
