@@ -51,7 +51,7 @@ AgileFlow can be installed automatically in any software project using a utility
 ### Auto Install
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/main/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/logickernel/agileflow/refs/heads/main/install.sh)"
 ```
 
 Select the CI/CD engine to view the keys and instructions to set them up. If completed successfully, AgileFlow’s CI/CD scripts will automatically version the product.
@@ -138,22 +138,22 @@ Alternatively, you can create a pair of keys and configure GitHub manually:
 
 **GitHub Actions Setup**
 
-Create a file `./.github/workflows/agileflow.yml`:
+Create a file `.github/workflows/agileflow.yml`:
 
 ```yaml
-name: AgileFlow Tag Version
+name: Tag Version
 
 on:
   push:
     branches:
-      - 'release/*'
+      - "release/*"
 
 jobs:
   tag_version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Run AgileFlow
+      - uses: actions/checkout@v4
+      - name: Install AgileFlow
         run: ./agileflow tag --key ${{ secrets.AGILEFLOW_KEY }} --yes
 ```
 

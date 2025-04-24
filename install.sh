@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Preconfigured URL
-URL="https://code.logickernel.com/kernel/agileflow/-/raw/HEAD/agileflow"
+URL="https://raw.githubusercontent.com/logickernel/agileflow/refs/heads/main/agileflow"
 FILENAME=$(basename "$URL")
 
 # Check if the file exists before downloading
