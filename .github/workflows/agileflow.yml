@@ -1,4 +1,4 @@
-name: AgileFlow Tag Version
+name: Tag Version
 
 on:
   push:
@@ -9,6 +9,6 @@ jobs:
   tag_version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Run AgileFlow
+      - uses: actions/checkout@v4
+      - name: Install AgileFlow
         run: ./agileflow tag --key ${{ secrets.AGILEFLOW_KEY }} --yes
