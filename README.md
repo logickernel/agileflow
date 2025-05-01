@@ -37,12 +37,13 @@ After completing the command and instructions successfully, AgileFlow will be in
         - [GitHub](#github)
   - [Release Branches](#release-branches)
   - [Development Branches](#development-branches)
+    - [Development Branches Creation](#development-branches-creation)
   - [Versioning](#versioning)
     - [Tagging](#tagging)
       - [Auto Tagging](#auto-tagging)
       - [Manual Tagging](#manual-tagging)
-  - [Main Branch](#main-branch)
   - [Create New Release Branches](#create-new-release-branches)
+  - [Main Branch](#main-branch)
 
 ## Install
 
@@ -51,7 +52,7 @@ AgileFlow can be installed automatically in any software project using a utility
 ### Auto Install
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/main/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/logickernel/agileflow/refs/heads/main/install.sh)"
 ```
 
 Select the CI/CD engine to view the keys and instructions to set them up. If completed successfully, AgileFlow’s CI/CD scripts will automatically version the product.
@@ -108,6 +109,7 @@ agileflow:
   only:
     - /^release\/[0-9]+\.[0-9]+$/
 ```
+
 </details>
 <details>
 <summary>
@@ -138,22 +140,22 @@ Alternatively, you can create a pair of keys and configure GitHub manually:
 
 **GitHub Actions Setup**
 
-Create a file `./.github/workflows/agileflow.yml`:
+Create a file `.github/workflows/agileflow.yml`:
 
 ```yaml
-name: AgileFlow Tag Version
+name: Tag Version
 
 on:
   push:
     branches:
-      - 'release/*'
+      - "release/*"
 
 jobs:
   tag_version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Run AgileFlow
+      - uses: actions/checkout@v4
+      - name: Install AgileFlow
         run: ./agileflow tag --key ${{ secrets.AGILEFLOW_KEY }} --yes
 ```
 
@@ -178,8 +180,16 @@ Once the tool is [installed](#install), you can use the following command to cre
 
 ## Development Branches
 
-Development branches are used for feature additions and bug fixes. They branch off the release branch they intend to merge into and follow these naming conventions:
-  
+Development branches are used for feature additions and bug fixes. They branch off the release branch they intend to merge into. They use the following names depending on their purpose: `dev/*`, `feat/*`, `fix/*`, and `hotfix/*`.
+
+<details>
+
+<summary>
+
+### Development Branches Creation
+
+</summary>
+
 1. **Generic Development Branches (dev/*)**: Generic development branches for large changes. Specially useful before `1.0.0`.
 
 ```bash
@@ -210,6 +220,7 @@ git switch -c fix/bug-fix-branch-name
 git switch -c hotfix/hotfix-branch-name
 ```
 
+</details>
 
 After the contribution is ready, the development branch is merged into its origin Release Branch, preferrably using a [Merge Request](https://docs.gitlab.com/ee/user/project/merge_requests/), a [Pull Request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests), or similar.
 
@@ -239,21 +250,6 @@ Use the following command in case no CI/CD is configured or a version tag needs 
 ./agileflow tag
 ```
 
-
-## Main Branch
-
-The main branch represents the latest build of the software. The release branch containing the latest available release is merged into the main branch.
-
-The AgileFlow tool's tag command detects automatically if the current release branch is the latest release branch available in the repo and if so it merges it with the main branch after creating a tag.
-
-If for some reason this behavior needs to be skipped use the flag `--skip-main`.
-
-```bash
-# Perform the version tag operations without merging the release branch with the main branch
-./agileflow tag --skip-main
-```
-
-
 ## Create New Release Branches
 
 Per [Semantic Versioning](https://semver.org), before the product is deployed and used the **MAJOR** version is kept as `0`. 
@@ -272,4 +268,16 @@ Use the Agileflow tool to easily release a major version:
 
 # Create the next major version, create a branch and push it to the origin
 ./agileflow release --major
+```
+
+
+## Main Branch
+
+Optionally, the main branch can represent the latest build of the software. The release branch containing the latest available release is merged into the main branch.
+
+Use the `--merge-main` flag to detect automatically if the current release branch is the latest release branch available in the repo and if so it merges it with the main branch after creating a tag. 
+
+```bash
+# Perform the version tag operations without merging the release branch with the main branch
+./agileflow tag --merge-main
 ```
