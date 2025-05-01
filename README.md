@@ -12,7 +12,7 @@ AgileFlow enforces Semantic Versioning and integrates a robust branching strateg
 [Install AgileFlow](#install) in your repo with the following command. It requires repository maintainer or owner equivalent permissions in your origin remote.
 
   ```bash
-  /bin/bash -c "$(curl -fsSL https://code.logickernel.com/kernel/agileflow/-/raw/release/0.3/install.sh)"
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/logickernel/agileflow/refs/heads/release/0.4/install.sh)"
   ```
 
 After completing the command and instructions successfully, AgileFlow will be integrated with the CI/CD engine to [create automatically a new version](#versioning) every time there’s a merge into a release branch, incrementing the patch number based on the latest identifiable version in the branch.
