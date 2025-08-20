@@ -4,31 +4,37 @@
 
 In today’s fast-paced software development landscape, maintaining clarity, consistency, and efficiency in the release process is essential. AgileFlow is a streamlined yet powerful versioning system, branching strategy, and CI/CD tool designed for software teams of all sizes and projects of any scale.
 
-AgileFlow enforces Semantic Versioning and integrates a robust branching strategy for development and deployment. It seamlessly works with GitLab CI and GitHub Actions CI/CD pipelines to ensure a structured, efficient, and predictable development lifecycle. Whether for small projects or large-scale deployments, AgileFlow is an indispensable tool that simplifies versioning and release management.
+AgileFlow enforces Semantic Versioning and integrates a robust branching strategy for development and deployment. It seamlessly works with GitLab CI pipelines to ensure a structured, efficient, and predictable development lifecycle. Whether for small projects or large-scale deployments, AgileFlow is an indispensable tool that simplifies versioning and release management.
 
 ![AgileFlow workflow example diagram](./media/diagram.jpg)
 
 
 AgileFlow works integrated with the CI/CD engine to **automatically create a new version** every time there’s a merge into a release branch, incrementing the patch number based on the latest identifiable version in the branch.
 
-Once AgileFlow is installed in either [GitLab](#gitlab-ci) or GitHub:
+Once AgileFlow is installed in [GitLab](#gitlab-ci):
 
 1. [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers, e.g. `release/0.1`, `release/1.0`, `release/1.1`, etc.
 2. [Create development branches](#development-branches) for contributors, following the naming conventions `dev/*`, `feat/*`, `fix/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
-3. [Merge the development branch with the release branch](#create-new-release-branches) for every **MAJOR** or **MINOR** version increment. After `v1.0.0`, ensure that any breaking change increments the **MAJOR** version.
+3. For a **MAJOR** or **MINOR** increment, [create a new release branch](#create-new-release-branches) (e.g., `release/1.1`) and merge development branches into it. Merges into a release branch automatically create the next patch tag. After `v1.0.0`, any breaking change increments the **MAJOR** version.
 
 
 
 
 ## Release Branches
 
-Release Branches are a main concept in the AgileFlow framework. They are meant to group the product versions and their name is used to determine them.
+Release branches are a core concept in the AgileFlow framework. They group product versions, and their name is used to determine them.
 
-Their name is composed by `release/` followed by the **MAJOR** and **MINOR** numbers of the versions they contain. Use the current product version number in the form `release/<MAJOR>.<MINOR>`, or for still unversioned projects:
+Their name is composed of `release/` followed by the **MAJOR** and **MINOR** numbers of the versions they contain. Use the current product version number in the form `release/<MAJOR>.<MINOR>`, or for still unversioned projects:
 
 - Use `release/0.1` for new projects.
 - Use `release/1.0` or a greater **MAJOR** number if the project is already being used in production.
 
+
+## Create New Release Branches
+
+- For a minor increment: branch from the current stable baseline to `release/<MAJOR>.<MINOR+1>` (e.g., from `release/1.0` to `release/1.1`).
+- For a major increment: create `release/<MAJOR+1>.0` (e.g., `release/2.0`).
+- Point your `dev/*`, `feat/*`, `fix/*`, and `hotfix/*` branches at the new release branch.
 
 ## Development Branches
 
@@ -37,7 +43,7 @@ Development branches are used for feature additions and bug fixes. They branch o
 
 ### Development Branches Creation
 
-1. **Generic Development Branches (dev/*)**: Generic development branches for large changes. Specially useful before `1.0.0`.
+1. **Generic Development Branches (dev/*)**: Generic development branches for large changes. Especially useful before `1.0.0`.
 
 ```bash
 git switch -c dev/generic-development-branch-name
@@ -63,7 +69,7 @@ git switch -c fix/bug-fix-branch-name
 git switch -c hotfix/hotfix-branch-name
 ```
 
-After the contribution is ready, the development branch is merged into its origin Release Branch, preferrably using a [Merge Request](https://docs.gitlab.com/ee/user/project/merge_requests/), a [Pull Request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests), or similar.
+After the contribution is ready, the development branch is merged into its origin release branch, preferably using a [Merge Request](https://docs.gitlab.com/ee/user/project/merge_requests/) or similar.
 
 ## Versioning
 
@@ -83,10 +89,12 @@ Add the following job to your `.gitlab-ci.yml` configuration:
 
 ```yml
 agileflow:
-  image: registry.logickernel.com/kernel/agileflow:0.6.9
+  image: registry.logickernel.com/kernel/agileflow:0.6.4
   script:
     - agileflow gitlab-ci
   only:
     - /^release\/[0-9]+\.[0-9]+$/
 ```
+
+Note: To allow the pipeline to push tags, enable "Allow Git push requests to the repository" for the CI job token under Settings > CI/CD > Job token permissions. On some self-managed instances you may also need to enable the feature flag `allow_push_repository_for_job_token`.
 
