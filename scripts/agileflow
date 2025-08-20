@@ -1,0 +1,29 @@
+#!/usr/bin/env node
+'use strict';
+
+function printHelp() {
+  console.log(`agileflow - lightweight CI utilities\n\nUsage:\n  agileflow <command> [options]\n\nCommands:\n  tag-ci       Configure git, create UTC tag and push to GitLab\n\nExamples:\n  agileflow tag-ci\n`);
+}
+
+function main() {
+  const [, , cmd, ...rest] = process.argv;
+  if (!cmd || cmd === '-h' || cmd === '--help' || cmd === 'help') {
+    printHelp();
+    process.exit(0);
+  }
+
+  switch (cmd) {
+    case 'tag-version':
+      // Defer to the tag script. It will handle its own errors and exit codes.
+      require('./tag-version.js');
+      break;
+    default:
+      console.error(`Unknown command: ${cmd}`);
+      printHelp();
+      process.exit(1);
+  }
+}
+
+main();
+
+
