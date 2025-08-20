@@ -1,6 +1,6 @@
 # .gitlab-ci.yml
 agileflow:
-  image: registry.logickernel.com/kernel/agileflow:v0.6.10
+  image: registry.logickernel.com/kernel/agileflow:0.6.13
   only:
     - /^release\/[0-9]+\.[0-9]+$/
   script:
@@ -14,7 +14,7 @@ release:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   script:
-    - VERSION="${CI_COMMIT_TAG#v}"   # strips leading "v"
+    - VERSION="${CI_COMMIT_TAG#v}"
     - >-
       /kaniko/executor
       --context "${CI_PROJECT_DIR}"

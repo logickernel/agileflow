@@ -89,7 +89,7 @@ Add the following job to your `.gitlab-ci.yml` configuration:
 
 ```yml
 agileflow:
-  image: registry.logickernel.com/kernel/agileflow:0.6.10
+  image: registry.logickernel.com/kernel/agileflow:0.6.13
   script:
     - agileflow gitlab-ci
   only:
