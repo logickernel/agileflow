@@ -8,6 +8,7 @@ const {
   pushTag,
   runWithOutput,
   run,
+  buildTagMessage,
 } = require('./git-utils');
 
 function requireEnv(varName) {
@@ -94,8 +95,9 @@ function main() {
     // Format: v<major>.<minor>.<patch>
     const TAG = buildNextTagFromReleaseBranch();
 
-    // Create annotated tag
-    createAnnotatedTag(TAG, `CI test tag ${TAG}`);
+    // Create annotated tag message: version + summarized commits since previous tag on same release line
+    const tagMessage = buildTagMessage(TAG, { maxCommitLines: 100, includeMergeCommits: false });
+    createAnnotatedTag(TAG, tagMessage);
 
     // Push tag to GitLab using CI token
     const encodedToken = encodeURIComponent(CI_JOB_TOKEN);

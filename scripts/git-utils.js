@@ -62,6 +62,57 @@ function pushTag(remoteUrl, tagName) {
   }
 }
 
+// --- Tag message builder (externalized) ---
+
+function parseSemverTag(tagName) {
+  const m = String(tagName).trim().match(/^v(\d+)\.(\d+)\.(\d+)$/);
+  if (!m) return null;
+  return { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3]) };
+}
+
+function listTagsForRelease(major, minor) {
+  const pattern = `v${major}.${minor}.*`;
+  const out = runWithOutput(`git tag --list "${pattern}" --sort=v:refname`) || '';
+  return out
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function getPreviousTagForTarget(tagName) {
+  const parsed = parseSemverTag(tagName);
+  if (!parsed) return null;
+  const tags = listTagsForRelease(parsed.major, parsed.minor);
+  if (tags.length === 0) return null;
+  return tags[tags.length - 1] || null;
+}
+
+function getCommitSubjectsSince(fromTagExclusive, maxCount = 50) {
+  if (!fromTagExclusive) return [];
+  const logCmd = `git log ${fromTagExclusive}..HEAD --pretty=format:%s -n ${Number(maxCount)}`;
+  const out = runWithOutput(logCmd) || '';
+  return out
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function buildTagMessage(tagName, options = {}) {
+  const { maxCommitLines = 50, includeMergeCommits = false } = options;
+  const previousTag = getPreviousTagForTarget(tagName);
+  let subjects = getCommitSubjectsSince(previousTag, maxCommitLines);
+  if (!includeMergeCommits) {
+    subjects = subjects.filter((s) => !/^merge /i.test(s));
+  }
+  const lines = [String(tagName).trim()];
+  if (subjects.length > 0) {
+    for (const s of subjects) {
+      lines.push(`- ${s}`);
+    }
+  }
+  return lines.join('\n');
+}
+
 module.exports = {
   run,
   runWithOutput,
@@ -69,6 +120,7 @@ module.exports = {
   configureUser,
   createAnnotatedTag,
   pushTag,
+  buildTagMessage,
 };
 
 
