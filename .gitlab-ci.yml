@@ -14,12 +14,12 @@ release:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   script:
-    # Build and push linux/amd64 image
+    - VERSION="${CI_COMMIT_TAG#v}"   # strips leading "v"
     - >-
       /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_NAME}"
+      --destination "${CI_REGISTRY_IMAGE}:${VERSION}"
       --customPlatform "linux/amd64"
       --build-arg TARGETOS=linux
       --build-arg TARGETARCH=amd64
