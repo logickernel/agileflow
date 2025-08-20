@@ -6,6 +6,8 @@ const {
   configureUser,
   createAnnotatedTag,
   pushTag,
+  runWithOutput,
+  run,
 } = require('./git-utils');
 
 function requireEnv(varName) {
@@ -30,6 +32,51 @@ function utcTimestamp() {
   );
 }
 
+function parseReleaseBranchName(branchName) {
+  // Expected formats: release/X.Y or origin/release/X.Y
+  const match = branchName.match(/(?:^|\/)release\/(\d+)\.(\d+)$/);
+  if (!match) return null;
+  return { major: Number(match[1]), minor: Number(match[2]) };
+}
+
+function getCurrentBranchName() {
+  // Prefer CI-provided ref name when available (handles detached HEAD)
+  const envName = process.env.CI_COMMIT_REF_NAME;
+  if (envName && envName.trim() !== '') return envName.trim();
+  const name = runWithOutput('git rev-parse --abbrev-ref HEAD').trim();
+  return name;
+}
+
+function getLatestPatchForRelease(major, minor) {
+  // List tags matching vMAJOR.MINOR.PATCH, sort by version, take highest patch
+  // Using git tag --list 'vM.N.*' with --sort=v:refname gives natural version sort (requires v prefix)
+  const pattern = `v${major}.${minor}.*`;
+  const out = runWithOutput(`git tag --list "${pattern}" --sort=v:refname`) || '';
+  const tags = out.split('\n').map((s) => s.trim()).filter(Boolean);
+  if (tags.length === 0) return -1;
+  const last = tags[tags.length - 1];
+  const m = last.match(/^v\d+\.\d+\.(\d+)$/);
+  return m ? Number(m[1]) : -1;
+}
+
+function buildNextTagFromReleaseBranch() {
+  // Ensure we see all tags before computing next patch
+  try {
+    run('git fetch --all --tags --prune --prune-tags');
+  } catch (_) {
+    // Non-fatal; continue with whatever tags are present locally
+  }
+  const branch = getCurrentBranchName();
+  const parsed = parseReleaseBranchName(branch);
+  if (!parsed) {
+    throw new Error(`Current branch '${branch}' is not a release branch (expected 'release/X.Y').`);
+  }
+  const { major, minor } = parsed;
+  const latestPatch = getLatestPatchForRelease(major, minor);
+  const nextPatch = latestPatch + 1;
+  return `v${major}.${minor}.${nextPatch}`;
+}
+
 function main() {
   try {
     ensureGitRepo();
@@ -43,8 +90,9 @@ function main() {
     // Configure git user
     configureUser(GITLAB_USER_NAME, GITLAB_USER_EMAIL);
 
-    // Build tag name
-    const TAG = `ci-test-${utcTimestamp()}`;
+    // Build tag name automatically from current release branch
+    // Format: v<major>.<minor>.<patch>
+    const TAG = buildNextTagFromReleaseBranch();
 
     // Create annotated tag
     createAnnotatedTag(TAG, `CI test tag ${TAG}`);

@@ -64,6 +64,7 @@ function pushTag(remoteUrl, tagName) {
 
 module.exports = {
   run,
+  runWithOutput,
   ensureGitRepo,
   configureUser,
   createAnnotatedTag,

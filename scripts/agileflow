@@ -2,7 +2,7 @@
 'use strict';
 
 function printHelp() {
-  console.log(`agileflow - lightweight CI utilities\n\nUsage:\n  agileflow <command> [options]\n\nCommands:\n  gitlab-ci       Configure git, create UTC tag and push to GitLab\n\nExamples:\n  agileflow tag-ci\n`);
+  console.log(`agileflow - lightweight CI utilities\n\nUsage:\n  agileflow <command> [options]\n\nCommands:\n  gitlab-ci       Configure git, compute semver tag from release branch, and push to GitLab\n\nExamples:\n  agileflow gitlab-ci\n`);
 }
 
 function main() {
