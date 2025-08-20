@@ -67,9 +67,12 @@ function main() {
         console.error('The CI_JOB_TOKEN job token is not permitted to push to the repository.');
         console.error('\nHow to fix:');
         console.error('- Ensure the feature flag "allow_push_repository_for_job_token" is enabled. See: https://archives.docs.gitlab.com/17.4/ee/administration/feature_flags.html');
-        console.error('- Then in your project, go to Settings > CI/CD > Job token permissions (Token Access) and enable "Allow Git push requests to the repository".');
-        console.error('Docs: https://archives.docs.gitlab.com/17.4/ee/ci/jobs/ci_job_token.html#git-push-to-your-project-repository');
+        console.error('- Then in your project, go to Settings > CI/CD > Job token permissions (Token Access)\n');
+        console.error(`  https://${CI_SERVER_HOST}/${CI_PROJECT_PATH}/-/settings/ci_cd`);
+        console.error('  and enable "Allow Git push requests to the repository".');
+        console.error('\nDocs: https://archives.docs.gitlab.com/17.4/ee/ci/jobs/ci_job_token.html#git-push-to-your-project-repository');
         console.error('\nAfter enabling, retry this pipeline.');
+        process.exit(1);
       }
       throw pushError;
     }
