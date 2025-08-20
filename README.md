@@ -1,22 +1,13 @@
 # AgileFlow
 
-## Deployment
+# GitLab CI
 
-```bash
-docker login registry.logickernel.com
+```yml
+agileflow:
+  image: registry.logickernel.com/kernel/agileflow:0.6.4
+  script:
+    - agileflow gitlab-ci
+  only:
+    - /^release\/[0-9]+\.[0-9]+$/
 ```
 
-```bash
-docker buildx build \
-  --platform linux/amd64,linux/arm64 \
-  -f Dockerfile \
-  -t registry.logickernel.com/kernel/agileflow:`cat VERSION` \
-  --push \
-  .
-```
-
-Inspect image
-
-```bash
-docker buildx imagetools inspect registry.logickernel.com/kernel/agileflow:`cat VERSION`
-```
