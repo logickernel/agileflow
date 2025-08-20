@@ -104,12 +104,94 @@ function buildTagMessage(tagName, options = {}) {
   if (!includeMergeCommits) {
     subjects = subjects.filter((s) => !/^merge /i.test(s));
   }
-  const lines = [String(tagName).trim()];
-  if (subjects.length > 0) {
-    for (const s of subjects) {
-      lines.push(`- ${s}`);
+
+  // If no subjects, keep the simple message
+  if (subjects.length === 0) {
+    return String(tagName).trim();
+  }
+
+  // Conventional commit parser: type[!]?(scope)?: description
+  const parseConventional = (subject) => {
+    const match = subject.match(/^(\w+)(!)?(?:\(([^)]+)\))?:\s+(.+)$/);
+    if (!match) return null;
+    return {
+      type: match[1].toLowerCase(),
+      breaking: Boolean(match[2]),
+      scope: match[3] ? String(match[3]).trim() : '',
+      description: String(match[4]).trim(),
+    };
+  };
+
+  // Section titles with stable ordering
+  const sectionOrder = [
+    'feat',
+    'fix',
+    'perf',
+    'refactor',
+    'docs',
+    'build',
+    'ci',
+    'chore',
+    'test',
+    'style',
+    'revert',
+  ];
+  const sectionTitles = {
+    feat: 'Features',
+    fix: 'Bug fixes',
+    perf: 'Performance improvements',
+    refactor: 'Refactors',
+    docs: 'Documentation',
+    build: 'Build system',
+    ci: 'CI',
+    chore: 'Chores',
+    test: 'Tests',
+    style: 'Code style',
+    revert: 'Reverts',
+  };
+
+  // Group by conventional type; non-matching go to "others"
+  const groups = { others: [] };
+  for (const type of sectionOrder) groups[type] = [];
+
+  let hasAtLeastOneConventional = false;
+  for (const subject of subjects) {
+    const parsed = parseConventional(subject);
+    if (parsed && (sectionOrder.includes(parsed.type) || parsed.type)) {
+      hasAtLeastOneConventional = true;
+      const targetKey = sectionOrder.includes(parsed.type) ? parsed.type : 'others';
+      const prefix = parsed.breaking ? 'BREAKING: ' : '';
+      const scopePart = parsed.scope ? `${parsed.scope}: ` : '';
+      groups[targetKey].push(`- ${prefix}${scopePart}${parsed.description}`);
+    } else {
+      groups.others.push(`- ${subject}`);
     }
   }
+
+  // If nothing parsed as conventional, fallback to flat list (legacy behavior)
+  if (!hasAtLeastOneConventional) {
+    const flat = [String(tagName).trim()];
+    for (const s of subjects) flat.push(`- ${s}`);
+    return flat.join('\n');
+  }
+
+  // Build grouped message
+  const lines = [String(tagName).trim(), ''];
+  for (const type of sectionOrder) {
+    const items = groups[type];
+    if (items && items.length > 0) {
+      lines.push(`${sectionTitles[type]}:`);
+      lines.push(...items);
+      lines.push('');
+    }
+  }
+  if (groups.others.length > 0) {
+    lines.push('Other changes:');
+    lines.push(...groups.others);
+    lines.push('');
+  }
+  // Trim possible trailing blank line
+  while (lines.length > 1 && lines[lines.length - 1] === '') lines.pop();
   return lines.join('\n');
 }
 
