@@ -81,6 +81,68 @@ Once a development branch is merged into a release branch, AgileFlow calculates 
 
 
 
+### Conventional Commits and Tag Messages
+
+AgileFlow elevates release notes by grouping the annotated tag message according to the intent of each change, following the [Conventional Commits](https://www.conventionalcommits.org/) methodology.
+
+- **Principle**: Release notes should communicate intent (what improved, what was fixed, what changed) rather than a raw list of commits. Grouping by change type creates a quick, scannable summary aligned with Semantic Versioning.
+- **Method**: When commit subjects follow the Conventional Commits format `type[!]?(scope)?: description`, AgileFlow groups them into sections like Features, Bug fixes, and Performance improvements. Breaking changes are highlighted.
+- **Resilience**: If no conventional commit messages are detected, AgileFlow falls back to a simple, flat list of commit subjects (the previous behavior). Non-conforming commits are listed under "Other changes" when at least one conventional commit is present.
+
+Recognized types and their order in the tag message:
+
+- **feat**: Features
+- **fix**: Bug fixes
+- **perf**: Performance improvements
+- **refactor**: Refactors
+- **docs**: Documentation
+- **build**: Build system
+- **ci**: CI
+- **chore**: Chores
+- **test**: Tests
+- **style**: Code style
+- **revert**: Reverts
+- **Other changes**: Any commits that don't match the conventional format
+
+Breaking changes are flagged when using the conventional `!` shorthand (for example, `feat!:`). After `1.0.0`, breaking changes should drive a **MAJOR** version bump per SemVer.
+
+Examples of conventional commit subjects:
+
+```text
+feat(auth): add OIDC login flow
+fix(api): correct null handling in user lookup
+perf(cache)!: switch to Redis cluster
+docs: update README with usage examples
+```
+
+Example of the generated tag message body when conventional commits are detected:
+
+```text
+v1.2.4
+
+Features:
+- auth: add OIDC login flow
+
+Bug fixes:
+- api: correct null handling in user lookup
+
+Performance improvements:
+- BREAKING: cache: switch to Redis cluster
+
+Documentation:
+- update README with usage examples
+```
+
+When commits are not in the conventional format, AgileFlow will produce a simple list:
+
+```text
+v1.2.4
+- Merge branch 'feat/ui-polish'
+- Tweak logging verbosity
+- Fix typo in pipeline
+```
+
+
 # Installation
 
 ## GitLab CI
@@ -89,7 +151,7 @@ Add the following job to your `.gitlab-ci.yml` configuration:
 
 ```yml
 agileflow:
-  image: registry.logickernel.com/kernel/agileflow:0.6.17
+  image: registry.logickernel.com/kernel/agileflow:0.6.18
   script:
     - agileflow gitlab-ci
   only:
