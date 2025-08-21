@@ -1,12 +1,10 @@
 # .gitlab-ci.yml
 agileflow:
-  image: registry.logickernel.com/kernel/agileflow:0.6.17
+  image: registry.logickernel.com/kernel/agileflow:0.6.18
   only:
     - /^release\/[0-9]+\.[0-9]+$/
   script:
     - agileflow gitlab-ci
-  tags:
-    - agileflow
 
 release:
   stage: deploy
