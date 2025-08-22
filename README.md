@@ -49,7 +49,7 @@ Their name is composed of `release/` followed by the **MAJOR** and **MINOR** num
 - Use `release/1.0` or a greater **MAJOR** number if the project is already being used in production.
 
 
-## Create New Release Branches
+### Create New Release Branches
 
 - For a minor increment: branch from the current stable baseline to `release/<MAJOR>.<MINOR+1>` (e.g., from `release/1.0` to `release/1.1`).
 - For a major increment: create `release/<MAJOR+1>.0` (e.g., `release/2.0`).
