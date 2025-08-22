@@ -11,6 +11,25 @@ AgileFlow enforces Semantic Versioning and integrates a robust branching strateg
 
 AgileFlow works integrated with the CI/CD engine to **automatically create a new version** every time there’s a merge into a release branch, incrementing the patch number based on the latest identifiable version in the branch.
 
+# Installation
+
+## GitLab CI
+
+Add the following job to your `.gitlab-ci.yml` configuration:
+
+```yml
+agileflow:
+  image: registry.logickernel.com/kernel/agileflow:0.6.18
+  script:
+    - agileflow gitlab-ci
+  only:
+    - /^release\/[0-9]+\.[0-9]+$/
+```
+
+Note: To allow the pipeline to push tags, enable "Allow Git push requests to the repository" for the CI job token under Settings > CI/CD > Job token permissions. On some self-managed instances you may also need to enable the feature flag `allow_push_repository_for_job_token`.
+
+
+
 Once AgileFlow is installed in [GitLab](#gitlab-ci):
 
 1. [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers, e.g. `release/0.1`, `release/1.0`, `release/1.1`, etc.
@@ -18,7 +37,7 @@ Once AgileFlow is installed in [GitLab](#gitlab-ci):
 3. For a **MAJOR** or **MINOR** increment, [create a new release branch](#create-new-release-branches) (e.g., `release/1.1`) and merge development branches into it. Merges into a release branch automatically create the next patch tag. After `v1.0.0`, any breaking change increments the **MAJOR** version.
 
 
-
+# Principles
 
 ## Release Branches
 
@@ -81,15 +100,22 @@ Once a development branch is merged into a release branch, AgileFlow calculates 
 
 
 
-### Conventional Commits and Tag Messages
+### Conventional Commits
 
-AgileFlow elevates release notes by grouping the annotated tag message according to the intent of each change, following the [Conventional Commits](https://www.conventionalcommits.org/) methodology.
+Conventional Commits encode the intent of a change in the commit subject so that humans (and tools) can generate clear release notes and version bumps.
 
-- **Principle**: Release notes should communicate intent (what improved, what was fixed, what changed) rather than a raw list of commits. Grouping by change type creates a quick, scannable summary aligned with Semantic Versioning.
-- **Method**: When commit subjects follow the Conventional Commits format `type[!]?(scope)?: description`, AgileFlow groups them into sections like Features, Bug fixes, and Performance improvements. Breaking changes are highlighted.
-- **Resilience**: If no conventional commit messages are detected, AgileFlow falls back to a simple, flat list of commit subjects (the previous behavior). Non-conforming commits are listed under "Other changes" when at least one conventional commit is present.
+Commit subject format:
 
-Recognized types and their order in the tag message:
+```text
+type[!]?(scope)?: description
+```
+
+- **type**: one of the recognized types below (lowercase).
+- **scope (optional)**: short, lowercase noun describing the affected area, e.g. `api`, `auth`, `build`.
+- **description**: concise, imperative mood summary (e.g., "add support for...", "fix crash when...").
+- Use the commit body for rationale/details, and use footers for metadata (e.g., `BREAKING CHANGE:`).
+
+Recognized commit types (release notes order):
 
 - **feat — Features**: Introduces new user- or API-facing capabilities without removing existing behavior.
   - **Use for**: new endpoints, CLI commands, configuration options, UI components, additive DB migrations.
@@ -147,7 +173,7 @@ Recognized types and their order in the tag message:
 
 - **Other changes**: Commits that don't match the conventional format or are unclassified. These are listed verbatim when at least one conventional commit is present.
 
-Breaking changes are flagged when using the conventional `!` shorthand (for example, `feat!:`). After `1.0.0`, breaking changes should drive a **MAJOR** version bump per SemVer.
+Breaking changes are flagged using the `!` shorthand in the subject (for example, `feat!:`) or with a `BREAKING CHANGE:` footer. After `1.0.0`, breaking changes should drive a **MAJOR** version bump per SemVer.
 
 Examples of conventional commit subjects:
 
@@ -157,6 +183,11 @@ fix(api): correct null handling in user lookup
 perf(cache)!: switch to Redis cluster
 docs: update README with usage examples
 ```
+
+### Tag Messages
+
+AgileFlow elevates release notes by grouping the annotated tag message according to the intent of each change, following the [Conventional Commits](https://www.conventionalcommits.org/) methodology.
+
 
 Example of the generated tag message body when conventional commits are detected:
 
@@ -184,22 +215,3 @@ v1.2.4
 - Tweak logging verbosity
 - Fix typo in pipeline
 ```
-
-
-# Installation
-
-## GitLab CI
-
-Add the following job to your `.gitlab-ci.yml` configuration:
-
-```yml
-agileflow:
-  image: registry.logickernel.com/kernel/agileflow:0.6.18
-  script:
-    - agileflow gitlab-ci
-  only:
-    - /^release\/[0-9]+\.[0-9]+$/
-```
-
-Note: To allow the pipeline to push tags, enable "Allow Git push requests to the repository" for the CI job token under Settings > CI/CD > Job token permissions. On some self-managed instances you may also need to enable the feature flag `allow_push_repository_for_job_token`.
-
