@@ -91,18 +91,61 @@ AgileFlow elevates release notes by grouping the annotated tag message according
 
 Recognized types and their order in the tag message:
 
-- **feat**: Features
-- **fix**: Bug fixes
-- **perf**: Performance improvements
-- **refactor**: Refactors
-- **docs**: Documentation
-- **build**: Build system
-- **ci**: CI
-- **chore**: Chores
-- **test**: Tests
-- **style**: Code style
-- **revert**: Reverts
-- **Other changes**: Any commits that don't match the conventional format
+- **feat — Features**: Introduces new user- or API-facing capabilities without removing existing behavior.
+  - **Use for**: new endpoints, CLI commands, configuration options, UI components, additive DB migrations.
+  - **Avoid for**: internal-only refactors or performance tweaks that do not add capability.
+  - **Example**: `feat(api): expose /v2/reports endpoint`
+
+- **fix — Bug fixes**: Corrects faulty behavior, regressions, crashes, data corruption, or incorrect outputs.
+  - **Use for**: logic errors, off-by-one fixes, null handling, race conditions, flaky behavior.
+  - **Avoid for**: refactors that do not change externally observable behavior.
+  - **Example**: `fix(auth): handle empty refresh token gracefully`
+
+- **perf — Performance improvements**: Makes the system faster or leaner without changing public behavior or semantics.
+  - **Use for**: algorithmic improvements, caching, reduced allocations, optimized queries, I/O batching.
+  - **Avoid for**: feature additions or bug fixes; use those dedicated types instead.
+  - **Example**: `perf(cache): batch writes to cut latency by 30%`
+
+- **refactor — Refactors**: Internal code changes that do not alter external behavior; improves structure, readability, or maintainability.
+  - **Use for**: renaming, extracting functions, reorganizing modules, paying down technical debt.
+  - **Avoid for**: behavior changes (use `feat`, `fix`, or `perf`).
+  - **Example**: `refactor(repo): split monolithic service into modules`
+
+- **docs — Documentation**: Documentation-only changes.
+  - **Use for**: README updates, API docs, examples, ADRs, inline docstrings.
+  - **Avoid for**: code changes that affect behavior; pair with another type if both occur.
+  - **Example**: `docs: add configuration examples for SSO`
+
+- **build — Build system**: Changes that affect the build tooling or dependencies.
+  - **Use for**: dependency bumps, lockfiles, Dockerfiles, Makefiles, build scripts, compilers, bundlers.
+  - **Avoid for**: runtime code or CI-only config (use `ci` for that).
+  - **Example**: `build(docker): slim image and enable build cache`
+
+- **ci — CI**: Changes to continuous integration configuration and automation.
+  - **Use for**: pipeline definitions, jobs, cache settings, CI scripts, badges.
+  - **Avoid for**: build tooling that also affects local builds (use `build`).
+  - **Example**: `ci(gitlab): add release job for tags`
+
+- **chore — Chores**: Routine tasks that do not affect src behavior or tests.
+  - **Use for**: repository housekeeping, license files, issue templates, renaming files without behavior change.
+  - **Avoid for**: dependency/build changes (`build`), formatting-only changes (`style`).
+  - **Example**: `chore: archive old roadmap documents`
+
+- **test — Tests**: Adds or updates tests without changing runtime behavior.
+  - **Use for**: new unit/integration/e2e tests, fixtures, test refactors.
+  - **Avoid for**: fixing behavior (use `fix`) or adding features (`feat`).
+  - **Example**: `test(api): cover error path for 404 responses`
+
+- **style — Code style**: Non-functional changes that do not affect meaning of code.
+  - **Use for**: formatting, whitespace, linters, code style fixes, reorder imports.
+  - **Avoid for**: refactors or behavior changes.
+  - **Example**: `style: apply Prettier 3 formatting`
+
+- **revert — Reverts**: Reverts a previous commit.
+  - **Use for**: explicit rollbacks; the body should reference the reverted commit.
+  - **Example**: `revert: feat(api): expose /v2/reports endpoint`
+
+- **Other changes**: Commits that don't match the conventional format or are unclassified. These are listed verbatim when at least one conventional commit is present.
 
 Breaking changes are flagged when using the conventional `!` shorthand (for example, `feat!:`). After `1.0.0`, breaking changes should drive a **MAJOR** version bump per SemVer.
 
