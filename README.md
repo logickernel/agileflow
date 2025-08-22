@@ -19,12 +19,16 @@ AgileFlow integrates with GitLab CI to automate version tagging. Follow these st
 
 ### Using the Template
 
+Add the following line at the top of `.gitlab-ci.yml`:
+
 ```yml
 include:
   - remote: https://code.logickernel.com/kernel/agileflow/-/raw/release/0.6/templates/AgileFlow.gitlab-ci.yml
 ```
 
 ### Manual Installation
+
+You can also install it manually by adding the following job to the `.gitlab-ci.yml` file instead:
 
 ```yml
 agileflow:
