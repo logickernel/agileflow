@@ -35,7 +35,11 @@ agileflow:
     - if: '$CI_COMMIT_BRANCH =~ /^release\/\d+\.\d+$/'
 ```
 
-Note: To allow the pipeline to push tags, enable "Allow Git push requests to the repository" for the CI job token under Settings > CI/CD > Job token permissions. On some self-managed instances you may also need to enable the feature flag `allow_push_repository_for_job_token`.
+> [!NOTE]
+> To allow the pipeline to push tags:
+>
+> - Enable `Allow Git push requests to the repository` for the CI job token under `Settings > CI/CD > Job token permissions`.
+> - On some self-managed instances, you may also need to enable the feature flag `allow_push_repository_for_job_token`.
 
 
 
