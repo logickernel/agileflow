@@ -40,21 +40,18 @@ agileflow:
 ```
 
 > [!NOTE]
-> To allow the pipeline to push tags:
+> To allow the pipeline to push tags enable `Allow Git push requests to the repository` for the CI job token under `Settings > CI/CD > Job token permissions`.
 >
-> - Enable `Allow Git push requests to the repository` for the CI job token under `Settings > CI/CD > Job token permissions`.
-> - On some self-managed instances, you may also need to enable the feature flag `allow_push_repository_for_job_token`.
+> You may need to enable the feature flag `allow_push_repository_for_job_token` in your self-managed instance to see it.
 
 
+# Principles
 
 Once AgileFlow is installed in [GitLab](#gitlab-ci):
 
 1. [Create a release branch](#release-branches) using the product's current **MAJOR** and **MINOR** version numbers, e.g. `release/0.1`, `release/1.0`, `release/1.1`, etc.
 2. [Create development branches](#development-branches) for contributors, following the naming conventions `dev/*`, `feat/*`, `fix/*`, or `hotfix/*` to keep the code organized and ensure smooth merging.
 3. For a **MAJOR** or **MINOR** increment, [create a new release branch](#create-new-release-branches) (e.g., `release/1.1`) and merge development branches into it. Merges into a release branch automatically create the next patch tag. After `v1.0.0`, any breaking change increments the **MAJOR** version.
-
-
-# Principles
 
 ## Release Branches
 
