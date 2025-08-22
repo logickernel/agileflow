@@ -1,0 +1,49 @@
+# AgileFlow GitLab CI template
+#
+# Purpose:
+# - Automatically create the next Semantic Version tag (v<MAJOR>.<MINOR>.<PATCH>)
+#   whenever commits are merged into a release branch (e.g., release/1.0).
+# - The tag message is generated from recent commits and grouped by Conventional
+#   Commits types when possible.
+#
+# How to include in your pipeline:
+# - Save this file at templates/AgileFlow.gitlab-ci.yml
+# - In your root .gitlab-ci.yml, add:
+#
+#   include:
+#     - local: templates/AgileFlow.gitlab-ci.yml
+#
+# Branching requirements:
+# - Release branches must follow the format: release/<MAJOR>.<MINOR>
+#   Examples: release/0.1, release/1.0, release/1.1
+#
+# Permissions required to push tags:
+# - The job uses CI_JOB_TOKEN to push annotated tags back to the repository.
+# - In GitLab: Settings > CI/CD > Job token permissions → enable
+#   "Allow Git push requests to the repository" for this project.
+# - On some self-managed instances you may need the feature flag
+#   allow_push_repository_for_job_token enabled by an administrator.
+#
+# Environment variables expected (provided by GitLab in CI jobs):
+# - GITLAB_USER_NAME, GITLAB_USER_EMAIL, CI_JOB_TOKEN, CI_SERVER_HOST, CI_PROJECT_PATH
+#   The job will fail fast with a clear error if any are missing.
+#
+# Notes:
+# - The container image version is pinned. Update the tag when upgrading AgileFlow.
+# - This job uses rules: to match release branches per GitLab guidance.
+#
+agileflow:
+  # Runs the AgileFlow CLI to compute and push the next version tag derived
+  # from the current release branch name and existing tags in the repo.
+  image: registry.logickernel.com/kernel/agileflow:0.6.23
+  # Run this job only on branches that match release/<MAJOR>.<MINOR>.
+  # The regex below enforces two dot-separated integers (e.g., release/1.0).
+  rules:
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/\d+\.\d+$/'
+  # The CLI command performs:
+  # - Git config (based on CI-provided user/email)
+  # - Compute next tag v<MAJOR>.<MINOR>.<PATCH> for the current release line
+  # - Generate an annotated tag message grouped by Conventional Commits types
+  # - Push the tag back to the repository using CI_JOB_TOKEN
+  script:
+    - agileflow gitlab-ci
