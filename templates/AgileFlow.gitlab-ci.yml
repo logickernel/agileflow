@@ -7,6 +7,7 @@
       dotenv: VERSION
 
 release_main:
+  stage: build
   extends: .agileflow
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
