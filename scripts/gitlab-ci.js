@@ -33,12 +33,7 @@ function utcTimestamp() {
   );
 }
 
-function parseReleaseBranchName(branchName) {
-  // Expected formats: release/X.Y or origin/release/X.Y
-  const match = branchName.match(/(?:^|\/)release\/(\d+)\.(\d+)$/);
-  if (!match) return null;
-  return { major: Number(match[1]), minor: Number(match[2]) };
-}
+
 
 function getCurrentBranchName() {
   // Prefer CI-provided ref name when available (handles detached HEAD)
@@ -48,34 +43,34 @@ function getCurrentBranchName() {
   return name;
 }
 
-function getLatestPatchForRelease(major, minor) {
-  // List tags matching vMAJOR.MINOR.PATCH, sort by version, take highest patch
-  // Using git tag --list 'vM.N.*' with --sort=v:refname gives natural version sort (requires v prefix)
-  const pattern = `v${major}.${minor}.*`;
-  const out = runWithOutput(`git tag --list "${pattern}" --sort=v:refname`) || '';
+function getLatestVersion() {
+  // Get the latest version tag from the current branch
+  const out = runWithOutput('git tag --list "v*" --sort=v:refname') || '';
   const tags = out.split('\n').map((s) => s.trim()).filter(Boolean);
-  if (tags.length === 0) return -1;
-  const last = tags[tags.length - 1];
-  const m = last.match(/^v\d+\.\d+\.(\d+)$/);
-  return m ? Number(m[1]) : -1;
+  if (tags.length === 0) return { major: 0, minor: 0, patch: 0 };
+  
+  const lastTag = tags[tags.length - 1];
+  const m = lastTag.match(/^v(\d+)\.(\d+)\.(\d+)$/);
+  if (!m) return { major: 0, minor: 0, patch: 0 };
+  
+  return { 
+    major: Number(m[1]), 
+    minor: Number(m[2]), 
+    patch: Number(m[3]) 
+  };
 }
 
-function buildNextTagFromReleaseBranch() {
-  // Ensure we see all tags before computing next patch
+function buildNextTag() {
+  // Ensure we see all tags before computing next version
   try {
     run('git fetch --all --tags --prune --prune-tags');
   } catch (_) {
     // Non-fatal; continue with whatever tags are present locally
   }
-  const branch = getCurrentBranchName();
-  const parsed = parseReleaseBranchName(branch);
-  if (!parsed) {
-    throw new Error(`Current branch '${branch}' is not a release branch (expected 'release/X.Y').`);
-  }
-  const { major, minor } = parsed;
-  const latestPatch = getLatestPatchForRelease(major, minor);
-  const nextPatch = latestPatch + 1;
-  return `v${major}.${minor}.${nextPatch}`;
+  
+  const currentVersion = getLatestVersion();
+  const nextPatch = currentVersion.patch + 1;
+  return `v${currentVersion.major}.${currentVersion.minor}.${nextPatch}`;
 }
 
 function main() {
@@ -91,11 +86,11 @@ function main() {
     // Configure git user
     configureUser(GITLAB_USER_NAME, GITLAB_USER_EMAIL);
 
-    // Build tag name automatically from current release branch
+    // Build tag name automatically from the current branch
     // Format: v<major>.<minor>.<patch>
-    const TAG = buildNextTagFromReleaseBranch();
+    const TAG = buildNextTag();
 
-    // Create annotated tag message: version + summarized commits since previous tag on same release line
+    // Create annotated tag message: version + summarized commits since previous tag
     const tagMessage = buildTagMessage(TAG, { maxCommitLines: 100, includeMergeCommits: false });
     createAnnotatedTag(TAG, tagMessage);
 

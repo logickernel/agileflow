@@ -2,7 +2,7 @@
 #
 # Purpose:
 # - Automatically create the next Semantic Version tag (v<MAJOR>.<MINOR>.<PATCH>)
-#   whenever commits are merged into a release branch (e.g., release/1.0).
+#   whenever commits are merged into the main branch.
 # - The tag message is generated from recent commits and grouped by Conventional
 #   Commits types when possible.
 #
@@ -14,8 +14,8 @@
 #     - local: templates/AgileFlow.gitlab-ci.yml
 #
 # Branching requirements:
-# - Release branches must follow the format: release/<MAJOR>.<MINOR>
-#   Examples: release/0.1, release/1.0, release/1.1
+# - This job runs on the main branch (or master) to create version tags
+#   Examples: main, master
 #
 # Permissions required to push tags:
 # - The job uses CI_JOB_TOKEN to push annotated tags back to the repository.
@@ -30,19 +30,18 @@
 #
 # Notes:
 # - The container image version is pinned. Update the tag when upgrading AgileFlow.
-# - This job uses rules: to match release branches per GitLab guidance.
+# - This job runs on the main branch to create version tags.
 #
 agileflow:
   # Runs the AgileFlow CLI to compute and push the next version tag derived
-  # from the current release branch name and existing tags in the repo.
+  # from the current branch and existing tags in the repo.
   image: registry.logickernel.com/kernel/agileflow:0.6.23
-  # Run this job only on branches that match release/<MAJOR>.<MINOR>.
-  # The regex below enforces two dot-separated integers (e.g., release/1.0).
+  # Run this job only on the main branch.
   rules:
-    - if: '$CI_COMMIT_BRANCH =~ /^release\/\d+\.\d+$/'
+    - if: '$CI_COMMIT_BRANCH == "main"'
   # The CLI command performs:
   # - Git config (based on CI-provided user/email)
-  # - Compute next tag v<MAJOR>.<MINOR>.<PATCH> for the current release line
+  # - Compute next tag v<MAJOR>.<MINOR>.<PATCH> for the current branch
   # - Generate an annotated tag message grouped by Conventional Commits types
   # - Push the tag back to the repository using CI_JOB_TOKEN
   script:
