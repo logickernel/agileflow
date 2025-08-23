@@ -15,6 +15,6 @@ release:
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
       --destination "${CI_REGISTRY_IMAGE}:$(cat VERSION)"
-      --customPlatform "linux/amd64"
+      --custom-platform "linux/amd64"
       --build-arg TARGETOS=linux
       --build-arg TARGETARCH=amd64

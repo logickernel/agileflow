@@ -1,5 +1,9 @@
 agileflow:
   stage: .pre
-  image: registry.logickernel.com/kernel/agileflow:0.6.39
+  image: registry.logickernel.com/kernel/agileflow:0.6.40
+  cache:
+    paths:
+      - VERSION
+    policy: push
   script:
-    - echo "VERSION=$(agileflow gitlab-ci)" > VERSION
+    - agileflow gitlab-ci
