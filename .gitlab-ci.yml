@@ -3,7 +3,7 @@ include:
 
 release:
   stage: deploy
-  needs: [".agileflow"]
+  needs: ["agileflow"]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
   image:

@@ -1,4 +1,4 @@
-.agileflow:
+agileflow:
   stage: .pre
   image: registry.logickernel.com/kernel/agileflow:0.6.39
   script:
