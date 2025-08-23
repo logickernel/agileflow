@@ -4,6 +4,5 @@ agileflow:
   script:
     - agileflow gitlab-ci
   artifacts:
-    name: VERSION
     reports:
       dotenv: VERSION
