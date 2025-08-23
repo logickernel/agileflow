@@ -1,48 +1,11 @@
-# AgileFlow GitLab CI template
-#
-# Purpose:
-# - Automatically create the next Semantic Version tag (v<MAJOR>.<MINOR>.<PATCH>)
-#   whenever commits are merged into the main branch.
-# - The tag message is generated from recent commits and grouped by Conventional
-#   Commits types when possible.
-#
-# How to include in your pipeline:
-# - Save this file at templates/AgileFlow.gitlab-ci.yml
-# - In your root .gitlab-ci.yml, add:
-#
-#   include:
-#     - local: templates/AgileFlow.gitlab-ci.yml
-#
-# Branching requirements:
-# - This job runs on the main branch (or master) to create version tags
-#   Examples: main, master
-#
-# Permissions required to push tags:
-# - The job uses CI_JOB_TOKEN to push annotated tags back to the repository.
-# - In GitLab: Settings > CI/CD > Job token permissions → enable
-#   "Allow Git push requests to the repository" for this project.
-# - On some self-managed instances you may need the feature flag
-#   allow_push_repository_for_job_token enabled by an administrator.
-#
-# Environment variables expected (provided by GitLab in CI jobs):
-# - GITLAB_USER_NAME, GITLAB_USER_EMAIL, CI_JOB_TOKEN, CI_SERVER_HOST, CI_PROJECT_PATH
-#   The job will fail fast with a clear error if any are missing.
-#
-# Notes:
-# - The container image version is pinned. Update the tag when upgrading AgileFlow.
-# - This job runs on the main branch to create version tags.
-#
 agileflow:
-  # Runs the AgileFlow CLI to compute and push the next version tag derived
-  # from the current branch and existing tags in the repo.
+  stage: version
   image: registry.logickernel.com/kernel/agileflow:0.6.27
-  # Run this job only on the main branch.
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-  # The CLI command performs:
-  # - Git config (based on CI-provided user/email)
-  # - Compute next tag v<MAJOR>.<MINOR>.<PATCH> for the current branch
-  # - Generate an annotated tag message grouped by Conventional Commits types
-  # - Push the tag back to the repository using CI_JOB_TOKEN
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?$/'
+    - when: never
   script:
-    - agileflow gitlab-ci
+    - echo "VERSION=$(agileflow gitlab-ci)" > version.env
+  artifacts:
+    reports: { dotenv: version.env }

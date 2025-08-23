@@ -1,18 +1,13 @@
-# .gitlab-ci.yml
-agileflow:
-  image: registry.logickernel.com/kernel/agileflow:0.6.27
-  script:
-    - agileflow gitlab-ci
-  only:
-    - main
+include:
+  - local: templates/AgileFlow.gitlab-ci.yml
 
 release:
   stage: deploy
+  needs: ["agileflow"] 
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
   script:
-    - VERSION="${CI_COMMIT_TAG#v}"
     - >-
       /kaniko/executor
       --context "${CI_PROJECT_DIR}"
@@ -21,5 +16,3 @@ release:
       --customPlatform "linux/amd64"
       --build-arg TARGETOS=linux
       --build-arg TARGETARCH=amd64
-  only:
-    - tags

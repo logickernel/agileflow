@@ -20,19 +20,6 @@ function requireEnv(varName) {
   return value;
 }
 
-function utcTimestamp() {
-  const d = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
-  return (
-    String(d.getUTCFullYear()) +
-    pad(d.getUTCMonth() + 1) +
-    pad(d.getUTCDate()) +
-    pad(d.getUTCHours()) +
-    pad(d.getUTCMinutes()) +
-    pad(d.getUTCSeconds())
-  );
-}
-
 
 
 function getCurrentBranchName() {
@@ -50,7 +37,7 @@ function getLatestVersion() {
   if (tags.length === 0) return { major: 0, minor: 0, patch: 0 };
   
   const lastTag = tags[tags.length - 1];
-  const m = lastTag.match(/^v(\d+)\.(\d+)\.(\d+)$/);
+  const m = lastTag.match(/^v\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?$/);
   if (!m) return { major: 0, minor: 0, patch: 0 };
   
   return { 
@@ -75,6 +62,19 @@ function buildNextTag() {
 
 function main() {
   try {
+    // Check if we're running on a tag and handle semver output
+    const CI_COMMIT_TAG = process.env.CI_COMMIT_TAG;
+    if (CI_COMMIT_TAG && CI_COMMIT_TAG.trim() !== '') {
+      const tag = CI_COMMIT_TAG.trim();
+      // Check if it's a semver tag starting with 'v'
+      const semverMatch = tag.match(/^v(\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?)$/);
+      if (semverMatch) {
+        // Print version without 'v' prefix and exit successfully
+        console.log(semverMatch[1]);
+        process.exit(0);
+      }
+    }
+
     ensureGitRepo();
 
     const GITLAB_USER_NAME = requireEnv('GITLAB_USER_NAME');
@@ -122,8 +122,9 @@ function main() {
       throw pushError;
     }
 
-    // Only print the version on success
-    console.log(TAG);
+    // Only print the version on success (without 'v' prefix)
+    const versionWithoutV = TAG.replace(/^v/, '');
+    console.log(versionWithoutV);
   } catch (err) {
     if (err && err.status) {
       process.exit(err.status);
