@@ -1,0 +1,19 @@
+{
+    "x=0": {
+        "feat": "patch",
+        "feat!": "minor",
+        "fix": "patch",
+        "fix!": "minor",
+        "perf": "patch",
+        "perf!": "minor"
+    },
+    "x>0": {
+        "feat": "minor",
+        "feat!": "major",
+        "fix": "patch",
+        "fix!": "major",
+        "perf": "patch",
+        "perf!": "major",
+        "revert": "mirror"
+    }
+}

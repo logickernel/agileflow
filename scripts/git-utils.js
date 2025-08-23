@@ -4,7 +4,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 
 function run(command, options = {}) {
-  execSync(command, { stdio: 'inherit', ...options });
+  execSync(command, { stdio: 'pipe', ...options });
 }
 
 function runWithOutput(command, options = {}) {
@@ -53,9 +53,7 @@ function pushTag(remoteUrl, tagName) {
   const safeTag = String(tagName).replace(/"/g, '\\"');
   try {
     const output = runWithOutput(`git push "${safeRemote}" "${safeTag}"`);
-    if (output && output.length > 0) {
-      process.stdout.write(output);
-    }
+    // Don't output anything - keep it silent
   } catch (error) {
     // Re-throw after ensuring error carries captured IO
     throw error;

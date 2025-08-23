@@ -34,7 +34,7 @@ You can also install it manually by adding the following job to the `.gitlab-ci.
 agileflow:
   image: registry.logickernel.com/kernel/agileflow:0.6.23
   script:
-    - agileflow gitlab-ci
+    - VERSION=$(agileflow gitlab-ci)
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
 ```
@@ -70,45 +70,9 @@ The main branch is the core of the AgileFlow framework. It serves as the single 
 
 ## Development Branches
 
-Development branches are used for feature additions and bug fixes. They branch off the main branch and merge back into it when ready. They use the following names depending on their purpose: `dev/*`, `feat/*`, `fix/*`, and `hotfix/*`.
-
-
-### Development Branches Creation
-
-1. **Generic Development Branches (dev/*)**: Generic development branches for large changes. Especially useful before `1.0.0`.
-
-```bash
-git switch -c dev/generic-development-branch-name
-```
-
-2. **Feature Branches (feat/*)**: For developing new features. Merges back into main when features are ready. Example: `feat/new-login`.
-
-```bash
-git switch -c feat/feature-branch-name
-```
-
-3. **Bug Fix Branches (fix/*)**: For fixing bugs. These are also merged into main. Example: `fix/login-error`.
-
-```bash
-git switch -c fix/bug-fix-branch-name
-```
-
-4. **Hotfix Branches (hotfix/*)**: For urgent fixes in production. They allow applying critical patches without interfering with other in-progress development. Once resolved, these branches are merged back into main.
-
-```bash
-git switch -c hotfix/hotfix-branch-name
-```
+Development branches are used for feature additions and bug fixes. They branch off the main branch and merge back into it when ready. Consider using expressive names depending on their purpose, e.g.: `dev/*`, `feat/*`, `fix/*`, and `hotfix/*`.
 
 After the contribution is ready, the development branch is merged into main, preferably using a [Merge Request](https://docs.gitlab.com/ee/user/project/merge_requests/) or similar.
-
-## Versioning
-
-Once a development branch is merged into main, AgileFlow calculates the next version number by increasing the patch number from the previous tag in the main branch's history. This keeps versioning consistent and transparent, making it easier to track small changes or bug fixes. AgileFlow enforces strict [Semantic Versioning](https://semver.org), which breaks down version numbers as follows:
-
-- **Major Versions (X.0.0)**: Introduces breaking changes or significant shifts in functionality.
-- **Minor Versions (0.Y.0)**: Represents new features, improvements, or non-breaking changes.
-- **Patch Versions (0.0.Z)**: Denotes bug fixes or minor tweaks.
-
 
 
 ### Conventional Commits

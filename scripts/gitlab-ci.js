@@ -122,12 +122,12 @@ function main() {
       throw pushError;
     }
 
-    console.log(`Created and pushed tag: ${TAG}`);
+    // Only print the version on success
+    console.log(TAG);
   } catch (err) {
     if (err && err.status) {
       process.exit(err.status);
     }
-    console.error(err);
     process.exit(1);
   }
 }
