@@ -5,3 +5,8 @@
   artifacts:
     reports:
       dotenv: VERSION
+
+release_main:
+  extends: .agileflow
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
