@@ -37,7 +37,7 @@ function getLatestVersion() {
   if (tags.length === 0) return { major: 0, minor: 0, patch: 0 };
   
   const lastTag = tags[tags.length - 1];
-  const m = lastTag.match(/^v\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?$/);
+  const m = lastTag.match(/^v(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.-]+)?$/);
   if (!m) return { major: 0, minor: 0, patch: 0 };
   
   return { 
