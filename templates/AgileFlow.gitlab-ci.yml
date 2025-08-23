@@ -1,8 +1,5 @@
-agileflow:
-  stage: version
+.agileflow:
   image: registry.logickernel.com/kernel/agileflow:0.6.43
-  rules:
-    - when: always
   script:
     - agileflow gitlab-ci
   artifacts:
