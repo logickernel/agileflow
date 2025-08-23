@@ -55,6 +55,14 @@ function buildNextTag() {
   return tag;
 }
 
+function writeVersionFile(version) {
+  // Remove the 'v' prefix if present for the VERSION file
+  const versionWithoutV = version.replace(/^v/, '');
+  console.log(`Writing version ${versionWithoutV} to VERSION file`);
+  fs.writeFileSync('VERSION', `VERSION=${versionWithoutV}\n`);
+  console.log('Version environment file created successfully');
+}
+
 function main() {
   try {
     console.log('Starting AgileFlow versioning process...');
@@ -75,15 +83,13 @@ function main() {
     const CI_COMMIT_TAG = process.env.CI_COMMIT_TAG;
     if (CI_COMMIT_TAG && CI_COMMIT_TAG.trim() !== '') {
       const tag = CI_COMMIT_TAG.trim();
-      console.log(`Running on existing tag: ${tag}`);
+      console.log(`Running on existing version tag: ${tag}`);
       // Check if it's a semver tag starting with 'v'
       const semverMatch = tag.match(/^v(\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?)$/);
       if (semverMatch) {
-        // Write version to version.env file in VERSION=... format and exit successfully
+        // Write version to VERSION file in VERSION=... format and exit successfully
         const version = semverMatch[1];
-        console.log(`Writing version ${version} to version.env file`);
-        fs.writeFileSync('version.env', `VERSION=${version}\n`);
-        console.log('Version environment file created successfully');
+        writeVersionFile(version);
         process.exit(0);
       }
       console.log('Tag is not a valid semver tag, proceeding with normal flow');
@@ -115,6 +121,8 @@ function main() {
     createAnnotatedTag(TAG, tagMessage);
     console.log(`Tag ${TAG} created locally`);
 
+
+
     // Push tag to GitLab using CI token
     console.log('Pushing tag to GitLab...');
     const encodedToken = encodeURIComponent(CI_JOB_TOKEN);
@@ -131,25 +139,26 @@ function main() {
       const deniesPush = normalized.includes('you are not allowed to push') || normalized.includes('not allowed to push code');
 
       if (has403 && deniesPush) {
-        console.error('\nGit push denied for CI_JOB_TOKEN (403).');
         console.error('The CI_JOB_TOKEN job token is not permitted to push to the repository.');
         console.error('\nHow to fix:');
-        console.error('- Ensure the feature flag "allow_push_repository_for_job_token" is enabled. See: https://archives.docs.gitlab.com/ee/administration/feature_flags.html');
+        console.error('- Ensure the feature flag "allow_push_repository_for_job_token" is enabled.\n');
         console.error('- Then in your project, go to Settings > CI/CD > Job token permissions (Token Access)\n');
         console.error(`  https://${CI_SERVER_HOST}/${CI_PROJECT_PATH}/-/settings/ci_cd`);
-        console.error('  and enable "Allow Git push requests to the repository".');
-        console.error('\nDocs: https://docs.gitlab.com/ee/ci/jobs/ci_job_token.html#git-push-to-your-project-repository');
+        console.error('\n');
+        console.error('\nSee:'); 
+        console.error('\n - https://docs.gitlab.com/ee/ci/jobs/ci_job_token.html#git-push-to-your-project-repository');
+        console.error('\n - https://docs.gitlab.com/ee/administration/feature_flags.html');
         console.error('\nAfter enabling, retry this pipeline.');
         process.exit(1);
       }
       throw pushError;
     }
 
-    // Write the version to version.env file in VERSION=... format for GitLab CI
-    const versionWithoutV = TAG.replace(/^v/, '');
-    console.log(`Writing version ${versionWithoutV} to version.env file`);
-    fs.writeFileSync('version.env', `VERSION=${versionWithoutV}\n`);
-    console.log('Version environment file created successfully');
+
+
+
+    // Write the version to VERSION file in VERSION=... format for GitLab CI
+    writeVersionFile(TAG);
     console.log(`AgileFlow versioning completed successfully: ${TAG}`);
   } catch (err) {
     console.error('Error during AgileFlow versioning:', err.message);
