@@ -1,6 +1,10 @@
 include:
   - local: templates/AgileFlow.gitlab-ci.yml
 
+stages:
+  - version
+  - build
+
 release:
   stage: build
   rules:
