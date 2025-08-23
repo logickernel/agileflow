@@ -35,7 +35,7 @@
 agileflow:
   # Runs the AgileFlow CLI to compute and push the next version tag derived
   # from the current branch and existing tags in the repo.
-  image: registry.logickernel.com/kernel/agileflow:0.6.23
+  image: registry.logickernel.com/kernel/agileflow:0.6.27
   # Run this job only on the main branch.
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
