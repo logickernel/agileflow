@@ -1,6 +1,6 @@
 agileflow:
   stage: .pre
-  image: registry.logickernel.com/kernel/agileflow:0.6.38
+  image: registry.logickernel.com/kernel/agileflow:0.6.37
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
     - when: never
