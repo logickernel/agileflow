@@ -1,9 +1,8 @@
 agileflow:
   stage: .pre
-  image: registry.logickernel.com/kernel/agileflow:0.6.40
-  cache:
-    paths:
-      - VERSION
-    policy: push
+  image: registry.logickernel.com/kernel/agileflow:0.6.42
   script:
     - agileflow gitlab-ci
+  artifacts:
+    reports:
+      dotenv: version.env

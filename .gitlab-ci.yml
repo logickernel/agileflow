@@ -14,7 +14,7 @@ release:
       /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CI_REGISTRY_IMAGE}:$(cat VERSION)"
+      --destination "${CI_REGISTRY_IMAGE}:${VERSION}"
       --custom-platform "linux/amd64"
       --build-arg TARGETOS=linux
       --build-arg TARGETARCH=amd64

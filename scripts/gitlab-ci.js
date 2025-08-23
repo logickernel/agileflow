@@ -79,11 +79,11 @@ function main() {
       // Check if it's a semver tag starting with 'v'
       const semverMatch = tag.match(/^v(\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?)$/);
       if (semverMatch) {
-        // Write version without 'v' prefix to VERSION file and exit successfully
+        // Write version to version.env file in VERSION=... format and exit successfully
         const version = semverMatch[1];
-        console.log(`Writing version ${version} to VERSION file`);
-        fs.writeFileSync('VERSION', version);
-        console.log('Version file created successfully');
+        console.log(`Writing version ${version} to version.env file`);
+        fs.writeFileSync('version.env', `VERSION=${version}\n`);
+        console.log('Version environment file created successfully');
         process.exit(0);
       }
       console.log('Tag is not a valid semver tag, proceeding with normal flow');
@@ -145,11 +145,11 @@ function main() {
       throw pushError;
     }
 
-    // Only write the version to VERSION file on success (without 'v' prefix)
+    // Write the version to version.env file in VERSION=... format for GitLab CI
     const versionWithoutV = TAG.replace(/^v/, '');
-    console.log(`Writing version ${versionWithoutV} to VERSION file`);
-    fs.writeFileSync('VERSION', versionWithoutV);
-    console.log('Version file created successfully');
+    console.log(`Writing version ${versionWithoutV} to version.env file`);
+    fs.writeFileSync('version.env', `VERSION=${versionWithoutV}\n`);
+    console.log('Version environment file created successfully');
     console.log(`AgileFlow versioning completed successfully: ${TAG}`);
   } catch (err) {
     console.error('Error during AgileFlow versioning:', err.message);
