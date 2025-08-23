@@ -15,28 +15,11 @@ AgileFlow works integrated with the CI/CD engine to **automatically create a new
 
 ## GitLab CI
 
-AgileFlow integrates with GitLab CI to automate version tagging. Follow these steps to set up the pipeline in your project.
-
-### Using the Template
-
-Add the following line at the top of `.gitlab-ci.yml`:
+AgileFlow integrates with GitLab CI to automate version tagging. Add the following line at the top of `.gitlab-ci.yml`:
 
 ```yml
 include:
-  - remote: https://code.logickernel.com/kernel/agileflow/-/raw/release/0.6/templates/AgileFlow.gitlab-ci.yml
-```
-
-### Manual Installation
-
-You can also install it manually by adding the following job to the `.gitlab-ci.yml` file instead:
-
-```yml
-agileflow:
-  image: registry.logickernel.com/kernel/agileflow:0.6.23
-  script:
-    - VERSION=$(agileflow gitlab-ci)
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+  - remote: code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
 ```
 
 > [!NOTE]
