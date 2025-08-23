@@ -1,5 +1,7 @@
 agileflow:
-  stage: .pre
+  stage:
+    - .pre
+    - build
   image: registry.logickernel.com/kernel/agileflow:0.6.43
   rules:
     - when: always
