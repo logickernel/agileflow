@@ -1,3 +1,9 @@
+stages:
+  - version
+  - build
+  - test
+  - deploy
+
 agileflow:
   stage: version
   image: registry.logickernel.com/kernel/agileflow:0.6.43
