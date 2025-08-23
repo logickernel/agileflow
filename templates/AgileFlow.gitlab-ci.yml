@@ -1,5 +1,4 @@
 agileflow:
-  stage: .pre
   image: registry.logickernel.com/kernel/agileflow:0.6.43
   script:
     - agileflow gitlab-ci
