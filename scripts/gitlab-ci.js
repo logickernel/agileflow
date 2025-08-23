@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+const fs = require('fs');
 const {
   ensureGitRepo,
   configureUser,
@@ -67,39 +68,57 @@ function main() {
     const CI_COMMIT_TAG = process.env.CI_COMMIT_TAG;
     if (CI_COMMIT_TAG && CI_COMMIT_TAG.trim() !== '') {
       const tag = CI_COMMIT_TAG.trim();
+      console.log(`Running on existing tag: ${tag}`);
       // Check if it's a semver tag starting with 'v'
       const semverMatch = tag.match(/^v(\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?)$/);
       if (semverMatch) {
-        // Print version without 'v' prefix and exit successfully
-        console.log(semverMatch[1]);
+        // Write version without 'v' prefix to VERSION file and exit successfully
+        const version = semverMatch[1];
+        console.log(`Writing version ${version} to VERSION file`);
+        fs.writeFileSync('VERSION', version);
+        console.log('Version file created successfully');
         process.exit(0);
       }
+      console.log('Tag is not a valid semver tag, proceeding with normal flow');
     }
 
+    console.log('Starting AgileFlow versioning process...');
     ensureGitRepo();
+    console.log('Git repository verified');
 
     const GITLAB_USER_NAME = requireEnv('GITLAB_USER_NAME');
     const GITLAB_USER_EMAIL = requireEnv('GITLAB_USER_EMAIL');
     const CI_JOB_TOKEN = requireEnv('CI_JOB_TOKEN');
     const CI_SERVER_HOST = requireEnv('CI_SERVER_HOST');
     const CI_PROJECT_PATH = requireEnv('CI_PROJECT_PATH');
+    console.log('Environment variables loaded');
 
     // Configure git user
     configureUser(GITLAB_USER_NAME, GITLAB_USER_EMAIL);
+    console.log(`Git user configured: ${GITLAB_USER_NAME} <${GITLAB_USER_EMAIL}>`);
 
     // Build tag name automatically from the current branch
     // Format: v<major>.<minor>.<patch>
+    console.log('Building next version tag...');
     const TAG = buildNextTag();
+    console.log(`Next version tag: ${TAG}`);
 
     // Create annotated tag message: version + summarized commits since previous tag
+    console.log('Building tag message...');
     const tagMessage = buildTagMessage(TAG, { maxCommitLines: 100, includeMergeCommits: false });
+    console.log(`Tag message created (${tagMessage.split('\n').length} lines)`);
+    
+    console.log('Creating annotated tag...');
     createAnnotatedTag(TAG, tagMessage);
+    console.log(`Tag ${TAG} created locally`);
 
     // Push tag to GitLab using CI token
+    console.log('Pushing tag to GitLab...');
     const encodedToken = encodeURIComponent(CI_JOB_TOKEN);
     const remoteUrl = `https://gitlab-ci-token:${encodedToken}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git`;
     try {
       pushTag(remoteUrl, TAG);
+      console.log(`Tag ${TAG} pushed successfully to GitLab`);
     } catch (pushError) {
       const captured = pushError && pushError._captured ? pushError._captured : {};
       const combined = `${captured.stdout || ''}\n${captured.stderr || ''}\n${pushError.message || ''}`;
@@ -123,10 +142,14 @@ function main() {
       throw pushError;
     }
 
-    // Only print the version on success (without 'v' prefix)
+    // Only write the version to VERSION file on success (without 'v' prefix)
     const versionWithoutV = TAG.replace(/^v/, '');
-    console.log(versionWithoutV);
+    console.log(`Writing version ${versionWithoutV} to VERSION file`);
+    fs.writeFileSync('VERSION', versionWithoutV);
+    console.log('Version file created successfully');
+    console.log(`AgileFlow versioning completed successfully: ${TAG}`);
   } catch (err) {
+    console.error('Error during AgileFlow versioning:', err.message);
     if (err && err.status) {
       process.exit(err.status);
     }
