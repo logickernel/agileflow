@@ -1,5 +1,4 @@
 agileflow:
-  stage: version
   image: registry.logickernel.com/kernel/agileflow:0.6.27
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
