@@ -1,9 +1,8 @@
 agileflow:
-  stage:
-    - .pre
-    - build
+  stage: .pre
   image: registry.logickernel.com/kernel/agileflow:0.6.43
   rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
     - when: always
   script:
     - agileflow gitlab-ci
