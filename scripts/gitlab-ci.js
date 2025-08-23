@@ -49,13 +49,6 @@ function getLatestVersion() {
 }
 
 function buildNextTag() {
-  // Ensure we see all tags before computing next version
-  try {
-    run('git fetch --all --tags --prune --prune-tags');
-  } catch (_) {
-    // Non-fatal; continue with whatever tags are present locally
-  }
-  
   const currentVersion = getLatestVersion();
   const nextPatch = currentVersion.patch + 1;
   const tag = `v${currentVersion.major}.${currentVersion.minor}.${nextPatch}`;
@@ -64,6 +57,20 @@ function buildNextTag() {
 
 function main() {
   try {
+    console.log('Starting AgileFlow versioning process...');
+    ensureGitRepo();
+    console.log('Git repository verified');
+
+    // Fetch all tags and refs first before any tag operations
+    console.log('Fetching all tags and refs...');
+    try {
+      run('git fetch --all --tags --prune --prune-tags');
+      console.log('All tags and refs fetched successfully');
+    } catch (fetchError) {
+      console.warn('Warning: Failed to fetch all tags:', fetchError.message);
+      console.warn('Continuing with locally available tags...');
+    }
+
     // Check if we're running on a tag and handle semver output
     const CI_COMMIT_TAG = process.env.CI_COMMIT_TAG;
     if (CI_COMMIT_TAG && CI_COMMIT_TAG.trim() !== '') {
@@ -81,10 +88,6 @@ function main() {
       }
       console.log('Tag is not a valid semver tag, proceeding with normal flow');
     }
-
-    console.log('Starting AgileFlow versioning process...');
-    ensureGitRepo();
-    console.log('Git repository verified');
 
     const GITLAB_USER_NAME = requireEnv('GITLAB_USER_NAME');
     const GITLAB_USER_EMAIL = requireEnv('GITLAB_USER_EMAIL');
