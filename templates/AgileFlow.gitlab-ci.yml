@@ -6,3 +6,9 @@ agileflow:
   artifacts:
     reports:
       dotenv: VERSION
+
+.post:
+  cleanup:
+    stage: .post
+    script:
+      - echo "Cleaning up VERSION artefact"
