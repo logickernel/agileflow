@@ -3,7 +3,9 @@ include:
 
 release:
   stage: deploy
-  needs: ["agileflow"] 
+  needs: [".agileflow"]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
   image:
     name: gcr.io/kaniko-project/executor:debug
     entrypoint: [""]
@@ -12,7 +14,7 @@ release:
       /kaniko/executor
       --context "${CI_PROJECT_DIR}"
       --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
-      --destination "${CI_REGISTRY_IMAGE}:${VERSION}"
+      --destination "${CI_REGISTRY_IMAGE}:$(cat VERSION)"
       --customPlatform "linux/amd64"
       --build-arg TARGETOS=linux
       --build-arg TARGETARCH=amd64

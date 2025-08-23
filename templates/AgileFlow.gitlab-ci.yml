@@ -1,10 +1,5 @@
-agileflow:
+.agileflow:
   stage: .pre
-  image: registry.logickernel.com/kernel/agileflow:0.6.37
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
-    - when: never
+  image: registry.logickernel.com/kernel/agileflow:0.6.39
   script:
-    - echo "VERSION=$(agileflow gitlab-ci)" | tee version.env
-  artifacts:
-    reports: { dotenv: version.env }
+    - echo "VERSION=$(agileflow gitlab-ci)" > VERSION
