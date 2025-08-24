@@ -3,10 +3,11 @@ stages:
   - build
   - test
   - deploy
+  - cleanup
 
 agileflow:
   stage: version
-  image: registry.logickernel.com/kernel/agileflow:0.6.43
+  image: registry.logickernel.com/kernel/agileflow:0.6.67
   script:
     - agileflow gitlab-ci
   artifacts:

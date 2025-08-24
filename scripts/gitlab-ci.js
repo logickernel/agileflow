@@ -156,9 +156,13 @@ function main() {
 
 
 
-
     // Write the version to VERSION file in VERSION=... format for GitLab CI
     writeVersionFile(TAG);
+
+    // Use env variables to calculate the URL of the commit pipelines based on https://code.logickernel.com/kernel/agileflow/-/commit/d8312b0afc11356cec9b84bdfdc322314650717e/pipelines
+    const commitUrl = `https://${CI_SERVER_HOST}/${CI_PROJECT_PATH}/-/commit/${process.env.CI_COMMIT_SHA}/pipelines`;
+    console.log(`Commit pipelines URL: ${commitUrl}`);
+
     console.log(`AgileFlow versioning completed successfully: ${TAG}`);
   } catch (err) {
     console.error('Error during AgileFlow versioning:', err.message);
