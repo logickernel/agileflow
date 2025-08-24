@@ -44,5 +44,3 @@ We welcome contributions to improve our documentation! Please:
 ## External Resources
 
 - [Main README](../README.md) - Project overview and quick start
-- [GitHub Repository](https://github.com/logickernel/agileflow) - Source code and issues
-- [Community Discussions](https://github.com/logickernel/agileflow/discussions) - Questions and ideas
