@@ -26,7 +26,7 @@ include:
 >
 > You may need to enable the feature flag `allow_push_repository_for_job_token` in your self-managed instance to see it.
 
-**📚 Learn More**: [Complete Installation Guide](./docs/installation.md) - Step-by-step setup for different platforms
+**Learn More**: [Complete Installation Guide](./docs/installation.md) - Step-by-step setup for different platforms
 
 # Core Principles
 
@@ -45,7 +45,7 @@ The main branch is the core of the AgileFlow framework. It serves as the single 
 - Minor versions (v1.0.0 → v1.1.0) are created by merging significant features
 - Major versions (v1.0.0 → v2.0.0) are created for breaking changes
 
-**📚 Learn More**: [Branching Strategy Guide](./docs/branching-strategy.md) - Complete guide to AgileFlow's branching approach
+**Learn More**: [Branching Strategy Guide](./docs/branching-strategy.md) - Complete guide to AgileFlow's branching approach
 
 ## Development Branches
 
@@ -53,7 +53,7 @@ Development branches are used for feature additions and bug fixes. They branch o
 
 After the contribution is ready, the development branch is merged into main, preferably using a [Merge Request](https://docs.gitlab.com/ee/user/project/merge_requests/) or similar.
 
-**📚 Learn More**: [Getting Started Guide](./docs/getting-started.md) - Quick start for new AgileFlow users
+**Learn More**: [Getting Started Guide](./docs/getting-started.md) - Quick start for new AgileFlow users
 
 # Version-Centric CI/CD Approach
 
@@ -77,7 +77,7 @@ Your pipeline consists of 5 focused stages that work together seamlessly:
 4. **Test** - Validate the deployed version across all environments
 5. **Clean** - Cleanup temporary resources and artifacts
 
-**📚 Learn More**: [Version-Centric CI/CD Deep Dive](./docs/version-centric-cicd.md) - Comprehensive guide to AgileFlow's revolutionary CI/CD paradigm
+**Learn More**: [Version-Centric CI/CD Deep Dive](./docs/version-centric-cicd.md) - Comprehensive guide to AgileFlow's revolutionary CI/CD paradigm
 
 # Conventional Commits
 
@@ -111,7 +111,7 @@ perf(cache)!: switch to Redis cluster
 docs: update README with usage examples
 ```
 
-**📚 Learn More**: [Conventional Commits Guide](./docs/conventional-commits.md) - Complete guide to commit message formatting and types
+**Learn More**: [Conventional Commits Guide](./docs/conventional-commits.md) - Complete guide to commit message formatting and types
 
 # Release Management
 
@@ -143,7 +143,7 @@ Documentation:
 - update README with usage examples
 ```
 
-**📚 Learn More**: [Release Management Guide](./docs/release-management.md) - How to manage releases and versions effectively
+**Learn More**: [Release Management Guide](./docs/release-management.md) - How to manage releases and versions effectively
 
 # GitLab CI Integration
 
@@ -172,7 +172,7 @@ build:
 - **Consistent Deployments**: Deploy the same version everywhere
 - **Simplified Rollbacks**: Rollback to any previous version with confidence
 
-**📚 Learn More**: [GitLab CI Template Reference](./docs/gitlab-ci-template.md) - Complete reference for the AgileFlow GitLab CI template
+**Learn More**: [GitLab CI Template Reference](./docs/gitlab-ci-template.md) - Complete reference for the AgileFlow GitLab CI template
 
 # Getting Started
 
@@ -189,7 +189,7 @@ build:
 - Customize for multiple services
 - Set up environment-specific configurations
 
-**📚 Learn More**: [Getting Started Guide](./docs/getting-started.md) - Step-by-step setup and examples
+**Learn More**: [Getting Started Guide](./docs/getting-started.md) - Step-by-step setup and examples
 
 # Advanced Topics
 
@@ -211,7 +211,7 @@ If you're currently using a traditional branch-based approach:
 - Use conventional commits for automatic versioning
 - Keep deployment scripts identical across environments
 
-**📚 Learn More**: [Advanced Topics](./docs/README.md#advanced-topics) - Migration guides, best practices, and troubleshooting
+**Learn More**: [Advanced Topics](./docs/README.md#advanced-topics) - Migration guides, best practices, and troubleshooting
 
 # Documentation
 

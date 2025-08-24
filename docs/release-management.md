@@ -184,34 +184,6 @@ v1.2.4
 - Add unit tests
 ```
 
-### Customizing Release Notes
-
-You can customize release note generation:
-
-```javascript
-// agileflow.config.js
-module.exports = {
-  releaseNotes: {
-    enabled: true,
-    format: 'conventional', // 'conventional' or 'simple'
-    includeBody: true,     // Include commit body
-    groupByType: true,      // Group by commit type
-    sortOrder: [           // Custom sort order
-      'feat',
-      'fix', 
-      'perf',
-      'refactor',
-      'docs',
-      'test',
-      'build',
-      'ci',
-      'chore',
-      'style'
-    ]
-  }
-};
-```
-
 ## Release Strategies
 
 ### Continuous Delivery
