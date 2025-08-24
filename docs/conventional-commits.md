@@ -21,17 +21,17 @@ AgileFlow automatically determines version bumps based on conventional commit me
 
 | Commit Type | Description | (>1.0.0) | (0.x.x) |
 |-------------|-------------|----------|---------|
-| [feat](./type-feat.md) | New features | **Minor** | **Patch** |
-| [fix](./type-fix.md) | Bug fixes | **Patch** | **Patch** |
-| [perf](./type-perf.md) | Performance improvements | **Patch** | **Patch** |
-| [build](./type-build.md) | Build system changes | **Patch** | **Patch** |
-| [docs](./type-docs.md) | Documentation changes | **None** | **None** |
-| [style](./type-style.md) | Code style changes | **None** | **None** |
-| [refactor](./type-refactor.md) | Code refactoring | **None** | **None** |
-| [test](./type-test.md) | Test additions/changes | **None** | **None** |
-| [ci](./type-ci.md) | CI/CD changes | **None** | **None** |
-| [chore](./type-chore.md) | Maintenance tasks | **None** | **None** |
-| [revert](./type-revert.md) | Revert previous commits | **None** | **None** |
+| [feat](./conventional-commits/type-feat.md) | New features | **Minor** | **Patch** |
+| [fix](./conventional-commits/type-fix.md) | Bug fixes | **Patch** | **Patch** |
+| [perf](./conventional-commits/type-perf.md) | Performance improvements | **Patch** | **Patch** |
+| [build](./conventional-commits/type-build.md) | Build system changes | **Patch** | **Patch** |
+| [docs](./conventional-commits/type-docs.md) | Documentation changes | **None** | **None** |
+| [style](./conventional-commits/type-style.md) | Code style changes | **None** | **None** |
+| [refactor](./conventional-commits/type-refactor.md) | Code refactoring | **None** | **None** |
+| [test](./conventional-commits/type-test.md) | Test additions/changes | **None** | **None** |
+| [ci](./conventional-commits/type-ci.md) | CI/CD changes | **None** | **None** |
+| [chore](./conventional-commits/type-chore.md) | Maintenance tasks | **None** | **None** |
+| [revert](./conventional-commits/type-revert.md) | Revert previous commits | **None** | **None** |
 
 ## Breaking Changes
 
