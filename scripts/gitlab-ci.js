@@ -10,6 +10,7 @@ const {
   runWithOutput,
   run,
   buildTagMessage,
+  getLatestVersion,
 } = require('./git-utils');
 
 function requireEnv(varName) {
@@ -28,122 +29,42 @@ function logCommitPipelinesUrl(ciServerHost, ciProjectPath) {
 }
 
 
-function getLatestVersion() {
-  // Get the latest version tag from the current branch
-  const out = runWithOutput('git tag --list "v*" --sort=v:refname') || '';
-  const tags = out.split('\n').map((s) => s.trim()).filter(Boolean);
-  if (tags.length === 0) return { major: 0, minor: 0, patch: 0 };
-  
-  const lastTag = tags[tags.length - 1];
-  const m = lastTag.match(/^v(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.-]+)?$/);
-  if (!m) return { major: 0, minor: 0, patch: 0 };
-  
-  return { 
-    major: Number(m[1]), 
-    minor: Number(m[2]), 
-    patch: Number(m[3]),
-    metadata: m[4] || '',
-  };
-}
+
 
 function calculateNextVersion(commitMessages = []) {
+  // Use the new functions from git-utils.js
+  const { calculateNextVersion: calculateNextVersionFromUtils, analyzeCommitMessages, getLatestVersion } = require('./git-utils');
+  
   const currentVersion = getLatestVersion();
-
-  let versionBump = 'none';
-
+  
+  // Analyze commit messages for debugging
   if (commitMessages && commitMessages.length > 0) {
     console.log(`Analyzing ${commitMessages.length} commit messages for version bump...`);
+    const analysis = analyzeCommitMessages(commitMessages);
     
     // Log first few commit messages for debugging
     const sampleMessages = commitMessages.slice(0, 5);
     console.log(`Sample commit messages: ${sampleMessages.map(m => `"${m}"`).join(', ')}`);
     
-    // Check for breaking changes according to conventional commit standards:
-    // 1. feat!, feat(scope)!, fix!, fix(scope)!, etc.
-    // 2. BREAKING CHANGE: in commit body
-    const containsBreakingChanges = commitMessages.some(message => {
-      const trimmed = message.trim();
-      // Check for breaking change indicator in commit type (e.g., feat!, feat(scope)!)
-      // Use the same regex pattern as git-utils.js for consistency
-      const hasBreakingIndicator = /^(\w+)(!)(?:\(([^)]+)\))?:\s+(.+)$/i.test(trimmed);
-      // Check for BREAKING CHANGE in the message
-      const hasBreakingChangeComment = /BREAKING CHANGE:/i.test(trimmed);
-      return hasBreakingIndicator || hasBreakingChangeComment;
-    });
-    
-    // Check for feature commits (feat: or feat!)
-    const containsFeatures = commitMessages.some(message => /^feat(!|\([^)]+\)!|:)/i.test(message.trim()));
-    
-    // Check for fix commits (fix: or fix!)
-    const containsFixes = commitMessages.some(message => /^fix(!|\([^)]+\)!|:)/i.test(message.trim()));
-    
-    // Check for performance commits (perf: or perf!)
-    const containsPerformance = commitMessages.some(message => /^perf(!|\([^)]+\)!|:)/i.test(message.trim()));
-
-    // Check for build system commits (buiild: or build!)
-    const containsBuild = commitMessages.some(message => /^build(!|\([^)]+\)!|:)/i.test(message.trim()));
-
-    // Debug logging
-    console.log(`Breaking changes detected: ${containsBreakingChanges}`);
-    console.log(`Features detected: ${containsFeatures}`);
-    console.log(`Fixes detected: ${containsFixes}`);
-    console.log(`Performance changes detected: ${containsPerformance}`);
+    // Log analysis results
+    console.log(`Breaking changes detected: ${analysis.breakingChanges.length > 0} (${analysis.breakingChanges.length})`);
+    console.log(`Features detected: ${analysis.features.length > 0} (${analysis.features.length})`);
+    console.log(`Fixes detected: ${analysis.fixes.length > 0} (${analysis.fixes.length})`);
+    console.log(`Performance changes detected: ${analysis.performance.length > 0} (${analysis.performance.length})`);
+    console.log(`Build changes detected: ${analysis.build.length > 0} (${analysis.build.length})`);
     
     // Show examples of breaking changes if any are detected
-    if (containsBreakingChanges) {
-      const breakingExamples = commitMessages.filter(message => {
-        const trimmed = message.trim();
-        const hasBreakingIndicator = /^(\w+)(!)(?:\(([^)]+)\))?:\s+(.+)$/i.test(trimmed);
-        const hasBreakingChangeComment = /BREAKING CHANGE:/i.test(trimmed);
-        return hasBreakingIndicator || hasBreakingChangeComment;
-      });
-      console.log(`Breaking change examples: ${breakingExamples.map(m => `"${m}"`).join(', ')}`);
-    }
-
-    if (currentVersion.major > 0) {
-      if (containsBreakingChanges) {
-        versionBump = 'major';
-      } else if (containsFeatures) {
-        versionBump = 'minor';
-      } else if (containsFixes || containsPerformance || containsBuild) {
-        versionBump = 'patch';
-      }
-    } else {
-      // For 0.x.x versions, breaking changes bump minor, features bump patch
-      if (containsBreakingChanges) {
-        versionBump = 'minor';
-      } else if (containsFeatures || containsFixes || containsPerformance || containsBuild) {
-        versionBump = 'patch';
-      }
+    if (analysis.breakingChanges.length > 0) {
+      console.log(`Breaking change examples: ${analysis.breakingChanges.map(m => `"${m}"`).join(', ')}`);
     }
   }
   
-  // Apply version bump
-  let nextMajor = currentVersion.major;
-  let nextMinor = currentVersion.minor;
-  let nextPatch = currentVersion.patch;
+  const result = calculateNextVersionFromUtils(commitMessages, currentVersion);
   
-  switch (versionBump) {
-    case 'major':
-      nextMajor += 1;
-      nextMinor = 0;
-      nextPatch = 0;
-      break;
-    case 'minor':
-      nextMinor += 1;
-      nextPatch = 0;
-      break;
-    case 'patch':
-      nextPatch += 1;
-      break;
-    case 'none':
-    default:
-      break;
-  }
+  // Log the version bump for debugging
+  console.log(`Version bump: ${result.versionBump} (${result.currentVersion} → ${result.nextVersion.major}.${result.nextVersion.minor}.${result.nextVersion.patch})`);
   
-  const tag = `v${nextMajor}.${nextMinor}.${nextPatch}${currentVersion.metadata}`;
-  console.log(`Version bump: ${versionBump} (${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch} → ${nextMajor}.${nextMinor}.${nextPatch})`);
-  return { tag, versionBump, currentVersion: `${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}` };
+  return result;
 }
 
 function writeVersionFile(version) {

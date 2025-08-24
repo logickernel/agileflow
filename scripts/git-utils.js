@@ -206,6 +206,162 @@ function buildTagMessage(tagName, options = {}) {
   return lines.join('\n');
 }
 
+function determineVersionBump(commitMessages, currentVersion = { major: 0, minor: 0, patch: 0 }) {
+  if (!commitMessages || commitMessages.length === 0) {
+    return 'none';
+  }
+
+  // Check for breaking changes according to conventional commit standards:
+  // 1. feat!, feat(scope)!, fix!, fix(scope)!, etc.
+  // 2. BREAKING CHANGE: in commit message
+  const containsBreakingChanges = commitMessages.some(message => {
+    const trimmed = message.trim();
+    // Check for breaking change indicator in commit type (e.g., feat!, feat(scope)!)
+    const hasBreakingIndicator = /^(\w+)(!)(?:\(([^)]+)\))?:\s+(.+)$/i.test(trimmed);
+    // Check for BREAKING CHANGE in the message
+    const hasBreakingChangeComment = /BREAKING CHANGE:/i.test(trimmed);
+    return hasBreakingIndicator || hasBreakingChangeComment;
+  });
+  
+  // Check for feature commits (feat: or feat!)
+  const containsFeatures = commitMessages.some(message => /^feat(!|\([^)]+\)!|:)/i.test(message.trim()));
+  
+  // Check for fix commits (fix: or fix!)
+  const containsFixes = commitMessages.some(message => /^fix(!|\([^)]+\)!|:)/i.test(message.trim()));
+  
+  // Check for performance commits (perf: or perf!)
+  const containsPerformance = commitMessages.some(message => /^perf(!|\([^)]+\)!|:)/i.test(message.trim()));
+
+  // Check for build system commits (build: or build!)
+  const containsBuild = commitMessages.some(message => /^build(!|\([^)]+\)!|:)/i.test(message.trim()));
+
+  // Determine version bump based on current version and commit types
+  if (currentVersion.major > 0) {
+    // For 1.x.x and above versions
+    if (containsBreakingChanges) {
+      return 'major';
+    } else if (containsFeatures) {
+      return 'minor';
+    } else if (containsFixes || containsPerformance || containsBuild) {
+      return 'patch';
+    }
+  } else {
+    // For 0.x.x versions, breaking changes bump minor, features bump patch
+    if (containsBreakingChanges) {
+      return 'minor';
+    } else if (containsFeatures || containsFixes || containsPerformance || containsBuild) {
+      return 'patch';
+    }
+  }
+  
+  return 'none';
+}
+
+function calculateNextVersion(commitMessages, currentVersion = { major: 0, minor: 0, patch: 0 }) {
+  const versionBump = determineVersionBump(commitMessages, currentVersion);
+  
+  // Apply version bump
+  let nextMajor = currentVersion.major;
+  let nextMinor = currentVersion.minor;
+  let nextPatch = currentVersion.patch;
+  
+  switch (versionBump) {
+    case 'major':
+      nextMajor += 1;
+      nextMinor = 0;
+      nextPatch = 0;
+      break;
+    case 'minor':
+      nextMinor += 1;
+      nextPatch = 0;
+      break;
+    case 'patch':
+      nextPatch += 1;
+      break;
+    case 'none':
+    default:
+      break;
+  }
+  
+  const tag = `v${nextMajor}.${nextMinor}.${nextPatch}${currentVersion.metadata || ''}`;
+  return { 
+    tag, 
+    versionBump, 
+    currentVersion: `${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}`,
+    nextVersion: { major: nextMajor, minor: nextMinor, patch: nextPatch }
+  };
+}
+
+function analyzeCommitMessages(commitMessages) {
+  if (!commitMessages || commitMessages.length === 0) {
+    return {
+      total: 0,
+      breakingChanges: [],
+      features: [],
+      fixes: [],
+      performance: [],
+      build: [],
+      other: []
+    };
+  }
+
+  const analysis = {
+    total: commitMessages.length,
+    breakingChanges: [],
+    features: [],
+    fixes: [],
+    performance: [],
+    build: [],
+    other: []
+  };
+
+  for (const message of commitMessages) {
+    const trimmed = message.trim();
+    
+    // Check for breaking changes
+    const hasBreakingIndicator = /^(\w+)(!)(?:\(([^)]+)\))?:\s+(.+)$/i.test(trimmed);
+    const hasBreakingChangeComment = /BREAKING CHANGE:/i.test(trimmed);
+    
+    if (hasBreakingIndicator || hasBreakingChangeComment) {
+      analysis.breakingChanges.push(message);
+      continue;
+    }
+    
+    // Check for conventional commit types
+    if (/^feat(!|\([^)]+\)!|:)/i.test(trimmed)) {
+      analysis.features.push(message);
+    } else if (/^fix(!|\([^)]+\)!|:)/i.test(trimmed)) {
+      analysis.fixes.push(message);
+    } else if (/^perf(!|\([^)]+\)!|:)/i.test(trimmed)) {
+      analysis.performance.push(message);
+    } else if (/^build(!|\([^)]+\)!|:)/i.test(trimmed)) {
+      analysis.build.push(message);
+    } else {
+      analysis.other.push(message);
+    }
+  }
+
+  return analysis;
+}
+
+function getLatestVersion() {
+  // Get the latest version tag from the current branch
+  const out = runWithOutput('git tag --list "v*" --sort=v:refname') || '';
+  const tags = out.split('\n').map((s) => s.trim()).filter(Boolean);
+  if (tags.length === 0) return { major: 0, minor: 0, patch: 0 };
+  
+  const lastTag = tags[tags.length - 1];
+  const m = lastTag.match(/^v(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.-]+)?$/);
+  if (!m) return { major: 0, minor: 0, patch: 0 };
+  
+  return { 
+    major: Number(m[1]), 
+    minor: Number(m[2]), 
+    patch: Number(m[3]),
+    metadata: m[4] || '',
+  };
+}
+
 module.exports = {
   run,
   runWithOutput,
@@ -215,6 +371,11 @@ module.exports = {
   pushTag,
   buildTagMessage,
   getCommitSubjectsSince,
+  determineVersionBump,
+  calculateNextVersion,
+  analyzeCommitMessages,
+  getLatestVersion,
+  parseSemverTag,
 };
 
 
