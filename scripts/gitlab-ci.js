@@ -52,23 +52,43 @@ function calculateNextVersion(commitMessages = []) {
     const sampleMessages = commitMessages.slice(0, 5);
     console.log(`Sample commit messages: ${sampleMessages.map(m => `"${m}"`).join(', ')}`);
     
-    // Check for breaking changes (commit messages ending with !)
-    const containsBreakingChanges = commitMessages.some(message => /!$/.test(message.trim()));
+    // Check for breaking changes according to conventional commit standards:
+    // 1. feat!, feat(scope)!, fix!, fix(scope)!, etc.
+    // 2. BREAKING CHANGE: in commit body
+    const containsBreakingChanges = commitMessages.some(message => {
+      const trimmed = message.trim();
+      // Check for breaking change indicator in commit type (e.g., feat!, feat(scope)!)
+      const hasBreakingIndicator = /^[a-z]+(!|\([^)]+\)!):/i.test(trimmed);
+      // Check for BREAKING CHANGE in the message
+      const hasBreakingChangeComment = /BREAKING CHANGE:/i.test(trimmed);
+      return hasBreakingIndicator || hasBreakingChangeComment;
+    });
     
     // Check for feature commits (feat: or feat!)
-    const containsFeatures = commitMessages.some(message => /^feat(!|:)/i.test(message.trim()));
+    const containsFeatures = commitMessages.some(message => /^feat(!|\([^)]+\)!|:)/i.test(message.trim()));
     
     // Check for fix commits (fix: or fix!)
-    const containsFixes = commitMessages.some(message => /^fix(!|:)/i.test(message.trim()));
+    const containsFixes = commitMessages.some(message => /^fix(!|\([^)]+\)!|:)/i.test(message.trim()));
     
     // Check for performance commits (perf: or perf!)
-    const containsPerformance = commitMessages.some(message => /^perf(!|:)/i.test(message.trim()));
+    const containsPerformance = commitMessages.some(message => /^perf(!|\([^)]+\)!|:)/i.test(message.trim()));
 
     // Debug logging
     console.log(`Breaking changes detected: ${containsBreakingChanges}`);
     console.log(`Features detected: ${containsFeatures}`);
     console.log(`Fixes detected: ${containsFixes}`);
     console.log(`Performance changes detected: ${containsPerformance}`);
+    
+    // Show examples of breaking changes if any are detected
+    if (containsBreakingChanges) {
+      const breakingExamples = commitMessages.filter(message => {
+        const trimmed = message.trim();
+        const hasBreakingIndicator = /^[a-z]+(!|\([^)]+\)!):/i.test(trimmed);
+        const hasBreakingChangeComment = /BREAKING CHANGE:/i.test(trimmed);
+        return hasBreakingIndicator || hasBreakingChangeComment;
+      });
+      console.log(`Breaking change examples: ${breakingExamples.map(m => `"${m}"`).join(', ')}`);
+    }
 
     if (currentVersion.major > 0) {
       if (containsBreakingChanges) {
