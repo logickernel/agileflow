@@ -64,7 +64,8 @@ function calculateNextVersion(commitMessages = []) {
     const containsBreakingChanges = commitMessages.some(message => {
       const trimmed = message.trim();
       // Check for breaking change indicator in commit type (e.g., feat!, feat(scope)!)
-      const hasBreakingIndicator = /^[a-z]+(!|\([^)]+\)!):/i.test(trimmed);
+      // Use the same regex pattern as git-utils.js for consistency
+      const hasBreakingIndicator = /^(\w+)(!)(?:\(([^)]+)\))?:\s+(.+)$/i.test(trimmed);
       // Check for BREAKING CHANGE in the message
       const hasBreakingChangeComment = /BREAKING CHANGE:/i.test(trimmed);
       return hasBreakingIndicator || hasBreakingChangeComment;
@@ -89,7 +90,7 @@ function calculateNextVersion(commitMessages = []) {
     if (containsBreakingChanges) {
       const breakingExamples = commitMessages.filter(message => {
         const trimmed = message.trim();
-        const hasBreakingIndicator = /^[a-z]+(!|\([^)]+\)!):/i.test(trimmed);
+        const hasBreakingIndicator = /^(\w+)(!)(?:\(([^)]+)\))?:\s+(.+)$/i.test(trimmed);
         const hasBreakingChangeComment = /BREAKING CHANGE:/i.test(trimmed);
         return hasBreakingIndicator || hasBreakingChangeComment;
       });
