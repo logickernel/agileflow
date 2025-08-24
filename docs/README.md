@@ -2,7 +2,7 @@
 
 Welcome to the AgileFlow documentation! This folder contains detailed guides and explanations for different aspects of the AgileFlow system.
 
-## 📚 Available Documentation
+## Available Documentation
 
 ### Core Concepts
 - **[Version-Centric CI/CD Approach](./version-centric-cicd.md)** - Comprehensive guide to AgileFlow's revolutionary CI/CD paradigm
@@ -24,14 +24,14 @@ Welcome to the AgileFlow documentation! This folder contains detailed guides and
 - **[Best Practices](./best-practices.md)** - Recommended practices and patterns
 - **[Troubleshooting](./troubleshooting.md)** - Common issues and solutions
 
-## 🚀 Quick Navigation
+## Quick Navigation
 
 - **New to AgileFlow?** Start with [Getting Started](./getting-started.md)
 - **Want to understand the approach?** Read [Version-Centric CI/CD](./version-centric-cicd.md)
 - **Ready to install?** Follow [Installation & Setup](./installation.md)
 - **Need help?** Check [Troubleshooting](./troubleshooting.md)
 
-## 📝 Contributing to Documentation
+## Contributing to Documentation
 
 We welcome contributions to improve our documentation! Please:
 
@@ -41,7 +41,7 @@ We welcome contributions to improve our documentation! Please:
 4. Test any code examples or commands
 5. Submit changes via merge requests
 
-## 🔗 External Resources
+## External Resources
 
 - [Main README](../README.md) - Project overview and quick start
 - [GitHub Repository](https://github.com/logickernel/agileflow) - Source code and issues
