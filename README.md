@@ -257,7 +257,7 @@ Here's how the version-centric approach works in practice:
 ```yaml
 # .gitlab-ci.yml
 include:
-  - local: templates/AgileFlow.gitlab-ci.yml
+  - remote: https://code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
 
 # Build stage uses VERSION from agileflow job
 build:
