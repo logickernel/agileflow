@@ -2,12 +2,11 @@
 
 # AgileFlow
 
-In today’s fast-paced software development landscape, maintaining clarity, consistency, and efficiency in the release process is essential. AgileFlow is a streamlined yet powerful versioning system, branching strategy, and CI/CD tool designed for software teams of all sizes and projects of any scale.
+In today's fast-paced software development landscape, maintaining clarity, consistency, and efficiency in the release process is essential. AgileFlow is a streamlined yet powerful versioning system, branching strategy, and CI/CD tool designed for software teams of all sizes and projects of any scale.
 
 AgileFlow enforces Semantic Versioning and integrates a robust branching strategy for development and deployment. It seamlessly works with GitLab CI pipelines to ensure a structured, efficient, and predictable development lifecycle. **All versions are calculated from the main branch's commit history**, ensuring consistent versioning and release notes. Whether for small projects or large-scale deployments, AgileFlow is an indispensable tool that simplifies versioning and release management.
 
 ![AgileFlow workflow example diagram](./media/diagram.jpg)
-
 
 AgileFlow works integrated with the CI/CD engine to **automatically create a new version** every time there's a merge into the main branch, incrementing the patch number based on the latest identifiable version in the repository.
 
@@ -27,14 +26,9 @@ include:
 >
 > You may need to enable the feature flag `allow_push_repository_for_job_token` in your self-managed instance to see it.
 
+**📚 Learn More**: [Complete Installation Guide](./docs/installation.md) - Step-by-step setup for different platforms
 
-# Principles
-
-Once AgileFlow is installed in [GitLab](#gitlab-ci):
-
-1. **Main Branch**: Use the main branch (or master) as your primary release branch
-2. [Create development branches](#development-branches) for contributors to keep the code organized
-3. Merge development branches into main when ready, and AgileFlow automatically creates the next version tag based on the main branch's history
+# Core Principles
 
 ## Main Branch Strategy
 
@@ -51,89 +45,64 @@ The main branch is the core of the AgileFlow framework. It serves as the single 
 - Minor versions (v1.0.0 → v1.1.0) are created by merging significant features
 - Major versions (v1.0.0 → v2.0.0) are created for breaking changes
 
+**📚 Learn More**: [Branching Strategy Guide](./docs/branching-strategy.md) - Complete guide to AgileFlow's branching approach
+
 ## Development Branches
 
 Development branches are used for feature additions and bug fixes. They branch off the main branch and merge back into it when ready. Consider using expressive names depending on their purpose, e.g.: `dev/*`, `feat/*`, `fix/*`, and `hotfix/*`.
 
 After the contribution is ready, the development branch is merged into main, preferably using a [Merge Request](https://docs.gitlab.com/ee/user/project/merge_requests/) or similar.
 
+**📚 Learn More**: [Getting Started Guide](./docs/getting-started.md) - Quick start for new AgileFlow users
 
-### Conventional Commits
+# Version-Centric CI/CD Approach
+
+AgileFlow introduces a revolutionary approach to CI/CD that prioritizes **version management over environment-based deployments**. This paradigm shift eliminates the complexity of managing multiple deployment branches and environments, replacing them with a streamlined, version-focused workflow.
+
+## What Makes AgileFlow Different?
+
+- **Version-Centric**: Every deployment, test, and operation is performed on well-identified versions
+- **Simplified Pipeline**: Just 5 focused stages (version, build, deploy, test, clean)
+- **Eliminates Environment Drift**: All environments run identical versions
+- **Predictable Deployments**: Every deployment uses a well-identified, immutable version
+- **Simple Rollbacks**: Rollback to any previous version with confidence
+
+## Pipeline Stages
+
+Your pipeline consists of 5 focused stages that work together seamlessly:
+
+1. **Version** - AgileFlow generates semantic versions automatically
+2. **Build** - Create versioned artifacts using the generated version
+3. **Deploy** - Deploy the same version everywhere (staging, production, etc.)
+4. **Test** - Validate the deployed version across all environments
+5. **Clean** - Cleanup temporary resources and artifacts
+
+**📚 Learn More**: [Version-Centric CI/CD Deep Dive](./docs/version-centric-cicd.md) - Comprehensive guide to AgileFlow's revolutionary CI/CD paradigm
+
+# Conventional Commits
 
 Conventional Commits encode the intent of a change in the commit subject so that humans (and tools) can generate clear release notes and version bumps.
 
-Commit subject format:
+## Commit Format
 
 ```text
 type[!]?(scope)?: description
+
+[optional body]
+
+[optional footer(s)]
 ```
 
-- **type**: one of the recognized types below (lowercase).
-- **scope (optional)**: short, lowercase noun describing the affected area, e.g. `api`, `auth`, `build`.
-- **description**: concise, imperative mood summary (e.g., "add support for...", "fix crash when...").
-- Use the commit body for rationale/details, and use footers for metadata (e.g., `BREAKING CHANGE:`).
+## Key Commit Types
 
-Recognized commit types (release notes order):
+- **feat** - New features (minor version bump)
+- **fix** - Bug fixes (patch version bump)
+- **perf** - Performance improvements (minor version bump)
+- **refactor** - Code refactoring (patch version bump)
+- **docs** - Documentation updates (patch version bump)
+- **!** - Breaking changes (major version bump)
 
-- **feat — Features**: Introduces new user- or API-facing capabilities without removing existing behavior.
-  - **Use for**: new endpoints, CLI commands, configuration options, UI components, additive DB migrations.
-  - **Avoid for**: internal-only refactors or performance tweaks that do not add capability.
-  - **Example**: `feat(api): expose /v2/reports endpoint`
-
-- **fix — Bug fixes**: Corrects faulty behavior, regressions, crashes, data corruption, or incorrect outputs.
-  - **Use for**: logic errors, off-by-one fixes, null handling, race conditions, flaky behavior.
-  - **Avoid for**: refactors that do not change externally observable behavior.
-  - **Example**: `fix(auth): handle empty refresh token gracefully`
-
-- **perf — Performance improvements**: Makes the system faster or leaner without changing public behavior or semantics.
-  - **Use for**: algorithmic improvements, caching, reduced allocations, optimized queries, I/O batching.
-  - **Avoid for**: feature additions or bug fixes; use those dedicated types instead.
-  - **Example**: `perf(cache): batch writes to cut latency by 30%`
-
-- **refactor — Refactors**: Internal code changes that do not alter external behavior; improves structure, readability, or maintainability.
-  - **Use for**: renaming, extracting functions, reorganizing modules, paying down technical debt.
-  - **Avoid for**: behavior changes (use `feat`, `fix`, or `perf`).
-  - **Example**: `refactor(repo): split monolithic service into modules`
-
-- **docs — Documentation**: Documentation-only changes.
-  - **Use for**: README updates, API docs, examples, ADRs, inline docstrings.
-  - **Avoid for**: code changes that affect behavior; pair with another type if both occur.
-  - **Example**: `docs: add configuration examples for SSO`
-
-- **build — Build system**: Changes that affect the build tooling or dependencies.
-  - **Use for**: dependency bumps, lockfiles, Dockerfiles, Makefiles, build scripts, compilers, bundlers.
-  - **Avoid for**: runtime code or CI-only config (use `ci` for that).
-  - **Example**: `build(docker): slim image and enable build cache`
-
-- **ci — CI**: Changes to continuous integration configuration and automation.
-  - **Use for**: pipeline definitions, jobs, cache settings, CI scripts, badges.
-  - **Avoid for**: build tooling that also affects local builds (use `build`).
-  - **Example**: `ci(gitlab): add release job for tags`
-
-- **chore — Chores**: Routine tasks that do not affect src behavior or tests.
-  - **Use for**: repository housekeeping, license files, issue templates, renaming files without behavior change.
-  - **Avoid for**: dependency/build changes (`build`), formatting-only changes (`style`).
-  - **Example**: `chore: archive old roadmap documents`
-
-- **test — Tests**: Adds or updates tests without changing runtime behavior.
-  - **Use for**: new unit/integration/e2e tests, fixtures, test refactors.
-  - **Avoid for**: fixing behavior (use `fix`) or adding features (`feat`).
-  - **Example**: `test(api): cover error path for 404 responses`
-
-- **style — Code style**: Non-functional changes that do not affect meaning of code.
-  - **Use for**: formatting, whitespace, linters, code style fixes, reorder imports.
-  - **Avoid for**: refactors or behavior changes.
-  - **Example**: `style: apply Prettier 3 formatting`
-
-- **revert — Reverts**: Reverts a previous commit.
-  - **Use for**: explicit rollbacks; the body should reference the reverted commit.
-  - **Example**: `revert: feat(api): expose /v2/reports endpoint`
-
-- **Other changes**: Commits that don't match the conventional format or are unclassified. These are listed verbatim when at least one conventional commit is present.
-
-Breaking changes are flagged using the `!` shorthand in the subject (for example, `feat!:`) or with a `BREAKING CHANGE:` footer. After `1.0.0`, breaking changes should drive a **MAJOR** version bump per SemVer.
-
-Examples of conventional commit subjects:
+## Example Commits
 
 ```text
 feat(auth): add OIDC login flow
@@ -142,12 +111,21 @@ perf(cache)!: switch to Redis cluster
 docs: update README with usage examples
 ```
 
-### Tag Messages
+**📚 Learn More**: [Conventional Commits Guide](./docs/conventional-commits.md) - Complete guide to commit message formatting and types
 
-AgileFlow elevates release notes by grouping the annotated tag message according to the intent of each change, following the [Conventional Commits](https://www.conventionalcommits.org/) methodology.
+# Release Management
 
+## Automatic Version Generation
 
-Example of the generated tag message body when conventional commits are detected:
+AgileFlow automatically analyzes your commit history and determines the next semantic version based on conventional commits. Each merge to main triggers a new version:
+
+- **Patch versions** (v1.0.0 → v1.0.1) for bug fixes and minor changes
+- **Minor versions** (v1.0.0 → v1.1.0) for new features
+- **Major versions** (v1.0.0 → v2.0.0) for breaking changes
+
+## Release Notes
+
+AgileFlow generates comprehensive release notes by grouping changes according to their intent:
 
 ```text
 v1.2.4
@@ -165,33 +143,87 @@ Documentation:
 - update README with usage examples
 ```
 
-When commits are not in the conventional format, AgileFlow will produce a simple list:
+**📚 Learn More**: [Release Management Guide](./docs/release-management.md) - How to manage releases and versions effectively
 
-```text
-v1.2.4
-- Merge branch 'feat/ui-polish'
-- Tweak logging verbosity
-- Fix typo in pipeline
+# GitLab CI Integration
+
+## Template Usage
+
+Include the AgileFlow template in your `.gitlab-ci.yml`:
+
+```yaml
+include:
+  - local: templates/AgileFlow.gitlab-ci.yml
+
+# Your custom jobs using the VERSION variable
+build:
+  stage: build
+  script:
+    - docker build -t myapp:${VERSION} .
+    - docker push myapp:${VERSION}
+  needs:
+    - agileflow
 ```
+
+## Key Benefits
+
+- **Automated Versioning**: The `agileflow` job generates versions automatically
+- **VERSION Variable**: Available to all subsequent stages
+- **Consistent Deployments**: Deploy the same version everywhere
+- **Simplified Rollbacks**: Rollback to any previous version with confidence
+
+**📚 Learn More**: [GitLab CI Template Reference](./docs/gitlab-ci-template.md) - Complete reference for the AgileFlow GitLab CI template
+
+# Getting Started
+
+## Quick Setup (5 minutes)
+
+1. **Include the template** in your `.gitlab-ci.yml`
+2. **Add your first job** using the `${VERSION}` variable
+3. **Commit and push** - AgileFlow automatically generates versions
+
+## Next Steps
+
+- Add deployment jobs for staging and production
+- Implement testing against deployed versions
+- Customize for multiple services
+- Set up environment-specific configurations
+
+**📚 Learn More**: [Getting Started Guide](./docs/getting-started.md) - Step-by-step setup and examples
+
+# Advanced Topics
+
+## Migration from Traditional CI/CD
+
+If you're currently using a traditional branch-based approach:
+
+1. **Start with AgileFlow** - Include the template and let it generate versions
+2. **Gradually simplify** - Remove environment-specific branches over time
+3. **Update deployments** - Modify scripts to use `${VERSION}` variable
+4. **Standardize testing** - Run tests against the deployed version
+5. **Document changes** - Update runbooks to reference versions
+
+## Best Practices
+
+- Always use the `${VERSION}` variable from AgileFlow
+- Deploy the same version to all environments
+- Test against deployed versions, not source code
+- Use conventional commits for automatic versioning
+- Keep deployment scripts identical across environments
+
+**📚 Learn More**: [Advanced Topics](./docs/README.md#advanced-topics) - Migration guides, best practices, and troubleshooting
 
 # Documentation
 
 For comprehensive guides and detailed explanations, see our [documentation folder](./docs/README.md).
 
-## Key Concepts
+## Quick Navigation
 
-AgileFlow introduces a **version-centric CI/CD approach** that prioritizes version management over environment-based deployments. This eliminates the complexity of managing multiple deployment branches and environments, replacing them with a streamlined, version-focused workflow.
+- **New to AgileFlow?** Start with [Getting Started](./docs/getting-started.md)
+- **Want to understand the approach?** Read [Version-Centric CI/CD](./docs/version-centric-cicd.md)
+- **Ready to implement?** Follow [GitLab CI Template Reference](./docs/gitlab-ci-template.md)
+- **Need help?** Check [Troubleshooting](./docs/troubleshooting.md)
 
-### What Makes AgileFlow Different?
+---
 
-- **Version-Centric**: Every deployment, test, and operation is performed on well-identified versions
-- **Simplified Pipeline**: Just 5 focused stages (version, build, deploy, test, clean)
-- **Eliminates Environment Drift**: All environments run identical versions
-- **Predictable Deployments**: Every deployment uses a well-identified, immutable version
-- **Simple Rollbacks**: Rollback to any previous version with confidence
-
-### Learn More
-
-- **[Version-Centric CI/CD Approach](./docs/version-centric-cicd.md)** - Comprehensive guide to AgileFlow's revolutionary CI/CD paradigm
-- **[GitLab CI Template Reference](./docs/gitlab-ci-template.md)** - Complete reference for the AgileFlow GitLab CI template
-- **[Getting Started](./docs/getting-started.md)** - Quick start guide for new users
+**Ready to transform your CI/CD?** Start with AgileFlow today and experience the benefits of a version-centric, streamlined deployment process! 🚀
