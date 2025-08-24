@@ -21,6 +21,12 @@ function requireEnv(varName) {
   return value;
 }
 
+function logCommitPipelinesUrl(ciServerHost, ciProjectPath) {
+  // Use env variables to calculate the URL of the commit pipelines based on https://code.logickernel.com/kernel/agileflow/-/commit/d8312b0afc11356cec9b84bdfdc322314650717e/pipelines
+  const commitUrl = `https://${ciServerHost}/${ciProjectPath}/-/commit/${process.env.CI_COMMIT_SHA}/pipelines`;
+  console.log(`Commit pipelines URL: ${commitUrl}`);
+}
+
 
 function getLatestVersion() {
   // Get the latest version tag from the current branch
@@ -171,6 +177,8 @@ function main() {
         // Write version to VERSION file in VERSION=... format and exit successfully
         const version = semverMatch[1];
         writeVersionFile(version);
+        logCommitPipelinesUrl(process.env.CI_SERVER_HOST, process.env.CI_PROJECT_PATH);
+        console.log('AgileFlow versioning completed: existing tag detected');
         process.exit(0);
       }
       console.log('Tag is not a valid semver tag, proceeding with normal flow');
@@ -209,6 +217,7 @@ function main() {
     if (versionBump === 'none') {
       console.log('No version bump needed. Writing current version to VERSION file and exiting.');
       writeVersionFile(`v${currentVersionString}`);
+      logCommitPipelinesUrl(CI_SERVER_HOST, CI_PROJECT_PATH);
       console.log('AgileFlow versioning completed: no version bump needed');
       process.exit(0);
     }
@@ -256,10 +265,8 @@ function main() {
     // Write the version to VERSION file in VERSION=... format for GitLab CI
     writeVersionFile(tag);
 
-    // Use env variables to calculate the URL of the commit pipelines based on https://code.logickernel.com/kernel/agileflow/-/commit/d8312b0afc11356cec9b84bdfdc322314650717e/pipelines
-    const commitUrl = `https://${CI_SERVER_HOST}/${CI_PROJECT_PATH}/-/commit/${process.env.CI_COMMIT_SHA}/pipelines`;
-    console.log(`Commit pipelines URL: ${commitUrl}`);
-
+    // Log commit pipelines URL at the end of all success outcomes
+    logCommitPipelinesUrl(CI_SERVER_HOST, CI_PROJECT_PATH);
     console.log(`AgileFlow versioning completed successfully: ${tag}`);
   } catch (err) {
     console.error('Error during AgileFlow versioning:', err.message);
