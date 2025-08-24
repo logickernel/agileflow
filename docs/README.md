@@ -2,6 +2,13 @@
 
 Welcome to the AgileFlow documentation! This folder contains detailed guides and explanations for different aspects of the AgileFlow system.
 
+## Quick Navigation
+
+- **New to AgileFlow?** Start with [Getting Started](./getting-started.md)
+- **Want to understand the approach?** Read [Version-Centric CI/CD](./version-centric-cicd.md)
+- **Ready to install?** Follow [Installation & Setup](./installation.md)
+- **Need help?** Check [Troubleshooting](./troubleshooting.md)
+
 ## Available Documentation
 
 ### Core Concepts
@@ -23,13 +30,6 @@ Welcome to the AgileFlow documentation! This folder contains detailed guides and
 - **[Migration Guide](./migration-guide.md)** - How to transition from traditional CI/CD approaches
 - **[Best Practices](./best-practices.md)** - Recommended practices and patterns
 - **[Troubleshooting](./troubleshooting.md)** - Common issues and solutions
-
-## Quick Navigation
-
-- **New to AgileFlow?** Start with [Getting Started](./getting-started.md)
-- **Want to understand the approach?** Read [Version-Centric CI/CD](./version-centric-cicd.md)
-- **Ready to install?** Follow [Installation & Setup](./installation.md)
-- **Need help?** Check [Troubleshooting](./troubleshooting.md)
 
 ## Contributing to Documentation
 
