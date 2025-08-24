@@ -91,7 +91,7 @@ build:
     - docker push myapp:${VERSION}
 
 # Deploy stage deploys the same version everywhere
-deploy-staging:
+deploy-testing:
   stage: deploy
   script:
     - kubectl set image deployment/myapp myapp=myapp:${VERSION}
