@@ -22,15 +22,6 @@ function requireEnv(varName) {
 }
 
 
-
-function getCurrentBranchName() {
-  // Prefer CI-provided ref name when available (handles detached HEAD)
-  const envName = process.env.CI_COMMIT_REF_NAME;
-  if (envName && envName.trim() !== '') return envName.trim();
-  const name = runWithOutput('git rev-parse --abbrev-ref HEAD').trim();
-  return name;
-}
-
 function getLatestVersion() {
   // Get the latest version tag from the current branch
   const out = runWithOutput('git tag --list "v*" --sort=v:refname') || '';
@@ -44,15 +35,85 @@ function getLatestVersion() {
   return { 
     major: Number(m[1]), 
     minor: Number(m[2]), 
-    patch: Number(m[3]) 
+    patch: Number(m[3]),
+    metadata: m[4] || '',
   };
 }
 
-function buildNextTag() {
+function calculateNextVersion(commitMessages = []) {
   const currentVersion = getLatestVersion();
-  const nextPatch = currentVersion.patch + 1;
-  const tag = `v${currentVersion.major}.${currentVersion.minor}.${nextPatch}`;
-  return tag;
+
+  let versionBump = 'none';
+
+  if (commitMessages && commitMessages.length > 0) {
+    console.log(`Analyzing ${commitMessages.length} commit messages for version bump...`);
+    
+    // Log first few commit messages for debugging
+    const sampleMessages = commitMessages.slice(0, 5);
+    console.log(`Sample commit messages: ${sampleMessages.map(m => `"${m}"`).join(', ')}`);
+    
+    // Check for breaking changes (commit messages ending with !)
+    const containsBreakingChanges = commitMessages.some(message => /!$/.test(message.trim()));
+    
+    // Check for feature commits (feat: or feat!)
+    const containsFeatures = commitMessages.some(message => /^feat(!|:)/i.test(message.trim()));
+    
+    // Check for fix commits (fix: or fix!)
+    const containsFixes = commitMessages.some(message => /^fix(!|:)/i.test(message.trim()));
+    
+    // Check for performance commits (perf: or perf!)
+    const containsPerformance = commitMessages.some(message => /^perf(!|:)/i.test(message.trim()));
+
+    // Debug logging
+    console.log(`Breaking changes detected: ${containsBreakingChanges}`);
+    console.log(`Features detected: ${containsFeatures}`);
+    console.log(`Fixes detected: ${containsFixes}`);
+    console.log(`Performance changes detected: ${containsPerformance}`);
+
+    if (currentVersion.major > 0) {
+      if (containsBreakingChanges) {
+        versionBump = 'major';
+      } else if (containsFeatures) {
+        versionBump = 'minor';
+      } else if (containsFixes || containsPerformance) {
+        versionBump = 'patch';
+      }
+    } else {
+      // For 0.x.x versions, breaking changes bump minor, features bump patch
+      if (containsBreakingChanges) {
+        versionBump = 'minor';
+      } else if (containsFeatures || containsFixes || containsPerformance) {
+        versionBump = 'patch';
+      }
+    }
+  }
+  
+  // Apply version bump
+  let nextMajor = currentVersion.major;
+  let nextMinor = currentVersion.minor;
+  let nextPatch = currentVersion.patch;
+  
+  switch (versionBump) {
+    case 'major':
+      nextMajor += 1;
+      nextMinor = 0;
+      nextPatch = 0;
+      break;
+    case 'minor':
+      nextMinor += 1;
+      nextPatch = 0;
+      break;
+    case 'patch':
+      nextPatch += 1;
+      break;
+    case 'none':
+    default:
+      break;
+  }
+  
+  const tag = `v${nextMajor}.${nextMinor}.${nextPatch}${currentVersion.metadata}`;
+  console.log(`Version bump: ${versionBump} (${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch} → ${nextMajor}.${nextMinor}.${nextPatch})`);
+  return { tag, versionBump, currentVersion: `${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}` };
 }
 
 function writeVersionFile(version) {
@@ -83,7 +144,7 @@ function main() {
     const CI_COMMIT_TAG = process.env.CI_COMMIT_TAG;
     if (CI_COMMIT_TAG && CI_COMMIT_TAG.trim() !== '') {
       const tag = CI_COMMIT_TAG.trim();
-      console.log(`Running on existing version tag: ${tag}`);
+      console.log(`Running on existing version tag provided by CI_COMMIT_TAG=${tag}`);
       // Check if it's a semver tag starting with 'v'
       const semverMatch = tag.match(/^v(\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?)$/);
       if (semverMatch) {
@@ -106,30 +167,48 @@ function main() {
     configureUser(GITLAB_USER_NAME, GITLAB_USER_EMAIL);
     console.log(`Git user configured: ${GITLAB_USER_NAME} <${GITLAB_USER_EMAIL}>`);
 
+    // Get commit messages since the last version for version calculation
+    console.log('Getting commit messages since last version...');
+    const currentVersion = getLatestVersion();
+    const previousTag = currentVersion.major === 0 && currentVersion.minor === 0 && currentVersion.patch === 0 
+      ? null 
+      : `v${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}${currentVersion.metadata}`;
+    
+    // Get commit subjects since the previous tag
+    const { getCommitSubjectsSince } = require('./git-utils');
+    const commitMessages = getCommitSubjectsSince(previousTag, 100);
+    console.log(`Found ${commitMessages.length} commit messages since last version`);
+
     // Build tag name automatically from the current branch
     // Format: v<major>.<minor>.<patch>
     console.log('Building next version tag...');
-    const TAG = buildNextTag();
-    console.log(`Next version tag: ${TAG}`);
+    const { tag, versionBump, currentVersion: currentVersionString } = calculateNextVersion(commitMessages);
+    console.log(`Next version tag: ${tag}`);
+
+    // Check if version bump is needed
+    if (versionBump === 'none') {
+      console.log('No version bump needed. Writing current version to VERSION file and exiting.');
+      writeVersionFile(`v${currentVersionString}`);
+      console.log('AgileFlow versioning completed: no version bump needed');
+      process.exit(0);
+    }
 
     // Create annotated tag message: version + summarized commits since previous tag
     console.log('Building tag message...');
-    const tagMessage = buildTagMessage(TAG, { maxCommitLines: 100, includeMergeCommits: false });
+    const tagMessage = buildTagMessage(tag, { maxCommitLines: 100, includeMergeCommits: false });
     console.log(`Tag message created (${tagMessage.split('\n').length} lines)`);
     
     console.log('Creating annotated tag...');
-    createAnnotatedTag(TAG, tagMessage);
-    console.log(`Tag ${TAG} created locally`);
-
-
+    createAnnotatedTag(tag, tagMessage);
+    console.log(`Tag ${tag} created locally`);
 
     // Push tag to GitLab using CI token
     console.log('Pushing tag to GitLab...');
     const encodedToken = encodeURIComponent(CI_JOB_TOKEN);
     const remoteUrl = `https://gitlab-ci-token:${encodedToken}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git`;
     try {
-      pushTag(remoteUrl, TAG);
-      console.log(`Tag ${TAG} pushed successfully to GitLab`);
+      pushTag(remoteUrl, tag);
+      console.log(`Tag ${tag} pushed successfully to GitLab`);
     } catch (pushError) {
       const captured = pushError && pushError._captured ? pushError._captured : {};
       const combined = `${captured.stdout || ''}\n${captured.stderr || ''}\n${pushError.message || ''}`;
@@ -154,16 +233,14 @@ function main() {
       throw pushError;
     }
 
-
-
     // Write the version to VERSION file in VERSION=... format for GitLab CI
-    writeVersionFile(TAG);
+    writeVersionFile(tag);
 
     // Use env variables to calculate the URL of the commit pipelines based on https://code.logickernel.com/kernel/agileflow/-/commit/d8312b0afc11356cec9b84bdfdc322314650717e/pipelines
     const commitUrl = `https://${CI_SERVER_HOST}/${CI_PROJECT_PATH}/-/commit/${process.env.CI_COMMIT_SHA}/pipelines`;
     console.log(`Commit pipelines URL: ${commitUrl}`);
 
-    console.log(`AgileFlow versioning completed successfully: ${TAG}`);
+    console.log(`AgileFlow versioning completed successfully: ${tag}`);
   } catch (err) {
     console.error('Error during AgileFlow versioning:', err.message);
     if (err && err.status) {

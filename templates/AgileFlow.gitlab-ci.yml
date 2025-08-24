@@ -7,7 +7,7 @@ stages:
 
 agileflow:
   stage: version
-  image: registry.logickernel.com/kernel/agileflow:0.6.67
+  image: registry.logickernel.com/kernel/agileflow:0.6.68
   script:
     - agileflow gitlab-ci
   artifacts:

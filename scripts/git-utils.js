@@ -201,6 +201,7 @@ module.exports = {
   createAnnotatedTag,
   pushTag,
   buildTagMessage,
+  getCommitSubjectsSince,
 };
 
 
