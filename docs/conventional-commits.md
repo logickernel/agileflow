@@ -282,7 +282,7 @@ style: reorder imports alphabetically
 style: fix trailing whitespace
 ```
 
-### ↩Reverts (`revert`)
+### Reverts (`revert`)
 Reverts a previous commit.
 
 **Use for**:
