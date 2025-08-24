@@ -64,7 +64,7 @@ feat(ui): add dark mode toggle
 feat(auth): support OAuth2 login flow
 ```
 
-### 🐛 Bug Fixes (`fix`)
+### Bug Fixes (`fix`)
 Corrects faulty behavior, regressions, crashes, data corruption, or incorrect outputs.
 
 **Use for**:
@@ -110,30 +110,6 @@ perf(cache): implement Redis caching for user sessions
 perf(db): optimize user query with proper indexing
 perf(api): batch database writes to reduce latency
 perf(ui): lazy load images for better page performance
-```
-
-### Refactors (`refactor`)
-Internal code changes that do not alter external behavior; improves structure, readability, or maintainability.
-
-**Use for**:
-- Code reorganization
-- Function extraction
-- Module restructuring
-- Technical debt reduction
-- Code cleanup
-- Renaming variables/functions
-
-**Avoid for**:
-- Behavior changes
-- New features
-- Bug fixes
-
-**Examples**:
-```text
-refactor(auth): extract authentication logic into service
-refactor(api): split monolithic controller into modules
-refactor(ui): reorganize component hierarchy
-refactor(db): normalize database schema
 ```
 
 ### Documentation (`docs`)
@@ -182,6 +158,30 @@ build(deps): update React to version 18
 build(docker): optimize Docker image layers
 build(webpack): configure code splitting
 build(npm): update package-lock.json
+```
+
+### Refactors (`refactor`)
+Internal code changes that do not alter external behavior; improves structure, readability, or maintainability.
+
+**Use for**:
+- Code reorganization
+- Function extraction
+- Module restructuring
+- Technical debt reduction
+- Code cleanup
+- Renaming variables/functions
+
+**Avoid for**:
+- Behavior changes
+- New features
+- Bug fixes
+
+**Examples**:
+```text
+refactor(auth): extract authentication logic into service
+refactor(api): split monolithic controller into modules
+refactor(ui): reorganize component hierarchy
+refactor(db): normalize database schema
 ```
 
 ### CI/CD (`ci`)
