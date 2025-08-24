@@ -80,9 +80,22 @@ function listTagsForRelease(major, minor) {
 function getPreviousTagForTarget(tagName) {
   const parsed = parseSemverTag(tagName);
   if (!parsed) return null;
-  const tags = listTagsForRelease(parsed.major, parsed.minor);
-  if (tags.length === 0) return null;
-  return tags[tags.length - 1] || null;
+  
+  // Get all version tags sorted chronologically (oldest first)
+  const out = runWithOutput('git tag --list "v*" --sort=v:refname') || '';
+  const allTags = out.split('\n').map((s) => s.trim()).filter(Boolean);
+  
+  if (allTags.length === 0) return null;
+  
+  // Find the target tag in the sorted list
+  const targetTagIndex = allTags.findIndex(tag => tag === tagName);
+  if (targetTagIndex === -1) return null;
+  
+  // If this is the first tag, there's no previous tag
+  if (targetTagIndex === 0) return null;
+  
+  // Return the tag that comes before the target tag
+  return allTags[targetTagIndex - 1];
 }
 
 function getCommitSubjectsSince(fromTagExclusive, maxCount = 50) {
