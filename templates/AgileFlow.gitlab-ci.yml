@@ -1,10 +1,46 @@
+# AgileFlow GitLab CI Template
+#
+# This template provides a simplified, version-centric CI/CD pipeline that focuses on
+# version management rather than environment-based deployments. The pipeline consists
+# of 5 stages that work together to create a streamlined release process.
+#
+# Key Benefits:
+# - Version-centric approach: All deployments, tests, and operations are performed
+#   on well-identified versions rather than branch-based environments
+# - Simplified stages: Clear separation of concerns with minimal complexity
+# - Automated versioning: Integrates with AgileFlow to automatically generate
+#   semantic versions based on commit history
+# - Consistent deployments: All environments use the same version artifacts
+#
+# Stages Overview:
+# 1. version    - Generate semantic version and release notes
+# 2. build      - Build application artifacts and Docker images
+# 3. deploy     - Deploy to various environments using the generated version
+# 4. test       - Run tests against deployed versions
+# 5. clean      - Cleanup temporary resources and artifacts
+#
+# Usage:
+# Include this template in your .gitlab-ci.yml:
+# include:
+#   - local: templates/AgileFlow.gitlab-ci.yml
+#
+# The agileflow job will automatically:
+# - Calculate the next semantic version based on commit history
+# - Generate comprehensive release notes from conventional commits
+# - Create and push version tags to the repository
+# - Make the VERSION variable available to subsequent stages
+
 stages:
   - version
   - build
-  - test
   - deploy
-  - cleanup
+  - test
+  - clean
 
+# Version Generation Stage
+# This stage uses the AgileFlow tool to automatically generate semantic versions
+# and release notes based on the main branch's commit history. The VERSION
+# variable is made available as an artifact for use in subsequent stages.
 agileflow:
   stage: version
   image: registry.logickernel.com/kernel/agileflow:0.6.68
