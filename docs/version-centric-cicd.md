@@ -96,7 +96,15 @@ deploy-staging:
   script:
     - kubectl set image deployment/myapp myapp=myapp:${VERSION}
   environment:
+    name: testing
+
+deploy-staging:
+  stage: deploy
+  script:
+    - kubectl set image deployment/myapp myapp=myapp:${VERSION}
+  environment:
     name: staging
+  when: manual
 
 deploy-production:
   stage: deploy

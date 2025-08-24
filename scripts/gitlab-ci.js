@@ -80,6 +80,9 @@ function calculateNextVersion(commitMessages = []) {
     // Check for performance commits (perf: or perf!)
     const containsPerformance = commitMessages.some(message => /^perf(!|\([^)]+\)!|:)/i.test(message.trim()));
 
+    // Check for build system commits (buiild: or build!)
+    const containsBuild = commitMessages.some(message => /^build(!|\([^)]+\)!|:)/i.test(message.trim()));
+
     // Debug logging
     console.log(`Breaking changes detected: ${containsBreakingChanges}`);
     console.log(`Features detected: ${containsFeatures}`);
@@ -102,14 +105,14 @@ function calculateNextVersion(commitMessages = []) {
         versionBump = 'major';
       } else if (containsFeatures) {
         versionBump = 'minor';
-      } else if (containsFixes || containsPerformance) {
+      } else if (containsFixes || containsPerformance || containsBuild) {
         versionBump = 'patch';
       }
     } else {
       // For 0.x.x versions, breaking changes bump minor, features bump patch
       if (containsBreakingChanges) {
         versionBump = 'minor';
-      } else if (containsFeatures || containsFixes || containsPerformance) {
+      } else if (containsFeatures || containsFixes || containsPerformance || containsBuild) {
         versionBump = 'patch';
       }
     }

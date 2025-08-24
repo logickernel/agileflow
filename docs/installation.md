@@ -65,22 +65,26 @@ build:
 
 ### Common Issues
 
-**Job Token Permissions Not Available**
-- Check if you're using a self-managed GitLab instance
-- Enable the `allow_push_repository_for_job_token` feature flag
-- Ensure you have admin access to the GitLab instance
+#### Job Token Permissions to Push Not Available
 
-**Template Include Fails**
+- Check if you're using a self-managed GitLab instance
+- Ensure you have admin access to the GitLab instance
+- Enable the `allow_push_repository_for_job_token` feature flag
+
+#### Template Include Fails
+
 - Verify the remote URL is accessible from your GitLab instance
 - Check network connectivity and firewall rules
 - Use a local copy of the template if remote access is restricted
 
-**VERSION Variable Not Available**
+#### VERSION Variable Not Available
+
 - Ensure the `agileflow` job completed successfully
 - Check that your jobs have `needs: - agileflow` dependency
 - Verify the dotenv artifact is properly configured
 
-**Docker Image Pull Fails**
+#### Docker Image Pull Fails
+
 - Check Docker registry access
 - Verify image name and tag
 - Ensure Docker daemon is running

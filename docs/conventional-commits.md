@@ -17,7 +17,7 @@ Conventional Commits provide several benefits:
 The basic format for conventional commits is:
 
 ```text
-type[!]?(scope)?: description
+type(scope)?[!]: description
 
 [optional body]
 
@@ -40,7 +40,7 @@ type[!]?(scope)?: description
 
 AgileFlow recognizes the following commit types, ordered by their impact on versioning:
 
-### 🚀 Features (`feat`)
+### Features (`feat`)
 Introduces new user- or API-facing capabilities without removing existing behavior.
 
 **Use for**:
@@ -88,7 +88,7 @@ fix(ui): resolve button click event not firing
 fix(db): fix transaction rollback on connection failure
 ```
 
-### ⚡ Performance (`perf`)
+### Performance (`perf`)
 Makes the system faster or leaner without changing public behavior or semantics.
 
 **Use for**:
@@ -112,7 +112,7 @@ perf(api): batch database writes to reduce latency
 perf(ui): lazy load images for better page performance
 ```
 
-### 🔧 Refactors (`refactor`)
+### Refactors (`refactor`)
 Internal code changes that do not alter external behavior; improves structure, readability, or maintainability.
 
 **Use for**:
@@ -136,7 +136,8 @@ refactor(ui): reorganize component hierarchy
 refactor(db): normalize database schema
 ```
 
-### 📚 Documentation (`docs`)
+### Documentation (`docs`)
+
 Documentation-only changes.
 
 **Use for**:
@@ -159,7 +160,8 @@ docs: add troubleshooting guide
 docs: update contributing guidelines
 ```
 
-### 🏗️ Build System (`build`)
+### Build System (`build`)
+
 Changes that affect the build tooling or dependencies.
 
 **Use for**:
@@ -182,8 +184,9 @@ build(webpack): configure code splitting
 build(npm): update package-lock.json
 ```
 
-### 🔄 CI/CD (`ci`)
-Changes to continuous integration configuration and automation.
+### CI/CD (`ci`)
+
+Changes to continuous integration configuration and automation. They usually do not affect source behavior, if they do, they must be marked as ! or add a BREAKING FIX footer.
 
 **Use for**:
 - Pipeline definitions
@@ -205,7 +208,8 @@ ci(tests): add integration test suite
 ci(deploy): automate production deployments
 ```
 
-### 🧹 Chores (`chore`)
+### Chores (`chore`)
+
 Routine tasks that do not affect source behavior or tests.
 
 **Use for**:
@@ -229,7 +233,8 @@ chore: reorganize project structure
 chore: update development setup instructions
 ```
 
-### 🧪 Tests (`test`)
+### Tests (`test`)
+
 Adds or updates tests without changing runtime behavior.
 
 **Use for**:
@@ -253,7 +258,7 @@ test(db): add database migration tests
 test(auth): add OAuth2 flow tests
 ```
 
-### 💅 Code Style (`style`)
+### Code Style (`style`)
 Non-functional changes that do not affect the meaning of code.
 
 **Use for**:
@@ -277,7 +282,7 @@ style: reorder imports alphabetically
 style: fix trailing whitespace
 ```
 
-### ↩️ Reverts (`revert`)
+### ↩Reverts (`revert`)
 Reverts a previous commit.
 
 **Use for**:
@@ -452,47 +457,23 @@ AgileFlow automatically determines version bumps based on your commit types:
 2. **Minor Version**: Any `feat` or `perf` commit
 3. **Patch Version**: Any `fix`, `docs`, `style`, `refactor`, `test`, `build`, `ci`, or `chore` commit
 
-## Tools and Integrations
-
-### Git Hooks
-Use pre-commit hooks to validate commit message format:
-
-```bash
-npm install --save-dev @commitlint/cli @commitlint/config-conventional
-```
-
-### IDE Extensions
-- **VS Code**: Conventional Commits extension
-- **IntelliJ**: Conventional Commits plugin
-- **Vim**: Various commit message plugins
-
-### Linting
-Validate commit messages in your CI pipeline:
-
-```yaml
-commitlint:
-  stage: test
-  script:
-    - npx commitlint --from $CI_COMMIT_BEFORE_SHA --to $CI_COMMIT_SHA
-```
-
 ## Troubleshooting
 
 ### Common Issues
 
-**Commit message too long**
+#### Commit message too long
 - Keep the description under 72 characters
 - Use the body for detailed explanations
 
-**Invalid type**
+#### Invalid type
 - Use only the recognized types listed above
 - Check spelling and case sensitivity
 
-**Missing description**
+#### Missing description
 - Always provide a clear, concise description
 - Use imperative mood
 
-**Scope format**
+#### Scope format
 - Use lowercase, short nouns
 - Avoid special characters or spaces
 
@@ -501,15 +482,3 @@ commitlint:
 - [Conventional Commits Specification](https://www.conventionalcommits.org/)
 - [Commitizen](https://github.com/commitizen/cz-cli) - Interactive commit message creation
 - [Commitlint](https://github.com/conventional-changelog/commitlint) - Lint commit messages
-
-## Conclusion
-
-Conventional Commits provide a powerful foundation for automated versioning and release management. By following these guidelines, you'll enable AgileFlow to:
-
-- Generate accurate semantic versions
-- Create meaningful release notes
-- Automate your release process
-- Improve team collaboration
-- Maintain professional standards
-
-Start using conventional commits today and experience the benefits of automated, intelligent version management!

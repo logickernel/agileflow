@@ -153,7 +153,7 @@ Include the AgileFlow template in your `.gitlab-ci.yml`:
 
 ```yaml
 include:
-  - local: templates/AgileFlow.gitlab-ci.yml
+  - remote: code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
 
 # Your custom jobs using the VERSION variable
 build:

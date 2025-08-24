@@ -1,4 +1,8 @@
-Rule: Single conventional commit at the end
+---
+description: Single conventional commit at the end of a task
+globs:
+alwaysApply: false
+---
 
 When you have finished all planned edits for a task, **ALWAYS** make exactly one git commit using the Conventional Commits spec.
 
