@@ -18,7 +18,7 @@ AgileFlow integrates with GitLab CI to automate version tagging. Add the followi
 
 ```yml
 include:
-  - remote: code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
+  - remote: https://code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
 ```
 
 > [!NOTE]
@@ -153,7 +153,7 @@ Include the AgileFlow template in your `.gitlab-ci.yml`:
 
 ```yaml
 include:
-  - remote: code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
+  - remote: https://code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
 
 # Your custom jobs using the VERSION variable
 build:
