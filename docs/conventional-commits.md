@@ -4,78 +4,149 @@ This document describes the conventional commit format used in AgileFlow and how
 
 ## Version Bump Logic
 
-AgileFlow automatically determines version bumps based on conventional commit messages:
+AgileFlow automatically determines version bumps based on conventional commit messages using the following logic:
 
+### For versions 1.0.0 and above:
 - **Major version bump (X.0.0)**: Breaking changes (`!` suffix or `BREAKING CHANGE:` in body)
 - **Minor version bump (0.X.0)**: New features (`feat:`)
 - **Patch version bump (0.0.X)**: Bug fixes, performance improvements, or build system changes
 - **No version bump**: Documentation, style changes, tests, CI, chores, refactors, or reverts
 
-**Note**: For pre-1.0.0 versions, breaking changes bump the minor version instead of major.
+### For pre-1.0.0 versions (0.x.x):
+- **Minor version bump (0.X.0)**: Breaking changes (`!` suffix or `BREAKING CHANGE:` in body)
+- **Patch version bump (0.0.X)**: New features, bug fixes, performance improvements, or build system changes
+- **No version bump**: Documentation, style changes, tests, CI, chores, refactors, or reverts
 
 ## Commit Types and Version Impact
 
-| Commit Type | Documentation | (>1.0.0) | (0.x.x) | Description | Examples |
-|-------------|---------------|----------------------|---------------------|-------------|----------|
-| **BREAKING** | - | **Major** | **Minor** | Breaking changes | `feat!: remove deprecated API`<br>`BREAKING CHANGE: in body` |
-| **feat** | [type-feat.md](./type-feat.md) | **Minor** | **Patch** | New features | `feat: add user authentication`<br>`feat(auth): implement OAuth2` |
-| **fix** | [type-fix.md](./type-fix.md) | **Patch** | **Patch** | Bug fixes | `fix: resolve login validation error`<br>`fix(api): handle null response` |
-| **perf** | [type-perf.md](./type-perf.md) | **Patch** | **Patch** | Performance improvements | `perf: optimize database queries`<br>`perf(ui): reduce render time` |
-| **build** | [type-build.md](./type-build.md) | **Patch** | **Patch** | Build system changes | `build: update webpack configuration`<br>`build(deps): upgrade to Node 18` |
-| **docs** | [type-docs.md](./type-docs.md) | **None** | **None** | Documentation changes | `docs: update API documentation`<br>`docs: add installation guide` |
-| **style** | [type-style.md](./type-style.md) | **None** | **None** | Code style changes | `style: format code with prettier`<br>`style: fix indentation` |
-| **refactor** | [type-refactor.md](./type-refactor.md) | **None** | **None** | Code refactoring | `refactor: extract common utilities`<br>`refactor(api): simplify response handling` |
-| **test** | [type-test.md](./type-test.md) | **None** | **None** | Test additions/changes | `test: add unit tests for auth`<br>`test: fix failing integration test` |
-| **ci** | [type-ci.md](./type-ci.md) | **None** | **None** | CI/CD changes | `ci: add GitHub Actions workflow`<br>`ci: update Docker image` |
-| **chore** | [type-chore.md](./type-chore.md) | **None** | **None** | Maintenance tasks | `chore: update dependencies`<br>`chore: clean up old files` |
-| **revert** | [type-revert.md](./type-revert.md) | **None** | **None** | Revert previous commits | `revert: "feat: add user authentication"` |
+| Commit Type | Description | (>1.0.0) | (0.x.x) |
+|-------------|-------------|----------|---------|
+| [feat](./type-feat.md) | New features | **Minor** | **Patch** |
+| [fix](./type-fix.md) | Bug fixes | **Patch** | **Patch** |
+| [perf](./type-perf.md) | Performance improvements | **Patch** | **Patch** |
+| [build](./type-build.md) | Build system changes | **Patch** | **Patch** |
+| [docs](./type-docs.md) | Documentation changes | **None** | **None** |
+| [style](./type-style.md) | Code style changes | **None** | **None** |
+| [refactor](./type-refactor.md) | Code refactoring | **None** | **None** |
+| [test](./type-test.md) | Test additions/changes | **None** | **None** |
+| [ci](./type-ci.md) | CI/CD changes | **None** | **None** |
+| [chore](./type-chore.md) | Maintenance tasks | **None** | **None** |
+| [revert](./type-revert.md) | Revert previous commits | **None** | **None** |
 
 ## Breaking Changes
 
-Breaking changes trigger a **major version bump** (or minor for pre-1.0.0) and can be indicated in two ways:
+Breaking changes can be indicated in two ways:
 
 1. **Exclamation mark suffix**: `feat!: breaking change` or `feat(scope)!: breaking change`
 2. **BREAKING CHANGE in body**: Any commit with `BREAKING CHANGE:` in the commit body
 
+### Breaking Change Examples:
+```
+feat!: remove deprecated API endpoints
+feat(auth)!: change authentication flow
+fix!: modify database schema
+BREAKING CHANGE: The /api/v1/users endpoint has been removed
+```
+
+## Commit Message Format
+
+The standard format for conventional commits is:
+
+```text
+type[!]?(scope)?: description
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Format Components:
+- **type**: The type of change (feat, fix, perf, etc.)
+- **!**: Optional breaking change indicator
+- **scope**: Optional scope in parentheses (e.g., auth, api, ui)
+- **description**: Short description of the change
+- **body**: Optional detailed explanation
+- **footer**: Optional footers like `BREAKING CHANGE:`
+
 ## Examples
 
-### Major Version Bump
+### Major Version Bump (1.0.0+)
 ```
 feat!: remove deprecated API endpoints
 BREAKING CHANGE: The /api/v1/users endpoint has been removed
+
+feat(auth)!: change authentication flow
+BREAKING CHANGE: JWT tokens are now required for all API calls
 ```
 
 ### Minor Version Bump
 ```
 feat: add new user management dashboard
 feat(auth): implement two-factor authentication
+feat(api): add user search endpoint
 ```
 
 ### Patch Version Bump
 ```
 fix: resolve user login issue
+fix(auth): correct null handling in user lookup
 perf: optimize database queries
+perf(cache): improve Redis connection pooling
 build: update webpack to v5
+build(deps): upgrade React to 18.2.0
 ```
 
 ### No Version Bump
 ```
 docs: update API documentation
+docs(readme): add installation instructions
 style: format code with prettier
+style(eslint): enforce consistent formatting
 test: add unit tests for auth module
+test(integration): add API endpoint tests
 ci: add GitHub Actions workflow
+ci(gitlab): update pipeline configuration
 chore: update dependencies
+chore(deps): bump lodash to 4.17.21
 refactor: extract common utilities
+refactor(auth): simplify token validation
 revert: "feat: add user authentication"
 ```
 
 ## Version Bump Priority
 
-When multiple commit types are present, the highest priority bump is applied:
+When multiple commit types are present in the commit history since the last version, the highest priority bump is applied:
 
-1. **Breaking changes** → Major version bump
-2. **Features** → Minor version bump  
+1. **Breaking changes** → Major version bump (or minor for 0.x.x)
+2. **Features** → Minor version bump (or patch for 0.x.x)
 3. **Fixes, Performance, Build** → Patch version bump
 4. **All others** → No version bump
 
 This ensures semantic versioning follows the [SemVer specification](https://semver.org/).
+
+## Implementation Details
+
+AgileFlow's versioning system:
+
+- **Analyzes commit messages** since the last version tag
+- **Groups changes by type** for organized release notes
+- **Generates comprehensive tag messages** with categorized changes
+- **Supports scoped commits** for better organization
+- **Handles breaking changes** automatically
+- **Creates annotated tags** with detailed commit summaries
+
+## Best Practices
+
+1. **Use conventional commit types** consistently
+2. **Add scopes** when changes affect specific areas
+3. **Use breaking change indicators** (`!` or `BREAKING CHANGE:`) for incompatible changes
+4. **Write clear descriptions** that explain what changed
+5. **Keep commits focused** on single changes
+6. **Use present tense** in commit messages ("add feature" not "added feature")
+
+## Related Documentation
+
+- [Getting Started](./getting-started.md) - Quick start guide
+- [Release Management](./release-management.md) - How versions are managed
+- [GitLab CI Template](./gitlab-ci-template.md) - CI/CD integration
+- [Branching Strategy](./branching-strategy.md) - Development workflow
