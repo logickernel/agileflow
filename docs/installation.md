@@ -44,8 +44,6 @@ build:
     - echo "Building version ${VERSION}"
     - docker build -t myapp:${VERSION} .
     - docker push myapp:${VERSION}
-  needs:
-    - agileflow
 ```
 
 ### Step 4: Test the Installation
