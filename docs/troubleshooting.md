@@ -140,18 +140,6 @@ docker pull registry.logickernel.com/kernel/agileflow:latest
    git log --oneline --graph
    ```
 
-3. **AgileFlow configuration issues**
-   ```javascript
-   // Check agileflow.config.js
-   module.exports = {
-     versionRules: {
-       major: ['feat!', 'BREAKING CHANGE'],
-       minor: ['feat', 'perf'],
-       patch: ['fix', 'docs', 'style', 'refactor', 'test', 'build', 'ci', 'chore']
-     }
-   };
-   ```
-
 ### Incorrect Version Bumping
 
 **Problem**: AgileFlow generates the wrong version number.
