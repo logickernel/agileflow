@@ -99,7 +99,16 @@ function getPreviousTagForTarget(tagName) {
 }
 
 function getCommitSubjectsSince(fromTagExclusive, maxCount = 50) {
-  if (!fromTagExclusive) return [];
+  if (!fromTagExclusive) {
+    // When no previous tag, get all commits from the beginning
+    const logCmd = `git log --pretty=format:%s -n ${Number(maxCount)}`;
+    const out = runWithOutput(logCmd) || '';
+    return out
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  
   const logCmd = `git log ${fromTagExclusive}..HEAD --pretty=format:%s -n ${Number(maxCount)}`;
   const out = runWithOutput(logCmd) || '';
   return out
@@ -208,8 +217,11 @@ function buildTagMessage(tagName, options = {}) {
 
 function determineVersionBump(commitMessages, currentVersion = { major: 0, minor: 0, patch: 0 }) {
   if (!commitMessages || commitMessages.length === 0) {
+    console.log('No commit messages provided for version bump analysis');
     return 'none';
   }
+  
+  console.log(`Analyzing ${commitMessages.length} commit messages for version bump from ${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}`);
 
   // Check for breaking changes according to conventional commit standards:
   // 1. feat!, feat(scope)!, fix!, fix(scope)!, etc.
@@ -234,26 +246,40 @@ function determineVersionBump(commitMessages, currentVersion = { major: 0, minor
 
   // Check for build system commits (build: or build!)
   const containsBuild = commitMessages.some(message => /^build(!|\([^)]+\)!|:)/i.test(message.trim()));
+  
+  // Log what we found for debugging
+  console.log(`Commit analysis results:`);
+  console.log(`  - Breaking changes: ${containsBreakingChanges}`);
+  console.log(`  - Features: ${containsFeatures}`);
+  console.log(`  - Fixes: ${containsFixes}`);
+  console.log(`  - Performance: ${containsPerformance}`);
+  console.log(`  - Build: ${containsBuild}`);
 
   // Determine version bump based on current version and commit types
   if (currentVersion.major > 0) {
     // For 1.x.x and above versions
     if (containsBreakingChanges) {
+      console.log('Major version bump: breaking changes detected');
       return 'major';
     } else if (containsFeatures) {
+      console.log('Minor version bump: features detected');
       return 'minor';
     } else if (containsFixes || containsPerformance || containsBuild) {
+      console.log('Patch version bump: fixes/performance/build changes detected');
       return 'patch';
     }
   } else {
     // For 0.x.x versions, breaking changes bump minor, features bump patch
     if (containsBreakingChanges) {
+      console.log('Minor version bump (0.x.x): breaking changes detected');
       return 'minor';
     } else if (containsFeatures || containsFixes || containsPerformance || containsBuild) {
+      console.log('Patch version bump (0.x.x): features/fixes/performance/build changes detected');
       return 'patch';
     }
   }
   
+  console.log('No version bump needed: no significant changes detected');
   return 'none';
 }
 

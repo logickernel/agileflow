@@ -123,20 +123,68 @@ function main() {
     // Get commit messages since the last version for version calculation
     console.log('Getting commit messages since last version...');
     const currentVersion = getLatestVersion();
+    
+    // Check if this is an empty repository
+    try {
+      const hasCommits = runWithOutput('git rev-list --count HEAD') || '0';
+      if (hasCommits === '0') {
+        console.error('Error: Repository has no commits. Cannot proceed with versioning.');
+        console.error('Please make at least one commit before running AgileFlow.');
+        process.exit(1);
+      }
+    } catch (error) {
+      console.warn('Warning: Could not verify commit count:', error.message);
+    }
+    
     const previousTag = currentVersion.major === 0 && currentVersion.minor === 0 && currentVersion.patch === 0 
       ? null 
       : `v${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}${currentVersion.metadata}`;
     
     // Get commit subjects since the previous tag
     const { getCommitSubjectsSince } = require('./git-utils');
-    const commitMessages = getCommitSubjectsSince(previousTag, 100);
+    let commitMessages;
+    
+    if (previousTag === null) {
+      // First push scenario: get all commit messages from the beginning
+      console.log('First push detected - getting all commit messages from repository start...');
+      commitMessages = getCommitSubjectsSince(null, 100);
+      
+      // If still no commit messages, try to get them from the beginning of the branch
+      if (commitMessages.length === 0) {
+        console.log('No commit messages found with previous method, trying alternative approach...');
+        try {
+          const allCommits = runWithOutput('git log --pretty=format:%s -n 100') || '';
+          commitMessages = allCommits.split('\n').map(s => s.trim()).filter(Boolean);
+          console.log(`Found ${commitMessages.length} commit messages using alternative method`);
+        } catch (error) {
+          console.warn('Alternative commit retrieval failed:', error.message);
+          commitMessages = [];
+        }
+      }
+      
+      // Final check: if we still have no commits, this might be an empty repository
+      if (commitMessages.length === 0) {
+        console.warn('Warning: No commits found in repository. This might be an empty repository.');
+        console.warn('Proceeding with empty commit messages array - version will remain 0.0.0');
+      }
+    } else {
+      commitMessages = getCommitSubjectsSince(previousTag, 100);
+    }
+    
     console.log(`Found ${commitMessages.length} commit messages since last version`);
 
     // Build tag name automatically from the current branch
     // Format: v<major>.<minor>.<patch>
     console.log('Building next version tag...');
+    console.log(`Current version: ${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}`);
+    console.log(`Commit messages to analyze: ${commitMessages.length}`);
+    if (commitMessages.length > 0) {
+      console.log(`Sample commit messages: ${commitMessages.slice(0, 3).map(m => `"${m}"`).join(', ')}`);
+    }
+    
     const { tag, versionBump, currentVersion: currentVersionString } = calculateNextVersion(commitMessages);
     console.log(`Next version tag: ${tag}`);
+    console.log(`Version bump type: ${versionBump}`);
 
     // Check if version bump is needed
     if (versionBump === 'none') {
