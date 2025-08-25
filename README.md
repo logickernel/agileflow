@@ -21,12 +21,15 @@ include:
   - remote: https://code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
 ```
 
+Introducing a simple workflow in which an environment variable $VERSION is available.
+
+**Learn More**: [Complete Installation Guide](./docs/installation.md) - Step-by-step setup for different platforms
+
 > [!NOTE]
 > To allow the pipeline to push tags enable `Allow Git push requests to the repository` for the CI job token under `Settings > CI/CD > Job token permissions`.
 >
 > You may need to enable the feature flag `allow_push_repository_for_job_token` in your self-managed instance to see it.
 
-**Learn More**: [Complete Installation Guide](./docs/installation.md) - Step-by-step setup for different platforms
 
 # Core Principles
 
