@@ -229,7 +229,7 @@ function determineVersionBump(commitMessages, currentVersion = { major: 0, minor
   const containsBreakingChanges = commitMessages.some(message => {
     const trimmed = message.trim();
     // Check for breaking change indicator in commit type (e.g., feat!, feat(scope)!)
-    const hasBreakingIndicator = /^(\w+)(!)(?:\(([^)]+)\))?:\s+(.+)$/i.test(trimmed);
+    const hasBreakingIndicator = /^(\w+)(!|\([^)]+\)!):\s+(.+)$/i.test(trimmed);
     // Check for BREAKING CHANGE in the message
     const hasBreakingChangeComment = /BREAKING CHANGE:/i.test(trimmed);
     return hasBreakingIndicator || hasBreakingChangeComment;
