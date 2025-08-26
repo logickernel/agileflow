@@ -235,17 +235,17 @@ function determineVersionBump(commitMessages, currentVersion = { major: 0, minor
     return hasBreakingIndicator || hasBreakingChangeComment;
   });
   
-  // Check for feature commits (feat: or feat!)
-  const containsFeatures = commitMessages.some(message => /^feat(!|\([^)]+\)!|:)/i.test(message.trim()));
+  // Check for feature commits (feat: or feat(scope): or feat! or feat(scope)!)
+  const containsFeatures = commitMessages.some(message => /^feat(!|\([^)]+\)!|\([^)]+\):|:)/i.test(message.trim()));
   
-  // Check for fix commits (fix: or fix!)
-  const containsFixes = commitMessages.some(message => /^fix(!|\([^)]+\)!|:)/i.test(message.trim()));
+  // Check for fix commits (fix: or fix(scope): or fix! or fix(scope)!)
+  const containsFixes = commitMessages.some(message => /^fix(!|\([^)]+\)!|\([^)]+\):|:)/i.test(message.trim()));
   
-  // Check for performance commits (perf: or perf!)
-  const containsPerformance = commitMessages.some(message => /^perf(!|\([^)]+\)!|:)/i.test(message.trim()));
+  // Check for performance commits (perf: or perf(scope): or perf! or perf(scope)!)
+  const containsPerformance = commitMessages.some(message => /^perf(!|\([^)]+\)!|\([^)]+\):|:)/i.test(message.trim()));
 
-  // Check for build system commits (build: or build!)
-  const containsBuild = commitMessages.some(message => /^build(!|\([^)]+\)!|:)/i.test(message.trim()));
+  // Check for build system commits (build: or build(scope): or build! or build(scope)!)
+  const containsBuild = commitMessages.some(message => /^build(!|\([^)]+\)!|\([^)]+\):|:)/i.test(message.trim()));
   
   // Log what we found for debugging
   console.log(`Commit analysis results:`);
