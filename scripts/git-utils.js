@@ -85,42 +85,113 @@ function getPreviousTagForTarget(tagName) {
   const out = runWithOutput('git tag --list "v*" --sort=v:refname') || '';
   const allTags = out.split('\n').map((s) => s.trim()).filter(Boolean);
   
+  console.log(`Debug: Looking for previous tag for ${tagName}`);
+  console.log(`Debug: Available tags: ${allTags.join(', ')}`);
+  
   if (allTags.length === 0) return null;
   
   // Find the target tag in the sorted list
   const targetTagIndex = allTags.findIndex(tag => tag === tagName);
-  if (targetTagIndex === -1) return null;
+  console.log(`Debug: Target tag index: ${targetTagIndex}`);
+  
+  if (targetTagIndex === -1) {
+    console.log(`Debug: Target tag ${tagName} not found in existing tags, treating as new tag`);
+    // If the target tag doesn't exist yet (it's being created), find the latest existing tag
+    return allTags[allTags.length - 1];
+  }
   
   // If this is the first tag, there's no previous tag
   if (targetTagIndex === 0) return null;
   
   // Return the tag that comes before the target tag
-  return allTags[targetTagIndex - 1];
+  const previousTag = allTags[targetTagIndex - 1];
+  console.log(`Debug: Previous tag found: ${previousTag}`);
+  return previousTag;
 }
 
 function getCommitSubjectsSince(fromTagExclusive, maxCount = 50) {
   if (!fromTagExclusive) {
     // When no previous tag, get all commits from the beginning
     const logCmd = `git log --pretty=format:%s -n ${Number(maxCount)}`;
+    console.log(`Debug: Executing git command: ${logCmd}`);
     const out = runWithOutput(logCmd) || '';
-    return out
+    const subjects = out
       .split('\n')
       .map((s) => s.trim())
       .filter(Boolean);
+    console.log(`Debug: Found ${subjects.length} subjects from beginning, first few: ${subjects.slice(0, 3).join(', ')}`);
+    return subjects;
+  }
+  
+  // First, verify the tag exists
+  try {
+    const tagExists = runWithOutput(`git rev-parse ${fromTagExclusive}`);
+    console.log(`Debug: Tag ${fromTagExclusive} exists at commit: ${tagExists.trim()}`);
+  } catch (error) {
+    console.warn(`Debug: Tag ${fromTagExclusive} not found, falling back to beginning`);
+    // If the tag doesn't exist, fall back to getting all commits
+    const logCmd = `git log --pretty=format:%s -n ${Number(maxCount)}`;
+    console.log(`Debug: Executing fallback git command: ${logCmd}`);
+    const out = runWithOutput(logCmd) || '';
+    const subjects = out
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    console.log(`Debug: Found ${subjects.length} subjects from beginning (fallback), first few: ${subjects.slice(0, 3).join(', ')}`);
+    return subjects;
   }
   
   const logCmd = `git log ${fromTagExclusive}..HEAD --pretty=format:%s -n ${Number(maxCount)}`;
+  console.log(`Debug: Executing git command: ${logCmd}`);
   const out = runWithOutput(logCmd) || '';
-  return out
+  const subjects = out
     .split('\n')
     .map((s) => s.trim())
     .filter(Boolean);
+  console.log(`Debug: Found ${subjects.length} subjects since ${fromTagExclusive}, first few: ${subjects.slice(0, 3).join(', ')}`);
+  
+  // If we got no subjects, there might be an issue with the range
+  if (subjects.length === 0) {
+    console.warn(`Debug: No subjects found with range ${fromTagExclusive}..HEAD, trying alternative approach`);
+    // Try getting commits since the tag without the range syntax
+    const altCmd = `git log ${fromTagExclusive} --not --all --pretty=format:%s -n ${Number(maxCount)}`;
+    console.log(`Debug: Executing alternative git command: ${altCmd}`);
+    try {
+      const altOut = runWithOutput(altCmd) || '';
+      const altSubjects = altOut
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      console.log(`Debug: Alternative command found ${altSubjects.length} subjects, first few: ${altSubjects.slice(0, 3).join(', ')}`);
+      return altSubjects;
+    } catch (altError) {
+      console.warn(`Debug: Alternative command failed: ${altError.message}, falling back to beginning`);
+      // Final fallback: get all commits
+      const fallbackCmd = `git log --pretty=format:%s -n ${Number(maxCount)}`;
+      const fallbackOut = runWithOutput(fallbackCmd) || '';
+      const fallbackSubjects = fallbackOut
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      console.log(`Debug: Fallback command found ${fallbackSubjects.length} subjects, first few: ${fallbackSubjects.slice(0, 3).join(', ')}`);
+      return fallbackSubjects;
+    }
+  }
+  
+  return subjects;
 }
 
 function buildTagMessage(tagName, options = {}) {
-  const { maxCommitLines = 50, includeMergeCommits = false } = options;
-  const previousTag = getPreviousTagForTarget(tagName);
-  let subjects = getCommitSubjectsSince(previousTag, maxCommitLines);
+  const { maxCommitLines = 50, includeMergeCommits = false, previousTag = null } = options;
+  
+  // Use provided previousTag if available, otherwise calculate it
+  const tagToUse = previousTag || getPreviousTagForTarget(tagName);
+  
+  console.log(`Debug: buildTagMessage for ${tagName}, using previousTag: ${tagToUse}`);
+  
+  let subjects = getCommitSubjectsSince(tagToUse, maxCommitLines);
+  console.log(`Debug: Found ${subjects.length} commit subjects since ${tagToUse || 'beginning'}`);
+  
   if (!includeMergeCommits) {
     subjects = subjects.filter((s) => !/^merge /i.test(s));
   }

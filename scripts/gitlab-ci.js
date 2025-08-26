@@ -86,6 +86,15 @@ function main() {
     try {
       run('git fetch --all --tags --prune --prune-tags');
       console.log('All tags and refs fetched successfully');
+      
+      // Debug: show what tags are available
+      try {
+        const availableTags = runWithOutput('git tag --list "v*" --sort=v:refname') || '';
+        const tags = availableTags.split('\n').map(s => s.trim()).filter(Boolean);
+        console.log(`Debug: Available version tags after fetch: ${tags.join(', ')}`);
+      } catch (tagError) {
+        console.warn('Debug: Could not list tags:', tagError.message);
+      }
     } catch (fetchError) {
       console.warn('Warning: Failed to fetch all tags:', fetchError.message);
       console.warn('Continuing with locally available tags...');
@@ -123,6 +132,7 @@ function main() {
     // Get commit messages since the last version for version calculation
     console.log('Getting commit messages since last version...');
     const currentVersion = getLatestVersion();
+    console.log(`Debug: Current version detected: ${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}${currentVersion.metadata}`);
     
     // Check if this is an empty repository
     try {
@@ -139,6 +149,8 @@ function main() {
     const previousTag = currentVersion.major === 0 && currentVersion.minor === 0 && currentVersion.patch === 0 
       ? null 
       : `v${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch}${currentVersion.metadata}`;
+    
+    console.log(`Debug: Previous tag calculated: ${previousTag || 'null (first push)'}`);
     
     // Get commit subjects since the previous tag
     const { getCommitSubjectsSince } = require('./git-utils');
@@ -168,10 +180,12 @@ function main() {
         console.warn('Proceeding with empty commit messages array - version will remain 0.0.0');
       }
     } else {
+      console.log(`Getting commit messages since previous tag: ${previousTag}`);
       commitMessages = getCommitSubjectsSince(previousTag, 100);
     }
     
     console.log(`Found ${commitMessages.length} commit messages since last version`);
+    console.log(`Previous tag used for commit analysis: ${previousTag || 'none (first push)'}`);
 
     // Build tag name automatically from the current branch
     // Format: v<major>.<minor>.<patch>
@@ -197,8 +211,17 @@ function main() {
 
     // Create annotated tag message: version + summarized commits since previous tag
     console.log('Building tag message...');
-    const tagMessage = buildTagMessage(tag, { maxCommitLines: 100, includeMergeCommits: false });
+    const tagMessage = buildTagMessage(tag, { 
+      maxCommitLines: 100, 
+      includeMergeCommits: false,
+      previousTag: previousTag 
+    });
     console.log(`Tag message created (${tagMessage.split('\n').length} lines)`);
+    console.log('Tag message preview (first 10 lines):');
+    console.log(tagMessage.split('\n').slice(0, 10).join('\n'));
+    if (tagMessage.split('\n').length > 10) {
+      console.log('... (truncated)');
+    }
     
     console.log('Creating annotated tag...');
     createAnnotatedTag(tag, tagMessage);
