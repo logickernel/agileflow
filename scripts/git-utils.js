@@ -124,9 +124,9 @@ function createTagViaAPI(tagName, message, projectPath, serverHost, accessToken)
 function pushTag(projectPath, serverHost, accessToken, tagName, tagMessage) {
   if (!accessToken) {
     const projectUrl = `https://${serverHost}/${projectPath}`;
-    const tokenUrl = `${projectUrl}/-/settings/access_tokens`;
+    const tokenUrl = `https://${serverHost}/-/user_settings/personal_access_tokens`;
     const cicdUrl = `${projectUrl}/-/settings/ci_cd#js-cicd-variables-settings`;
-    const tokenParams = '?name=AgileFlow%20Bot&description=Token%20for%20AgileFlow%20automatic%20versioning&scopes[]=api&role=maintainer';
+    const tokenParams = '?name=AgileFlow+Bot&description=Token+for+AgileFlow+automatic+versioning&scopes=api';
     
     throw new Error(`AGILEFLOW_TOKEN environment variable is required but not set.\n\nTo fix this:\n1. First, create a personal access token: ${tokenUrl}${tokenParams}\n2. Copy the generated token\n3. Add it as a CI/CD variable: ${cicdUrl}\n   - Variable key: AGILEFLOW_TOKEN\n   - Variable value: [paste your token here]\n   - Protect variable: Yes (recommended)`);
   }
