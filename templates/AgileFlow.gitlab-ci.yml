@@ -43,7 +43,7 @@ stages:
 # variable is made available as an artifact for use in subsequent stages.
 agileflow:
   stage: version
-  image: registry.logickernel.com/kernel/agileflow:0.8.4
+  image: registry.logickernel.com/kernel/agileflow:0.8.5
   script:
     - agileflow gitlab-ci
   artifacts:
