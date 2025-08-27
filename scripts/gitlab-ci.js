@@ -219,12 +219,8 @@ function main() {
     if (tagMessage.split('\n').length > 10) {
       console.log('... (truncated)');
     }
-    
-    console.log('Creating annotated tag...');
-    createAnnotatedTag(tag, tagMessage);
-    console.log(`Tag ${tag} created locally`);
 
-    // Push tag to GitLab using AGILEFLOW_TOKEN
+    // Push tag to GitLab using AGILEFLOW_TOKEN (creates tag remotely)
     console.log('Pushing tag to GitLab...');
     
     const AGILEFLOW_TOKEN = process.env.AGILEFLOW_TOKEN;

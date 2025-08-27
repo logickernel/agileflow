@@ -130,7 +130,7 @@ function pushTag(projectPath, serverHost, accessToken, tagName, tagMessage) {
     throw new Error(`AGILEFLOW_TOKEN environment variable is required but not set.\n\nTo fix this:\n1. Go to: ${tokenUrl}${tokenParams}\n2. Click "Create personal access token"\n3. Copy the token and add it as AGILEFLOW_TOKEN environment variable`);
   }
   
-  console.log(`Creating tag ${tagName} via GitLab API...`);
+  console.log(`Creating tag ${tagName} remotely via GitLab API...`);
   return createTagViaAPI(tagName, tagMessage || tagName, projectPath, serverHost, accessToken)
     .then(() => {
       console.log(`Tag ${tagName} created successfully via GitLab API`);
