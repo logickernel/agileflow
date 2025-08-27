@@ -227,12 +227,14 @@ function main() {
     createAnnotatedTag(tag, tagMessage);
     console.log(`Tag ${tag} created locally`);
 
-    // Push tag to GitLab - try API first if ACCESS_TOKEN is available, fallback to git push
+    // Push tag to GitLab - try multiple methods in order of preference
     console.log('Pushing tag to GitLab...');
     
     const AGILEFLOW_ACCESS_TOKEN = process.env.AGILEFLOW_ACCESS_TOKEN;
+    const PIPELINE_TRIGGER_TOKEN = process.env.PIPELINE_TRIGGER_TOKEN;
     let pushSuccess = false;
     
+    // Method 1: GitLab API with AGILEFLOW_ACCESS_TOKEN (if available)
     if (AGILEFLOW_ACCESS_TOKEN) {
       console.log('AGILEFLOW_ACCESS_TOKEN found, attempting to create tag via GitLab API...');
       try {
@@ -248,12 +250,32 @@ function main() {
         pushSuccess = true;
       } catch (apiError) {
         console.warn(`API tag creation failed: ${apiError.message}`);
+        console.log('Falling back to next method...');
+      }
+    }
+    
+    // Method 2: Pipeline Triggers API with PIPELINE_TRIGGER_TOKEN (if available)
+    if (!pushSuccess && PIPELINE_TRIGGER_TOKEN) {
+      console.log('PIPELINE_TRIGGER_TOKEN found, attempting to create tag locally and trigger pipeline...');
+      try {
+        pushTag(null, tag, {
+          usePipelineTrigger: true,
+          pipelineTriggerToken: PIPELINE_TRIGGER_TOKEN,
+          projectPath: CI_PROJECT_PATH,
+          serverHost: CI_SERVER_HOST,
+          tagMessage: tagMessage
+        });
+        console.log(`Tag ${tag} created locally and pipeline triggered successfully`);
+        pushSuccess = true;
+      } catch (triggerError) {
+        console.warn(`Pipeline trigger method failed: ${triggerError.message}`);
         console.log('Falling back to git push method...');
       }
     }
     
+    // Method 3: Git push with CI_JOB_TOKEN (fallback)
     if (!pushSuccess) {
-      console.log('Using git push method...');
+      console.log('Using git push method with CI_JOB_TOKEN...');
       const encodedToken = encodeURIComponent(CI_JOB_TOKEN);
       const remoteUrl = `https://gitlab-ci-token:${encodedToken}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git`;
       try {

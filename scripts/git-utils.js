@@ -117,13 +117,81 @@ function createTagViaAPI(tagName, message, projectPath, serverHost, accessToken)
   });
 }
 
+function triggerPipelineViaAPI(projectPath, serverHost, triggerToken, ref) {
+  return new Promise((resolve, reject) => {
+    const projectId = encodeURIComponent(projectPath);
+    
+    const postData = `token=${encodeURIComponent(triggerToken)}&ref=${encodeURIComponent(ref)}`;
+    
+    const options = {
+      hostname: serverHost,
+      port: 443,
+      path: `/api/v4/projects/${projectId}/trigger/pipeline`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+    
+    const req = https.request(options, (res) => {
+      let data = '';
+      
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          try {
+            const response = JSON.parse(data);
+            resolve(response);
+          } catch (e) {
+            resolve({ message: 'Pipeline triggered successfully' });
+          }
+        } else {
+          let errorMessage = `Pipeline trigger API request failed with status ${res.statusCode}`;
+          try {
+            const errorData = JSON.parse(data);
+            if (errorData.message) {
+              errorMessage += `: ${errorData.message}`;
+            }
+            if (res.statusCode === 403) {
+              errorMessage += '\n\nPermission denied. The PIPELINE_TRIGGER_TOKEN needs appropriate permissions.';
+              errorMessage += '\nTo fix this:';
+              errorMessage += '\n1. Go to your project Settings > CI/CD > Pipeline triggers';
+              errorMessage += '\n2. Create a new trigger or use an existing one';
+              errorMessage += '\n3. Add the token as PIPELINE_TRIGGER_TOKEN environment variable';
+            }
+          } catch (e) {
+            // If we can't parse the error response, use the raw data
+            if (data) {
+              errorMessage += `\nResponse: ${data}`;
+            }
+          }
+          reject(new Error(errorMessage));
+        }
+      });
+    });
+    
+    req.on('error', (error) => {
+      reject(new Error(`Network error: ${error.message}`));
+    });
+    
+    req.write(postData);
+    req.end();
+  });
+}
+
 function pushTag(remoteUrl, tagName, options = {}) {
   const { 
     useAPI = false, 
     accessToken = null, 
     projectPath = null, 
     serverHost = null,
-    tagMessage = null 
+    tagMessage = null,
+    usePipelineTrigger = false,
+    pipelineTriggerToken = null
   } = options;
   
   // If API is requested and we have the required parameters
@@ -137,6 +205,29 @@ function pushTag(remoteUrl, tagName, options = {}) {
         console.error(`API tag creation failed: ${error.message}`);
         throw error;
       });
+  }
+  
+  // If pipeline trigger is requested and we have the required parameters
+  if (usePipelineTrigger && pipelineTriggerToken && projectPath && serverHost) {
+    console.log(`Creating tag ${tagName} locally and triggering pipeline via API...`);
+    try {
+      // Create the tag locally first
+      createAnnotatedTag(tagName, tagMessage || tagName);
+      console.log(`Tag ${tagName} created locally`);
+      
+      // Trigger the pipeline via API
+      return triggerPipelineViaAPI(projectPath, serverHost, pipelineTriggerToken, tagName)
+        .then(() => {
+          console.log(`Pipeline triggered successfully for tag ${tagName}`);
+        })
+        .catch((error) => {
+          console.error(`Pipeline trigger failed: ${error.message}`);
+          throw error;
+        });
+    } catch (error) {
+      console.error(`Local tag creation failed: ${error.message}`);
+      throw error;
+    }
   }
   
   // Fallback to git push method
@@ -559,6 +650,7 @@ module.exports = {
   createAnnotatedTag,
   pushTag,
   createTagViaAPI,
+  triggerPipelineViaAPI,
   buildTagMessage,
   getCommitSubjectsSince,
   determineVersionBump,
