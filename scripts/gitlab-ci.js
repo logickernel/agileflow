@@ -99,7 +99,7 @@ function main() {
         console.warn('Debug: Could not list tags:', tagError.message);
       }
     } catch (cleanupError) {
-      console.warn('Warning: Failed to clean repository:', cleanupError.error.message);
+      console.warn('Warning: Failed to clean repository:', cleanupError.message);
       console.warn('Continuing with current state...');
     }
 
