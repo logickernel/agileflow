@@ -9,13 +9,13 @@ AgileFlow automatically determines version bumps based on conventional commit me
 ### For versions 1.0.0 and above:
 - **Major version bump (X.0.0)**: Breaking changes (`!` suffix or `BREAKING CHANGE:` in body)
 - **Minor version bump (0.X.0)**: New features (`feat:`)
-- **Patch version bump (0.0.X)**: Bug fixes, performance improvements, or build system changes
-- **No version bump**: Documentation, style changes, tests, CI, chores, refactors, or reverts
+- **Patch version bump (0.0.X)**: Bug fixes, performance improvements, build system changes, CI changes, refactors, reverts, or tests
+- **No version bump**: Documentation, style changes, or chores
 
 ### For pre-1.0.0 versions (0.x.x):
 - **Minor version bump (0.X.0)**: Breaking changes (`!` suffix or `BREAKING CHANGE:` in body)
-- **Patch version bump (0.0.X)**: New features, bug fixes, performance improvements, or build system changes
-- **No version bump**: Documentation, style changes, tests, CI, chores, refactors, or reverts
+- **Patch version bump (0.0.X)**: New features, bug fixes, performance improvements, build system changes, CI changes, refactors, or reverts
+- **No version bump**: Documentation, style changes, tests, or chores
 
 ## Commit Types and Version Impact
 
@@ -25,13 +25,13 @@ AgileFlow automatically determines version bumps based on conventional commit me
 | [fix](./conventional-commits/type-fix.md) | Bug fixes | **Patch** | **Patch** |
 | [perf](./conventional-commits/type-perf.md) | Performance improvements | **Patch** | **Patch** |
 | [build](./conventional-commits/type-build.md) | Build system changes | **Patch** | **Patch** |
+| [ci](./conventional-commits/type-ci.md) | CI/CD changes | **Patch** | **Patch** |
+| [refactor](./conventional-commits/type-refactor.md) | Code refactoring | **Patch** | **Patch** |
+| [revert](./conventional-commits/type-revert.md) | Revert previous commits | **Patch** | **Patch** |
+| [test](./conventional-commits/type-test.md) | Test additions/changes | **Patch** | **Patch** |
 | [docs](./conventional-commits/type-docs.md) | Documentation changes | **None** | **None** |
 | [style](./conventional-commits/type-style.md) | Code style changes | **None** | **None** |
-| [refactor](./conventional-commits/type-refactor.md) | Code refactoring | **None** | **None** |
-| [test](./conventional-commits/type-test.md) | Test additions/changes | **None** | **None** |
-| [ci](./conventional-commits/type-ci.md) | CI/CD changes | **None** | **None** |
 | [chore](./conventional-commits/type-chore.md) | Maintenance tasks | **None** | **None** |
-| [revert](./conventional-commits/type-revert.md) | Revert previous commits | **None** | **None** |
 
 ## Breaking Changes
 
@@ -119,7 +119,7 @@ When multiple commit types are present in the commit history since the last vers
 
 1. **Breaking changes** → Major version bump (or minor for 0.x.x)
 2. **Features** → Minor version bump (or patch for 0.x.x)
-3. **Fixes, Performance, Build** → Patch version bump
+3. **Fixes, Performance, Build, CI, Refactor, Revert, Test** → Patch version bump
 4. **All others** → No version bump
 
 This ensures semantic versioning follows the [SemVer specification](https://semver.org/).

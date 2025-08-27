@@ -98,9 +98,15 @@ type[!]?(scope)?: description
 
 - **feat** - New features (minor version bump)
 - **fix** - Bug fixes (patch version bump)
-- **perf** - Performance improvements (minor version bump)
+- **perf** - Performance improvements (patch version bump)
 - **refactor** - Code refactoring (patch version bump)
-- **docs** - Documentation updates (patch version bump)
+- **build** - Build system changes (patch version bump)
+- **ci** - CI/CD changes (patch version bump)
+- **revert** - Revert previous commits (patch version bump)
+- **docs** - Documentation updates (no version bump)
+- **test** - Test additions/changes (patch version bump)
+- **style** - Code style changes (no version bump)
+- **chore** - Maintenance tasks (no version bump)
 - **!** - Breaking changes (major version bump)
 
 ## Example Commits
@@ -120,7 +126,7 @@ docs: update README with usage examples
 
 AgileFlow automatically analyzes your commit history and determines the next semantic version based on conventional commits. Each merge to main triggers a new version:
 
-- **Patch versions** (v1.0.0 → v1.0.1) for bug fixes and minor changes
+- **Patch versions** (v1.0.0 → v1.0.1) for bug fixes, performance improvements, build changes, CI changes, refactors, reverts, and tests
 - **Minor versions** (v1.0.0 → v1.1.0) for new features
 - **Major versions** (v1.0.0 → v2.0.0) for breaking changes
 
@@ -138,7 +144,24 @@ Bug fixes:
 - api: correct null handling in user lookup
 
 Performance improvements:
-- BREAKING: cache: switch to Redis cluster
+- cache: optimize Redis connection pooling
+
+Build system:
+- update webpack to v5
+- upgrade React to 18.2.0
+
+CI:
+- fix pipeline configuration
+
+Refactors:
+- simplify authentication logic
+
+Tests:
+- add integration tests for auth flow
+- increase test coverage to 85%
+
+Reverts:
+- "feat: add experimental feature"
 
 Documentation:
 - update README with usage examples

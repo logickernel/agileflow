@@ -392,8 +392,8 @@ function determineVersionBump(commitMessages, currentVersion = { major: 0, minor
   // Check for feature commits (feat: or feat(scope): or feat! or feat(scope)!)
   const containsFeatures = commitMessages.some(message => /^feat(!|\([^)]+\)!|\([^)]+\):|:)/i.test(message.trim()));
   
-  // Check for fix, performance, build, ci, refactor, or revert commits
-  const containsFixesOrPerformanceOrBuildOrCIOrRefactorOrRevert = commitMessages.some(message => /^fix(!|\([^)]+\)!|\([^)]+\):|:)|perf(!|\([^)]+\)!|\([^)]+\):|:)|build(!|\([^)]+\)!|\([^)]+\):|:)|ci(!|\([^)]+\)!|\([^)]+\):|:)|refactor(!|\([^)]+\)!|\([^)]+\):|:)|revert(!|\([^)]+\)!|\([^)]+\):|:)/i.test(message.trim()));
+  // Check for fix, performance, build, ci, refactor, revert, or test commits
+  const containsFixesOrPerformanceOrBuildOrCIOrRefactorOrRevertOrTest = commitMessages.some(message => /^fix(!|\([^)]+\)!|\([^)]+\):|:)|perf(!|\([^)]+\)!|\([^)]+\):|:)|build(!|\([^)]+\)!|\([^)]+\):|:)|ci(!|\([^)]+\)!|\([^)]+\):|:)|refactor(!|\([^)]+\)!|\([^)]+\):|:)|revert(!|\([^)]+\)!|\([^)]+\):|:)|test(!|\([^)]+\)!|\([^)]+\):|:)/i.test(message.trim()));
   
 
   // Determine version bump based on current version and commit types
@@ -405,8 +405,8 @@ function determineVersionBump(commitMessages, currentVersion = { major: 0, minor
     } else if (containsFeatures) {
       console.log('Minor version bump: features detected');
       return 'minor';
-    } else if (containsFixesOrPerformanceOrBuildOrCIOrRefactorOrRevert) {
-      console.log('Patch version bump: fixes/performance/build changes detected');
+    } else if (containsFixesOrPerformanceOrBuildOrCIOrRefactorOrRevertOrTest) {
+      console.log('Patch version bump: fixes/performance/build/ci/refactor/revert/test changes detected');
       return 'patch';
     }
   } else {
@@ -414,8 +414,8 @@ function determineVersionBump(commitMessages, currentVersion = { major: 0, minor
     if (containsBreakingChanges) {
       console.log('Minor version bump (0.x.x): breaking changes detected');
       return 'minor';
-    } else if (containsFeatures || containsFixesOrPerformanceOrBuildOrCIOrRefactorOrRevert) {
-      console.log('Patch version bump (0.x.x): features/fixes/performance/build changes detected');
+    } else if (containsFeatures || containsFixesOrPerformanceOrBuildOrCIOrRefactorOrRevertOrTest) {
+      console.log('Patch version bump (0.x.x): features/fixes/performance/build/ci/refactor/revert/test changes detected');
       return 'patch';
     }
   }

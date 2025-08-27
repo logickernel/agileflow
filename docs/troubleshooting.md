@@ -151,6 +151,12 @@ docker pull registry.logickernel.com/kernel/agileflow:latest
    # Use recognized commit types
    feat: new feature          # Minor version bump
    fix: bug fix              # Patch version bump
+   perf: performance improvement # Patch version bump
+refactor: code refactoring    # Patch version bump
+build: build system change    # Patch version bump
+ci: CI/CD change             # Patch version bump
+test: test additions/changes  # Patch version bump
+revert: revert commit         # Patch version bump
    feat!: breaking change    # Major version bump
    ```
 

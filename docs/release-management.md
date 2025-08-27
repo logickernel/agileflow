@@ -39,11 +39,14 @@ AgileFlow analyzes your commit messages to determine the appropriate version bum
 ```bash
 # Patch version (v1.0.0 → v1.0.1)
 fix: resolve login validation error
-docs: update API documentation
 refactor: improve error handling
-test: add missing test coverage
 build: update dependencies
 ci: fix pipeline configuration
+perf: optimize database queries
+revert: "feat: add experimental feature"
+
+# No version bump
+docs: update API documentation
 chore: update issue templates
 style: fix code formatting
 

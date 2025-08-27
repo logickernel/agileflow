@@ -242,8 +242,16 @@ AgileFlow automatically determines version bumps based on commit types:
 ```bash
 # Patch version (v1.0.0 → v1.0.1)
 fix: resolve login bug
-docs: update README
 refactor: improve error handling
+perf: optimize database queries
+build: update dependencies
+ci: fix pipeline configuration
+revert: "feat: add experimental feature"
+
+# No version bump
+docs: update README
+style: fix code formatting
+chore: update dependencies
 
 # Minor version (v1.0.0 → v1.1.0)
 feat: add user authentication
