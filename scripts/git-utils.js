@@ -91,11 +91,11 @@ function createTagViaAPI(tagName, message, projectPath, serverHost, accessToken)
               errorMessage += `: ${errorData.message}`;
             }
             if (res.statusCode === 403) {
-              errorMessage += '\n\nPermission denied. The ACCESS_TOKEN needs "write_repository" scope.';
+              errorMessage += '\n\nPermission denied. The AGILEFLOW_ACCESS_TOKEN needs "write_repository" scope.';
               errorMessage += '\nTo fix this:';
               errorMessage += '\n1. Go to your project Settings > Access Tokens';
               errorMessage += '\n2. Create a token with "write_repository" scope';
-              errorMessage += '\n3. Add it as ACCESS_TOKEN environment variable';
+              errorMessage += '\n3. Add it as AGILEFLOW_ACCESS_TOKEN environment variable';
             }
           } catch (e) {
             // If we can't parse the error response, use the raw data

@@ -230,16 +230,16 @@ function main() {
     // Push tag to GitLab - try API first if ACCESS_TOKEN is available, fallback to git push
     console.log('Pushing tag to GitLab...');
     
-    const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+    const AGILEFLOW_ACCESS_TOKEN = process.env.AGILEFLOW_ACCESS_TOKEN;
     let pushSuccess = false;
     
-    if (ACCESS_TOKEN) {
-      console.log('ACCESS_TOKEN found, attempting to create tag via GitLab API...');
+    if (AGILEFLOW_ACCESS_TOKEN) {
+      console.log('AGILEFLOW_ACCESS_TOKEN found, attempting to create tag via GitLab API...');
       try {
         // API call is synchronous in our implementation, so we can call it directly
         pushTag(null, tag, {
           useAPI: true,
-          accessToken: ACCESS_TOKEN,
+          accessToken: AGILEFLOW_ACCESS_TOKEN,
           projectPath: CI_PROJECT_PATH,
           serverHost: CI_SERVER_HOST,
           tagMessage: tagMessage
