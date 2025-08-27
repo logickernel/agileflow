@@ -53,7 +53,6 @@ function createAnnotatedTag(tagName, message) {
 function createTagViaAPI(tagName, message, projectPath, serverHost, accessToken) {
   return new Promise((resolve, reject) => {
     const projectId = encodeURIComponent(projectPath);
-    const url = `https://${serverHost}/api/v4/projects/${projectId}/repository/tags`;
     
     const postData = JSON.stringify({
       tag_name: tagName,
@@ -90,78 +89,18 @@ function createTagViaAPI(tagName, message, projectPath, serverHost, accessToken)
             if (errorData.message) {
               errorMessage += `: ${errorData.message}`;
             }
-            if (res.statusCode === 403) {
-              errorMessage += '\n\nPermission denied. The AGILEFLOW_ACCESS_TOKEN needs "write_repository" scope.';
+            if (res.statusCode === 401) {
+              errorMessage += '\n\nAuthentication failed. The AGILEFLOW_TOKEN is invalid or expired.';
               errorMessage += '\nTo fix this:';
               errorMessage += '\n1. Go to your project Settings > Access Tokens';
-              errorMessage += '\n2. Create a token with "write_repository" scope';
-              errorMessage += '\n3. Add it as AGILEFLOW_ACCESS_TOKEN environment variable';
-            }
-          } catch (e) {
-            // If we can't parse the error response, use the raw data
-            if (data) {
-              errorMessage += `\nResponse: ${data}`;
-            }
-          }
-          reject(new Error(errorMessage));
-        }
-      });
-    });
-    
-    req.on('error', (error) => {
-      reject(new Error(`Network error: ${error.message}`));
-    });
-    
-    req.write(postData);
-    req.end();
-  });
-}
-
-function triggerPipelineViaAPI(projectPath, serverHost, triggerToken, ref) {
-  return new Promise((resolve, reject) => {
-    const projectId = encodeURIComponent(projectPath);
-    
-    const postData = `token=${encodeURIComponent(triggerToken)}&ref=${encodeURIComponent(ref)}`;
-    
-    const options = {
-      hostname: serverHost,
-      port: 443,
-      path: `/api/v4/projects/${projectId}/trigger/pipeline`,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Content-Length': Buffer.byteLength(postData)
-      }
-    };
-    
-    const req = https.request(options, (res) => {
-      let data = '';
-      
-      res.on('data', (chunk) => {
-        data += chunk;
-      });
-      
-      res.on('end', () => {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          try {
-            const response = JSON.parse(data);
-            resolve(response);
-          } catch (e) {
-            resolve({ message: 'Pipeline triggered successfully' });
-          }
-        } else {
-          let errorMessage = `Pipeline trigger API request failed with status ${res.statusCode}`;
-          try {
-            const errorData = JSON.parse(data);
-            if (errorData.message) {
-              errorMessage += `: ${errorData.message}`;
-            }
-            if (res.statusCode === 403) {
-              errorMessage += '\n\nPermission denied. The PIPELINE_TRIGGER_TOKEN needs appropriate permissions.';
+              errorMessage += '\n2. Check the expiration date of your AgileFlow Bot token';
+              errorMessage += '\n3. If expired, create a new token or extend the existing one';
+            } else if (res.statusCode === 403) {
+              errorMessage += '\n\nPermission denied. The AGILEFLOW_TOKEN needs "api" scope and maintainer role.';
               errorMessage += '\nTo fix this:';
-              errorMessage += '\n1. Go to your project Settings > CI/CD > Pipeline triggers';
-              errorMessage += '\n2. Create a new trigger or use an existing one';
-              errorMessage += '\n3. Add the token as PIPELINE_TRIGGER_TOKEN environment variable';
+              errorMessage += '\n1. Go to your project Settings > Access Tokens';
+              errorMessage += '\n2. Ensure your AgileFlow Bot token has "api" scope and maintainer role';
+              errorMessage += '\n3. If permissions are insufficient, create a new token with proper permissions';
             }
           } catch (e) {
             // If we can't parse the error response, use the raw data
@@ -183,64 +122,24 @@ function triggerPipelineViaAPI(projectPath, serverHost, triggerToken, ref) {
   });
 }
 
-function pushTag(remoteUrl, tagName, options = {}) {
-  const { 
-    useAPI = false, 
-    accessToken = null, 
-    projectPath = null, 
-    serverHost = null,
-    tagMessage = null,
-    usePipelineTrigger = false,
-    pipelineTriggerToken = null
-  } = options;
-  
-  // If API is requested and we have the required parameters
-  if (useAPI && accessToken && projectPath && serverHost) {
-    console.log(`Creating tag ${tagName} via GitLab API...`);
-    return createTagViaAPI(tagName, tagMessage || tagName, projectPath, serverHost, accessToken)
-      .then(() => {
-        console.log(`Tag ${tagName} created successfully via API`);
-      })
-      .catch((error) => {
-        console.error(`API tag creation failed: ${error.message}`);
-        throw error;
-      });
+function pushTag(projectPath, serverHost, accessToken, tagName, tagMessage) {
+  if (!accessToken) {
+    const projectUrl = `https://${serverHost}/${projectPath}`;
+    const tokenUrl = `${projectUrl}/-/settings/access_tokens`;
+    const tokenParams = '?name=AgileFlow%20Bot&description=Token%20for%20AgileFlow%20automatic%20versioning&scopes[]=api&role=maintainer';
+    
+    throw new Error(`AGILEFLOW_TOKEN environment variable is required but not set.\n\nTo fix this:\n1. Go to: ${tokenUrl}${tokenParams}\n2. Click "Create personal access token"\n3. Copy the token and add it as AGILEFLOW_TOKEN environment variable`);
   }
   
-  // If pipeline trigger is requested and we have the required parameters
-  if (usePipelineTrigger && pipelineTriggerToken && projectPath && serverHost) {
-    console.log(`Creating tag ${tagName} locally and triggering pipeline via API...`);
-    try {
-      // Create the tag locally first
-      createAnnotatedTag(tagName, tagMessage || tagName);
-      console.log(`Tag ${tagName} created locally`);
-      
-      // Trigger the pipeline via API
-      return triggerPipelineViaAPI(projectPath, serverHost, pipelineTriggerToken, tagName)
-        .then(() => {
-          console.log(`Pipeline triggered successfully for tag ${tagName}`);
-        })
-        .catch((error) => {
-          console.error(`Pipeline trigger failed: ${error.message}`);
-          throw error;
-        });
-    } catch (error) {
-      console.error(`Local tag creation failed: ${error.message}`);
+  console.log(`Creating tag ${tagName} via GitLab API...`);
+  return createTagViaAPI(tagName, tagMessage || tagName, projectPath, serverHost, accessToken)
+    .then(() => {
+      console.log(`Tag ${tagName} created successfully via GitLab API`);
+    })
+    .catch((error) => {
+      console.error(`API tag creation failed: ${error.message}`);
       throw error;
-    }
-  }
-  
-  // Fallback to git push method
-  const safeRemote = String(remoteUrl).replace(/"/g, '\\"');
-  const safeTag = String(tagName).replace(/"/g, '\\"');
-  try {
-    // Use --force-with-lease for safer force push that GitLab CI recognizes
-    const output = runWithOutput(`git push --force-with-lease "${safeRemote}" "${safeTag}"`);
-    // Don't output anything - keep it silent
-  } catch (error) {
-    // Re-throw after ensuring error carries captured IO
-    throw error;
-  }
+    });
 }
 
 // --- Tag message builder (externalized) ---
@@ -650,7 +549,6 @@ module.exports = {
   createAnnotatedTag,
   pushTag,
   createTagViaAPI,
-  triggerPipelineViaAPI,
   buildTagMessage,
   getCommitSubjectsSince,
   determineVersionBump,

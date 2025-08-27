@@ -7,8 +7,6 @@ const {
   configureUser,
   createAnnotatedTag,
   pushTag,
-  runWithOutput,
-  run,
   buildTagMessage,
   getLatestVersion,
 } = require('./git-utils');
@@ -120,7 +118,6 @@ function main() {
 
     const GITLAB_USER_NAME = requireEnv('GITLAB_USER_NAME');
     const GITLAB_USER_EMAIL = requireEnv('GITLAB_USER_EMAIL');
-    const CI_JOB_TOKEN = requireEnv('CI_JOB_TOKEN');
     const CI_SERVER_HOST = requireEnv('CI_SERVER_HOST');
     const CI_PROJECT_PATH = requireEnv('CI_PROJECT_PATH');
     console.log('Environment variables loaded');
@@ -227,83 +224,17 @@ function main() {
     createAnnotatedTag(tag, tagMessage);
     console.log(`Tag ${tag} created locally`);
 
-    // Push tag to GitLab - try multiple methods in order of preference
+    // Push tag to GitLab using AGILEFLOW_TOKEN
     console.log('Pushing tag to GitLab...');
     
-    const AGILEFLOW_ACCESS_TOKEN = process.env.AGILEFLOW_ACCESS_TOKEN;
-    const PIPELINE_TRIGGER_TOKEN = process.env.PIPELINE_TRIGGER_TOKEN;
-    let pushSuccess = false;
+    const AGILEFLOW_TOKEN = process.env.AGILEFLOW_TOKEN;
     
-    // Method 1: GitLab API with AGILEFLOW_ACCESS_TOKEN (if available)
-    if (AGILEFLOW_ACCESS_TOKEN) {
-      console.log('AGILEFLOW_ACCESS_TOKEN found, attempting to create tag via GitLab API...');
-      try {
-        // API call is synchronous in our implementation, so we can call it directly
-        pushTag(null, tag, {
-          useAPI: true,
-          accessToken: AGILEFLOW_ACCESS_TOKEN,
-          projectPath: CI_PROJECT_PATH,
-          serverHost: CI_SERVER_HOST,
-          tagMessage: tagMessage
-        });
-        console.log(`Tag ${tag} created successfully via GitLab API`);
-        pushSuccess = true;
-      } catch (apiError) {
-        console.warn(`API tag creation failed: ${apiError.message}`);
-        console.log('Falling back to next method...');
-      }
-    }
-    
-    // Method 2: Pipeline Triggers API with PIPELINE_TRIGGER_TOKEN (if available)
-    if (!pushSuccess && PIPELINE_TRIGGER_TOKEN) {
-      console.log('PIPELINE_TRIGGER_TOKEN found, attempting to create tag locally and trigger pipeline...');
-      try {
-        pushTag(null, tag, {
-          usePipelineTrigger: true,
-          pipelineTriggerToken: PIPELINE_TRIGGER_TOKEN,
-          projectPath: CI_PROJECT_PATH,
-          serverHost: CI_SERVER_HOST,
-          tagMessage: tagMessage
-        });
-        console.log(`Tag ${tag} created locally and pipeline triggered successfully`);
-        pushSuccess = true;
-      } catch (triggerError) {
-        console.warn(`Pipeline trigger method failed: ${triggerError.message}`);
-        console.log('Falling back to git push method...');
-      }
-    }
-    
-    // Method 3: Git push with CI_JOB_TOKEN (fallback)
-    if (!pushSuccess) {
-      console.log('Using git push method with CI_JOB_TOKEN...');
-      const encodedToken = encodeURIComponent(CI_JOB_TOKEN);
-      const remoteUrl = `https://gitlab-ci-token:${encodedToken}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git`;
-      try {
-        pushTag(remoteUrl, tag);
-        console.log(`Tag ${tag} pushed successfully to GitLab`);
-      } catch (pushError) {
-        const captured = pushError && pushError._captured ? pushError._captured : {};
-        const combined = `${captured.stdout || ''}\n${captured.stderr || ''}\n${pushError.message || ''}`;
-        const normalized = combined.toLowerCase();
-
-        const has403 = /\b403\b/.test(normalized) || /requested url returned error: 403/.test(normalized);
-        const deniesPush = normalized.includes('you are not allowed to push') || normalized.includes('not allowed to push code');
-
-        if (has403 && deniesPush) {
-          console.error('The CI_JOB_TOKEN job token is not permitted to push to the repository.');
-          console.error('\nHow to fix:');
-          console.error('- Ensure the feature flag "allow_push_repository_for_job_token" is enabled.\n');
-          console.error('- Then in your project, go to Settings > CI/CD > Job token permissions (Token Access)\n');
-          console.error(`  https://${CI_SERVER_HOST}/${CI_PROJECT_PATH}/-/settings/ci_cd`);
-          console.error('\n');
-          console.error('\nSee:'); 
-          console.error('\n - https://docs.gitlab.com/ee/ci/jobs/ci_job_token.html#git-push-to-your-project-repository');
-          console.error('\n - https://docs.gitlab.com/ee/administration/feature_flags.html');
-          console.error('\nAfter enabling, retry this pipeline.');
-          process.exit(1);
-        }
-        throw pushError;
-      }
+    try {
+      pushTag(CI_PROJECT_PATH, CI_SERVER_HOST, AGILEFLOW_TOKEN, tag, tagMessage);
+      console.log(`Tag ${tag} created successfully via GitLab API`);
+    } catch (pushError) {
+      console.error(`Tag creation failed: ${pushError.message}`);
+      throw pushError;
     }
 
     // Write the version to VERSION file in VERSION=... format for GitLab CI
