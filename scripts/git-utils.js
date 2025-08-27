@@ -124,11 +124,11 @@ function createTagViaAPI(tagName, message, projectPath, serverHost, accessToken)
 function pushTag(projectPath, serverHost, accessToken, tagName, tagMessage) {
   if (!accessToken) {
     const projectUrl = `https://${serverHost}/${projectPath}`;
-    const tokenUrl = `https://${serverHost}/-/user_settings/personal_access_tokens`;
+    const projectTokenUrl = `${projectUrl}/-/settings/access_tokens`;
+    const userTokenUrl = `https://${serverHost}/-/user_settings/personal_access_tokens`;
     const cicdUrl = `${projectUrl}/-/settings/ci_cd#js-cicd-variables-settings`;
-    const tokenParams = '?name=AgileFlow+Bot&description=Token+for+AgileFlow+automatic+versioning&scopes=api';
     
-    throw new Error(`AGILEFLOW_TOKEN environment variable is required but not set.\n\nTo fix this:\n1. First, create a personal access token: ${tokenUrl}${tokenParams}\n2. Copy the generated token\n3. Add it as a CI/CD variable: ${cicdUrl}\n   - Variable key: AGILEFLOW_TOKEN\n   - Variable value: [paste your token here]\n   - Protect variable: Yes (recommended)`);
+    throw new Error(`AGILEFLOW_TOKEN environment variable is required but not set.\n\nTo fix this:\n1. First, create a project access token (recommended): ${projectTokenUrl}\n   - Name: AgileFlow Bot\n   - Description: Token for AgileFlow automatic versioning\n   - Scopes: api\n   - Role: maintainer\n2. Or create a personal access token: ${userTokenUrl}\n   - Name: AgileFlow Bot\n   - Description: Token for AgileFlow automatic versioning\n   - Scopes: api\n3. Copy the generated token\n4. Add it as a CI/CD variable: ${cicdUrl}\n   - Variable key: AGILEFLOW_TOKEN\n   - Variable value: [paste your token here]\n   - Protect variable: Yes (recommended)`);
   }
   
   console.log(`Creating tag ${tagName} remotely via GitLab API...`);
