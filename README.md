@@ -26,9 +26,7 @@ Introducing a simple workflow in which an environment variable $VERSION is avail
 **Learn More**: [Complete Installation Guide](./docs/installation.md) - Step-by-step setup for different platforms
 
 > [!NOTE]
-> To allow the pipeline to push tags enable `Allow Git push requests to the repository` for the CI job token under `Settings > CI/CD > Job token permissions`.
->
-> You may need to enable the feature flag `allow_push_repository_for_job_token` in your self-managed instance to see it.
+> AgileFlow uses the GitLab API to create version tags remotely, eliminating the need for repository write permissions. You'll need to configure the `AGILEFLOW_TOKEN` environment variable with API access. See the [Installation Guide](./docs/installation.md) for complete setup instructions.
 
 
 # Core Principles
@@ -156,7 +154,7 @@ Include the AgileFlow template in your `.gitlab-ci.yml`:
 
 ```yaml
 include:
-  - remote: https://code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
+  - local: templates/AgileFlow.gitlab-ci.yml
 
 # Your custom jobs using the VERSION variable
 build:
@@ -167,6 +165,13 @@ build:
   needs:
     - agileflow
 ```
+
+> [!NOTE]
+> If you prefer to use the remote template, you can use:
+> ```yaml
+> include:
+>   - remote: https://code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
+> ```
 
 ## Key Benefits
 

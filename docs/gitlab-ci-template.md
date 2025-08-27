@@ -19,7 +19,7 @@ include:
 The foundation of the AgileFlow approach. This stage automatically generates semantic versions and comprehensive release notes.
 
 **Job**: `agileflow`
-- **Image**: `registry.logickernel.com/kernel/agileflow:0.6.68`
+- **Image**: `registry.logickernel.com/kernel/agileflow:0.8.0`
 - **Script**: `agileflow gitlab-ci`
 - **Artifacts**: `VERSION` variable (dotenv report)
 

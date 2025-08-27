@@ -14,7 +14,7 @@ By the end of this guide, you'll have:
 
 Before you begin, ensure you have:
 - A GitLab project with CI/CD enabled
-- Access to modify `.gitlab-ci.yml` files
+- Access to modify `.gitlab-ci.yml` files and CI/CD variables
 - Basic understanding of Git and CI/CD concepts
 
 ## Quick Start (5 minutes)
@@ -25,10 +25,26 @@ Add this line to the top of your `.gitlab-ci.yml` file:
 
 ```yaml
 include:
-  - local: templates/AgileFlow.gitlab-ci.yml
+  - remote: https://code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
 ```
 
-### Step 2: Add Your First Job
+### Step 2: Configure the AGILEFLOW_TOKEN
+
+AgileFlow needs a GitLab access token to create version tags via the API. Set this in your GitLab project:
+
+1. Go to **Settings > CI/CD > Variables**
+2. Add the `AGILEFLOW_TOKEN` variable:
+
+| Variable | Value | Type | Protect | Mask |
+|----------|-------|------|---------|------|
+| `AGILEFLOW_TOKEN` | Your GitLab API token | Variable | Yes | No |
+
+**Creating the AGILEFLOW_TOKEN:**
+- **Project Access Token (Recommended)**: Go to **Settings > Access Tokens** in your project
+- **Personal Access Token**: Go to your user **Settings > Access Tokens**
+- Set **Name**: `AgileFlow Bot`, **Scopes**: `api`, **Role**: `maintainer` or higher
+
+### Step 3: Add Your First Job
 
 Below the include statement, add a simple build job:
 
@@ -43,7 +59,7 @@ build:
     - agileflow
 ```
 
-### Step 3: Commit and Push
+### Step 4: Commit and Push
 
 ```bash
 git add .gitlab-ci.yml
@@ -58,7 +74,7 @@ That's it! 🎉 Your first AgileFlow pipeline is now running.
 1. **Pipeline Starts**: GitLab CI automatically detects your changes
 2. **Version Generation**: AgileFlow analyzes your commit history and generates the next semantic version
 3. **Build Process**: Your build job runs with the generated version
-4. **Version Tag**: A new version tag is created and pushed to your repository
+4. **Version Tag**: A new version tag is created via GitLab API (not git push)
 
 ## Understanding the Pipeline
 
@@ -68,11 +84,25 @@ Your pipeline now has 5 stages:
 version → build → deploy → test → clean
 ```
 
-- **version**: AgileFlow generates semantic versions automatically
+- **version**: AgileFlow generates semantic versions automatically using GitLab API
 - **build**: Your application builds with the generated version
 - **deploy**: Deploy the versioned artifacts (add your deployment jobs here)
 - **test**: Run tests against deployed versions (add your test jobs here)
 - **clean**: Cleanup temporary resources (optional)
+
+## How AgileFlow Works
+
+### No Git Push Required
+- **AgileFlow uses GitLab API** to create version tags
+- **No repository write permissions** needed for CI/CD jobs
+- **More secure** than traditional git push approaches
+- **Works with protected branches** without special permissions
+
+### Version Generation
+- **Analyzes commit messages** since the last version
+- **Uses conventional commits** to determine version bump type
+- **Creates semantic versions** automatically (v1.0.0, v1.0.1, etc.)
+- **Generates release notes** from commit history
 
 ## Next Steps
 
@@ -133,12 +163,16 @@ A: AgileFlow generates one version per pipeline run. Deploy the same version eve
 ### Q: How do I rollback to a previous version?
 A: Simply redeploy the previous version tag. Since all environments use the same version, rollbacks are consistent and predictable.
 
+### Q: Why doesn't AgileFlow need git push permissions?
+A: AgileFlow uses the GitLab API to create tags remotely instead of pushing them with git commands. This is more secure and doesn't require repository write access.
+
 ## Troubleshooting
 
 ### Pipeline Fails on Version Stage
-- Check that you have write access to push tags
-- Ensure the `agileflow` job has proper permissions
+- Check that the `AGILEFLOW_TOKEN` is set correctly
+- Ensure the token has `api` scope and `maintainer` role
 - Verify your GitLab CI/CD settings
+- Check the `agileflow` job logs for specific errors
 
 ### VERSION Variable Not Available
 - Ensure the `agileflow` job completed successfully
