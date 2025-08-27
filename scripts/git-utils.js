@@ -2,6 +2,8 @@
 
 const { execSync } = require('child_process');
 const fs = require('fs');
+const https = require('https');
+const http = require('http');
 
 function run(command, options = {}) {
   execSync(command, { stdio: 'pipe', ...options });
@@ -48,7 +50,96 @@ function createAnnotatedTag(tagName, message) {
   run(`git tag -a "${safeTag}" -m "${safeMsg}"`);
 }
 
-function pushTag(remoteUrl, tagName) {
+function createTagViaAPI(tagName, message, projectPath, serverHost, accessToken) {
+  return new Promise((resolve, reject) => {
+    const projectId = encodeURIComponent(projectPath);
+    const url = `https://${serverHost}/api/v4/projects/${projectId}/repository/tags`;
+    
+    const postData = JSON.stringify({
+      tag_name: tagName,
+      ref: 'main', // Default to main branch, could be made configurable
+      message: message
+    });
+    
+    const options = {
+      hostname: serverHost,
+      port: 443,
+      path: `/api/v4/projects/${projectId}/repository/tags`,
+      method: 'POST',
+      headers: {
+        'PRIVATE-TOKEN': accessToken,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+    
+    const req = https.request(options, (res) => {
+      let data = '';
+      
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(JSON.parse(data));
+        } else {
+          let errorMessage = `API request failed with status ${res.statusCode}`;
+          try {
+            const errorData = JSON.parse(data);
+            if (errorData.message) {
+              errorMessage += `: ${errorData.message}`;
+            }
+            if (res.statusCode === 403) {
+              errorMessage += '\n\nPermission denied. The ACCESS_TOKEN needs "write_repository" scope.';
+              errorMessage += '\nTo fix this:';
+              errorMessage += '\n1. Go to your project Settings > Access Tokens';
+              errorMessage += '\n2. Create a token with "write_repository" scope';
+              errorMessage += '\n3. Add it as ACCESS_TOKEN environment variable';
+            }
+          } catch (e) {
+            // If we can't parse the error response, use the raw data
+            if (data) {
+              errorMessage += `\nResponse: ${data}`;
+            }
+          }
+          reject(new Error(errorMessage));
+        }
+      });
+    });
+    
+    req.on('error', (error) => {
+      reject(new Error(`Network error: ${error.message}`));
+    });
+    
+    req.write(postData);
+    req.end();
+  });
+}
+
+function pushTag(remoteUrl, tagName, options = {}) {
+  const { 
+    useAPI = false, 
+    accessToken = null, 
+    projectPath = null, 
+    serverHost = null,
+    tagMessage = null 
+  } = options;
+  
+  // If API is requested and we have the required parameters
+  if (useAPI && accessToken && projectPath && serverHost) {
+    console.log(`Creating tag ${tagName} via GitLab API...`);
+    return createTagViaAPI(tagName, tagMessage || tagName, projectPath, serverHost, accessToken)
+      .then(() => {
+        console.log(`Tag ${tagName} created successfully via API`);
+      })
+      .catch((error) => {
+        console.error(`API tag creation failed: ${error.message}`);
+        throw error;
+      });
+  }
+  
+  // Fallback to git push method
   const safeRemote = String(remoteUrl).replace(/"/g, '\\"');
   const safeTag = String(tagName).replace(/"/g, '\\"');
   try {
@@ -467,6 +558,7 @@ module.exports = {
   configureUser,
   createAnnotatedTag,
   pushTag,
+  createTagViaAPI,
   buildTagMessage,
   getCommitSubjectsSince,
   determineVersionBump,

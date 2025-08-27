@@ -227,35 +227,61 @@ function main() {
     createAnnotatedTag(tag, tagMessage);
     console.log(`Tag ${tag} created locally`);
 
-    // Push tag to GitLab using CI token
+    // Push tag to GitLab - try API first if ACCESS_TOKEN is available, fallback to git push
     console.log('Pushing tag to GitLab...');
-    const encodedToken = encodeURIComponent(CI_JOB_TOKEN);
-    const remoteUrl = `https://gitlab-ci-token:${encodedToken}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git`;
-    try {
-      pushTag(remoteUrl, tag);
-      console.log(`Tag ${tag} pushed successfully to GitLab`);
-    } catch (pushError) {
-      const captured = pushError && pushError._captured ? pushError._captured : {};
-      const combined = `${captured.stdout || ''}\n${captured.stderr || ''}\n${pushError.message || ''}`;
-      const normalized = combined.toLowerCase();
-
-      const has403 = /\b403\b/.test(normalized) || /requested url returned error: 403/.test(normalized);
-      const deniesPush = normalized.includes('you are not allowed to push') || normalized.includes('not allowed to push code');
-
-      if (has403 && deniesPush) {
-        console.error('The CI_JOB_TOKEN job token is not permitted to push to the repository.');
-        console.error('\nHow to fix:');
-        console.error('- Ensure the feature flag "allow_push_repository_for_job_token" is enabled.\n');
-        console.error('- Then in your project, go to Settings > CI/CD > Job token permissions (Token Access)\n');
-        console.error(`  https://${CI_SERVER_HOST}/${CI_PROJECT_PATH}/-/settings/ci_cd`);
-        console.error('\n');
-        console.error('\nSee:'); 
-        console.error('\n - https://docs.gitlab.com/ee/ci/jobs/ci_job_token.html#git-push-to-your-project-repository');
-        console.error('\n - https://docs.gitlab.com/ee/administration/feature_flags.html');
-        console.error('\nAfter enabling, retry this pipeline.');
-        process.exit(1);
+    
+    const ACCESS_TOKEN = process.env.ACCESS_TOKEN;
+    let pushSuccess = false;
+    
+    if (ACCESS_TOKEN) {
+      console.log('ACCESS_TOKEN found, attempting to create tag via GitLab API...');
+      try {
+        // API call is synchronous in our implementation, so we can call it directly
+        pushTag(null, tag, {
+          useAPI: true,
+          accessToken: ACCESS_TOKEN,
+          projectPath: CI_PROJECT_PATH,
+          serverHost: CI_SERVER_HOST,
+          tagMessage: tagMessage
+        });
+        console.log(`Tag ${tag} created successfully via GitLab API`);
+        pushSuccess = true;
+      } catch (apiError) {
+        console.warn(`API tag creation failed: ${apiError.message}`);
+        console.log('Falling back to git push method...');
       }
-      throw pushError;
+    }
+    
+    if (!pushSuccess) {
+      console.log('Using git push method...');
+      const encodedToken = encodeURIComponent(CI_JOB_TOKEN);
+      const remoteUrl = `https://gitlab-ci-token:${encodedToken}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git`;
+      try {
+        pushTag(remoteUrl, tag);
+        console.log(`Tag ${tag} pushed successfully to GitLab`);
+      } catch (pushError) {
+        const captured = pushError && pushError._captured ? pushError._captured : {};
+        const combined = `${captured.stdout || ''}\n${captured.stderr || ''}\n${pushError.message || ''}`;
+        const normalized = combined.toLowerCase();
+
+        const has403 = /\b403\b/.test(normalized) || /requested url returned error: 403/.test(normalized);
+        const deniesPush = normalized.includes('you are not allowed to push') || normalized.includes('not allowed to push code');
+
+        if (has403 && deniesPush) {
+          console.error('The CI_JOB_TOKEN job token is not permitted to push to the repository.');
+          console.error('\nHow to fix:');
+          console.error('- Ensure the feature flag "allow_push_repository_for_job_token" is enabled.\n');
+          console.error('- Then in your project, go to Settings > CI/CD > Job token permissions (Token Access)\n');
+          console.error(`  https://${CI_SERVER_HOST}/${CI_PROJECT_PATH}/-/settings/ci_cd`);
+          console.error('\n');
+          console.error('\nSee:'); 
+          console.error('\n - https://docs.gitlab.com/ee/ci/jobs/ci_job_token.html#git-push-to-your-project-repository');
+          console.error('\n - https://docs.gitlab.com/ee/administration/feature_flags.html');
+          console.error('\nAfter enabling, retry this pipeline.');
+          process.exit(1);
+        }
+        throw pushError;
+      }
     }
 
     // Write the version to VERSION file in VERSION=... format for GitLab CI
