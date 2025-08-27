@@ -233,7 +233,7 @@ function main() {
       pushTag(CI_PROJECT_PATH, CI_SERVER_HOST, AGILEFLOW_TOKEN, tag, tagMessage);
       console.log(`Tag ${tag} created successfully via GitLab API`);
     } catch (pushError) {
-      console.error(`Tag creation failed: ${pushError.message}`);
+      // Don't log the error here since it will be logged by the main error handler
       throw pushError;
     }
 

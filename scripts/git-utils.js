@@ -3,7 +3,6 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const https = require('https');
-const http = require('http');
 
 function run(command, options = {}) {
   execSync(command, { stdio: 'pipe', ...options });
