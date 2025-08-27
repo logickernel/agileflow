@@ -392,22 +392,9 @@ function determineVersionBump(commitMessages, currentVersion = { major: 0, minor
   // Check for feature commits (feat: or feat(scope): or feat! or feat(scope)!)
   const containsFeatures = commitMessages.some(message => /^feat(!|\([^)]+\)!|\([^)]+\):|:)/i.test(message.trim()));
   
-  // Check for fix commits (fix: or fix(scope): or fix! or fix(scope)!)
-  const containsFixes = commitMessages.some(message => /^fix(!|\([^)]+\)!|\([^)]+\):|:)/i.test(message.trim()));
+  // Check for fix, performance, build, ci, refactor, or revert commits
+  const containsFixesOrPerformanceOrBuildOrCIOrRefactorOrRevert = commitMessages.some(message => /^fix(!|\([^)]+\)!|\([^)]+\):|:)|perf(!|\([^)]+\)!|\([^)]+\):|:)|build(!|\([^)]+\)!|\([^)]+\):|:)|ci(!|\([^)]+\)!|\([^)]+\):|:)|refactor(!|\([^)]+\)!|\([^)]+\):|:)|revert(!|\([^)]+\)!|\([^)]+\):|:)/i.test(message.trim()));
   
-  // Check for performance commits (perf: or perf(scope): or perf! or perf(scope)!)
-  const containsPerformance = commitMessages.some(message => /^perf(!|\([^)]+\)!|\([^)]+\):|:)/i.test(message.trim()));
-
-  // Check for build system commits (build: or build(scope): or build! or build(scope)!)
-  const containsBuild = commitMessages.some(message => /^build(!|\([^)]+\)!|\([^)]+\):|:)/i.test(message.trim()));
-  
-  // Log what we found for debugging
-  console.log(`Commit analysis results:`);
-  console.log(`  - Breaking changes: ${containsBreakingChanges}`);
-  console.log(`  - Features: ${containsFeatures}`);
-  console.log(`  - Fixes: ${containsFixes}`);
-  console.log(`  - Performance: ${containsPerformance}`);
-  console.log(`  - Build: ${containsBuild}`);
 
   // Determine version bump based on current version and commit types
   if (currentVersion.major > 0) {
@@ -418,7 +405,7 @@ function determineVersionBump(commitMessages, currentVersion = { major: 0, minor
     } else if (containsFeatures) {
       console.log('Minor version bump: features detected');
       return 'minor';
-    } else if (containsFixes || containsPerformance || containsBuild) {
+    } else if (containsFixesOrPerformanceOrBuildOrCIOrRefactorOrRevert) {
       console.log('Patch version bump: fixes/performance/build changes detected');
       return 'patch';
     }
@@ -427,7 +414,7 @@ function determineVersionBump(commitMessages, currentVersion = { major: 0, minor
     if (containsBreakingChanges) {
       console.log('Minor version bump (0.x.x): breaking changes detected');
       return 'minor';
-    } else if (containsFeatures || containsFixes || containsPerformance || containsBuild) {
+    } else if (containsFeatures || containsFixesOrPerformanceOrBuildOrCIOrRefactorOrRevert) {
       console.log('Patch version bump (0.x.x): features/fixes/performance/build changes detected');
       return 'patch';
     }
