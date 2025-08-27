@@ -52,7 +52,8 @@ function pushTag(remoteUrl, tagName) {
   const safeRemote = String(remoteUrl).replace(/"/g, '\\"');
   const safeTag = String(tagName).replace(/"/g, '\\"');
   try {
-    const output = runWithOutput(`git push "${safeRemote}" "${safeTag}"`);
+    // Use --force-with-lease for safer force push that GitLab CI recognizes
+    const output = runWithOutput(`git push --force-with-lease "${safeRemote}" "${safeTag}"`);
     // Don't output anything - keep it silent
   } catch (error) {
     // Re-throw after ensuring error carries captured IO
