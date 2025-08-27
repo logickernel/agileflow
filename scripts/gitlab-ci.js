@@ -79,23 +79,28 @@ function main() {
     ensureGitRepo();
     console.log('Git repository verified');
 
-    // Fetch all tags and refs first before any tag operations
-    console.log('Fetching all tags and refs...');
+    // Clean and sync repository with remote
+    console.log('Cleaning and syncing repository...');
     try {
-      run('git fetch --all --tags --prune --prune-tags');
-      console.log('All tags and refs fetched successfully');
+      // Reset any local changes and ensure clean state
+      run('git reset --hard HEAD');
+      run('git clean -fd');
       
-      // Debug: show what tags are available
+      // Fetch all tags and refs with pruning
+      run('git fetch --all --tags --prune --prune-tags');
+      console.log('Repository cleaned and synced successfully');
+      
+      // Debug: show what tags are available after cleanup
       try {
         const availableTags = runWithOutput('git tag --list "v*" --sort=v:refname') || '';
         const tags = availableTags.split('\n').map(s => s.trim()).filter(Boolean);
-        console.log(`Debug: Available version tags after fetch: ${tags.join(', ')}`);
+        console.log(`Debug: Available version tags after cleanup: ${tags.join(', ')}`);
       } catch (tagError) {
         console.warn('Debug: Could not list tags:', tagError.message);
       }
-    } catch (fetchError) {
-      console.warn('Warning: Failed to fetch all tags:', fetchError.message);
-      console.warn('Continuing with locally available tags...');
+    } catch (cleanupError) {
+      console.warn('Warning: Failed to clean repository:', cleanupError.error.message);
+      console.warn('Continuing with current state...');
     }
 
     // Check if we're running on a tag and handle semver output
