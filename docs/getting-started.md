@@ -78,16 +78,17 @@ That's it! 🎉 Your first AgileFlow pipeline is now running.
 
 ## Understanding the Pipeline
 
-Your pipeline now has 5 stages:
+Your pipeline now has 6 stages:
 
 ```
-version → build → deploy → test → clean
+version → test → build → deploy → e2e → clean
 ```
 
 - **version**: AgileFlow generates semantic versions automatically using GitLab API
+- **test**: Run tests against source code before building (add your test jobs here)
 - **build**: Your application builds with the generated version
 - **deploy**: Deploy the versioned artifacts (add your deployment jobs here)
-- **test**: Run tests against deployed versions (add your test jobs here)
+- **e2e**: Run end-to-end tests against deployed versions (add your e2e test jobs here)
 - **clean**: Cleanup temporary resources (optional)
 
 ## How AgileFlow Works
@@ -122,8 +123,18 @@ deploy-staging:
 
 ### 2. Add Testing
 ```yaml
-integration-tests:
+# Unit tests run before building
+unit-tests:
   stage: test
+  script:
+    - npm test
+    - npm run lint
+  needs:
+    - agileflow
+
+# Integration tests run after deployment
+integration-tests:
+  stage: e2e
   script:
     - ./run-tests.sh --version ${VERSION}
   needs:

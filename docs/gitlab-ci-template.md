@@ -4,7 +4,7 @@ The AgileFlow GitLab CI template provides a streamlined, version-centric CI/CD p
 
 ## Overview
 
-This template implements a 5-stage pipeline that focuses on version management rather than branch-based environment management. Every deployment, test, and operation is performed on well-identified versions, ensuring consistency and reliability across all environments.
+This template implements a 6-stage pipeline that focuses on version management rather than branch-based environment management. Every deployment, test, and operation is performed on well-identified versions, ensuring consistency and reliability across all environments.
 
 ## Template Structure
 
@@ -32,8 +32,26 @@ The foundation of the AgileFlow approach. This stage automatically generates sem
 
 **Output**: The `VERSION` variable contains the generated semantic version (e.g., `v1.2.3`)
 
-### 2. Build Stage
-Creates application artifacts and Docker images using the version from the previous stage.
+### 2. Test Stage
+Runs tests against the source code before building artifacts.
+
+**Purpose**: Validate that the source code is ready for building and deployment
+**Input**: Source code and `VERSION` variable from the version stage
+**Output**: Test results and validation that the code meets quality standards
+
+**Example implementation**:
+```yaml
+test:
+  stage: test
+  script:
+    - npm test
+    - npm run lint
+  needs:
+    - agileflow
+```
+
+### 3. Build Stage
+Creates application artifacts and Docker images using the version from the version stage.
 
 **Purpose**: Build versioned artifacts that will be deployed across all environments
 **Input**: `VERSION` variable from the version stage
@@ -47,10 +65,10 @@ build:
     - docker build -t myapp:${VERSION} .
     - docker push myapp:${VERSION}
   needs:
-    - agileflow
+    - test
 ```
 
-### 3. Deploy Stage
+### 4. Deploy Stage
 Deploys the versioned artifacts to various environments.
 
 **Purpose**: Deploy the same version to staging, production, and other environments
@@ -79,7 +97,7 @@ deploy-production:
     - build
 ```
 
-### 4. Test Stage
+### 5. E2E Stage
 Validates the deployed version across all environments.
 
 **Purpose**: Run tests against the actual deployed version
@@ -89,21 +107,21 @@ Validates the deployed version across all environments.
 **Example implementation**:
 ```yaml
 integration-tests:
-  stage: test
+  stage: e2e
   script:
     - ./run-tests.sh --version ${VERSION}
   needs:
     - deploy-staging
 
 performance-tests:
-  stage: test
+  stage: e2e
   script:
     - ./run-performance-tests.sh --version ${VERSION}
   needs:
     - deploy-staging
 ```
 
-### 5. Clean Stage
+### 6. Clean Stage
 Cleanup temporary resources and artifacts.
 
 **Purpose**: Remove old Docker images, temporary files, and unnecessary artifacts

@@ -43,7 +43,7 @@ graph LR
 
 ## Simplified Pipeline Stages
 
-AgileFlow's CI/CD pipeline consists of just 5 focused stages:
+AgileFlow's CI/CD pipeline consists of just 6 focused stages:
 
 ### 1. **Version** Stage
 - **Purpose**: Generate semantic version and comprehensive release notes
@@ -51,25 +51,31 @@ AgileFlow's CI/CD pipeline consists of just 5 focused stages:
 - **Automation**: Uses AgileFlow tool to analyze commit history and determine next version
 - **Artifacts**: Version tag pushed to repository, release notes generated
 
-### 2. **Build** Stage
+### 2. **Test** Stage
+- **Purpose**: Run tests against the source code before building
+- **Input**: Uses the source code and `VERSION` variable from the version stage
+- **Output**: Test results and validation that the code is ready for building
+- **Benefits**: Catch issues early before building artifacts
+
+### 3. **Build** Stage
 - **Purpose**: Create application artifacts and Docker images
 - **Input**: Uses the `VERSION` variable from the version stage
 - **Output**: Versioned artifacts (e.g., `app:v1.2.3`, `frontend:v1.2.3`)
 - **Consistency**: All builds use the same version identifier
 
-### 3. **Deploy** Stage
+### 4. **Deploy** Stage
 - **Purpose**: Deploy the versioned artifacts to various environments
 - **Approach**: Deploy the same version to staging, production, etc.
 - **Benefits**: Identical behavior across all environments
 - **Rollback**: Simple version-based rollback (e.g., "rollback to v1.2.2")
 
-### 4. **Test** Stage
-- **Purpose**: Validate the deployed version
+### 5. **E2E** Stage
+- **Purpose**: Run end-to-end tests against the deployed version
 - **Scope**: Integration tests, end-to-end tests, performance tests
 - **Target**: Tests run against the actual deployed version
 - **Confidence**: Tests validate exactly what will run in production
 
-### 5. **Clean** Stage
+### 6. **Clean** Stage
 - **Purpose**: Cleanup temporary resources and artifacts
 - **Maintenance**: Remove old Docker images, temporary files, etc.
 - **Optimization**: Keep only necessary version artifacts
@@ -83,12 +89,21 @@ Here's how the version-centric approach works in practice:
 include:
   - local: templates/AgileFlow.gitlab-ci.yml
 
+# Test stage runs tests against source code
+test:
+  stage: test
+  script:
+    - npm test
+    - npm run lint
+
 # Build stage uses VERSION from agileflow job
 build:
   stage: build
   script:
     - docker build -t myapp:${VERSION} .
     - docker push myapp:${VERSION}
+  needs:
+    - test
 
 # Deploy stage deploys the same version everywhere
 deploy-testing:
@@ -97,6 +112,8 @@ deploy-testing:
     - kubectl set image deployment/myapp myapp=myapp:${VERSION}
   environment:
     name: testing
+  needs:
+    - build
 
 deploy-staging:
   stage: deploy
@@ -105,6 +122,8 @@ deploy-staging:
   environment:
     name: staging
   when: manual
+  needs:
+    - build
 
 deploy-production:
   stage: deploy
@@ -113,12 +132,16 @@ deploy-production:
   environment:
     name: production
   when: manual
+  needs:
+    - build
 
-# Test stage validates the deployed version
+# E2E stage validates the deployed version
 integration-tests:
-  stage: test
+  stage: e2e
   script:
     - ./run-tests.sh --version ${VERSION}
+  needs:
+    - deploy-testing
 ```
 
 ## Key Advantages

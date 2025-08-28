@@ -63,20 +63,21 @@ AgileFlow introduces a revolutionary approach to CI/CD that prioritizes **versio
 ## What Makes AgileFlow Different?
 
 - **Version-Centric**: Every deployment, test, and operation is performed on well-identified versions
-- **Simplified Pipeline**: Just 5 focused stages (version, build, deploy, test, clean)
+- **Simplified Pipeline**: Just 6 focused stages (version, test, build, deploy, e2e, clean)
 - **Eliminates Environment Drift**: All environments run identical versions
 - **Predictable Deployments**: Every deployment uses a well-identified, immutable version
 - **Simple Rollbacks**: Rollback to any previous version with confidence
 
 ## Pipeline Stages
 
-Your pipeline consists of 5 focused stages that work together seamlessly:
+Your pipeline consists of 6 focused stages that work together seamlessly:
 
 1. **Version** - AgileFlow generates semantic versions automatically
-2. **Build** - Create versioned artifacts using the generated version
-3. **Deploy** - Deploy the same version everywhere (staging, production, etc.)
-4. **Test** - Validate the deployed version across all environments
-5. **Clean** - Cleanup temporary resources and artifacts
+2. **Test** - Run tests against the source code before building
+3. **Build** - Create versioned artifacts using the generated version
+4. **Deploy** - Deploy the same version everywhere (staging, production, etc.)
+5. **E2E** - Run end-to-end tests against the deployed version
+6. **Clean** - Cleanup temporary resources and artifacts
 
 **Learn More**: [Version-Centric CI/CD Deep Dive](./docs/version-centric-cicd.md) - Comprehensive guide to AgileFlow's revolutionary CI/CD paradigm
 

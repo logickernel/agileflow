@@ -2,7 +2,7 @@
 #
 # This template provides a simplified, version-centric CI/CD pipeline that focuses on
 # version management rather than environment-based deployments. The pipeline consists
-# of 5 stages that work together to create a streamlined release process.
+# of 6 stages that work together to create a streamlined release process.
 #
 # Key Benefits:
 # - Version-centric approach: All deployments, tests, and operations are performed
@@ -14,10 +14,11 @@
 #
 # Stages Overview:
 # 1. version    - Generate semantic version and release notes
-# 2. build      - Build application artifacts and Docker images
-# 3. deploy     - Deploy to various environments using the generated version
-# 4. test       - Run tests against deployed versions
-# 5. clean      - Cleanup temporary resources and artifacts
+# 2. test       - Run tests against source code before building
+# 3. build      - Build application artifacts and Docker images
+# 4. deploy     - Deploy to various environments using the generated version
+# 5. e2e        - Run end-to-end tests against deployed versions
+# 6. clean      - Cleanup temporary resources and artifacts
 #
 # Usage:
 # Include this template in your .gitlab-ci.yml:
@@ -32,9 +33,10 @@
 
 stages:
   - version
+  - test
   - build
   - deploy
-  - test
+  - e2e
   - clean
 
 # Version Generation Stage
