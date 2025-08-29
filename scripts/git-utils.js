@@ -414,7 +414,10 @@ function determineVersionBump(commitMessages, currentVersion = { major: 0, minor
     if (containsBreakingChanges) {
       console.log('Minor version bump (0.x.x): breaking changes detected');
       return 'minor';
-    } else if (containsFeatures || containsFixesOrPerformanceOrBuildOrCIOrRefactorOrRevertOrTest) {
+    } else if (containsFeatures) {
+      console.log('Minor version bump (0.x.x): features detected');
+      return 'patch';
+    } else if (containsFixesOrPerformanceOrBuildOrCIOrRefactorOrRevertOrTest) {
       console.log('Patch version bump (0.x.x): features/fixes/performance/build/ci/refactor/revert/test changes detected');
       return 'patch';
     }
