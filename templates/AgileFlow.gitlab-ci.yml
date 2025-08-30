@@ -35,7 +35,7 @@ stages:
   - version
   - test
   - build
-  - deploy
+  - deploy    # Build the image, push to registry, and deploy to DEV, manual deploy to STG and to PROD
   - e2e
   - clean
 
