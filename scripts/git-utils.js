@@ -344,8 +344,11 @@ function buildTagMessage(tagName, options = {}) {
 
   // If nothing parsed as conventional, fallback to flat list (legacy behavior)
   if (!hasAtLeastOneConventional) {
-    const flat = [String(tagName).trim()];
-    for (const s of subjects) flat.push(`- ${s}`);
+    for (const s of subjects) {
+      // Capitalize the first letter of the first word
+      s = s.charAt(0).toUpperCase() + s.slice(1);
+      flat.push(`- ${s}`);
+    }
     return flat.join('\n');
   }
 
