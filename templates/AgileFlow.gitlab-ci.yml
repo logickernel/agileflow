@@ -32,12 +32,24 @@
 # - Make the VERSION variable available to subsequent stages
 
 stages:
-  - version
-  - test
-  - build
-  - deploy    # Build the image, push to registry, and deploy to DEV, manual deploy to STG and to PROD
-  - e2e
-  - clean
+  - version   # Calculate the next semantic version based on commit history, 
+              # if there's a tag, it will use that as the version.
+
+              # Although the version is available in the $VERSION variable in all scenarios,
+              # the rest of the stages are recommended to run when there's a version tag pushed.
+              # This way the deployment process is version-centric.
+  - test      # Run tests against source code before building.
+  - build     # Build the image, and push to the registry.
+  - deploy    # Automatically deploy to DEV, manual deploy to STG and to PROD.
+  - e2e       # Run end-to-end tests against the deployed version.
+  - clean     # Cleanup temporary resources and artifacts.
+
+# Example: 
+# Run the job only when there's a version tag pushed. The version tags starts with v and semver.
+#
+# stage: build
+# rules:
+#   - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
 
 # Version Generation Stage
 # This stage uses the AgileFlow tool to automatically generate semantic versions
@@ -45,7 +57,7 @@ stages:
 # variable is made available as an artifact for use in subsequent stages.
 agileflow:
   stage: version
-  image: registry.logickernel.com/kernel/agileflow:0.8.5
+  image: registry.logickernel.com/kernel/agileflow:0.9.0
   script:
     - agileflow gitlab-ci
   artifacts:
