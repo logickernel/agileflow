@@ -52,7 +52,7 @@ The main branch is the core of the AgileFlow framework. It serves as the single 
 
 Development branches are used for feature additions and bug fixes. They branch off the main branch and merge back into it when ready. Consider using expressive names depending on their purpose, e.g.: `dev/*`, `feat/*`, `fix/*`, and `hotfix/*`.
 
-After the contribution is ready, the development branch is merged into main, preferably using a [Merge Request](https://docs.gitlab.com/ee/user/project/merge_requests/) or similar.
+After the contribution is ready, the development branch is merged into main, preferably using a [Pull Request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests) a [Merge Request](https://docs.gitlab.com/ee/user/project/merge_requests/) or similar.
 
 **Learn More**: [Getting Started Guide](./docs/getting-started.md) - Quick start for new AgileFlow users
 
@@ -130,6 +130,34 @@ AgileFlow automatically analyzes your commit history and determines the next sem
 - **Patch versions** (v1.0.0 → v1.0.1) for bug fixes, performance improvements, build changes, CI changes, refactors, reverts, and tests
 - **Minor versions** (v1.0.0 → v1.1.0) for new features
 - **Major versions** (v1.0.0 → v2.0.0) for breaking changes
+
+## Initial Versioning (0.x.x)
+
+When you first start using AgileFlow, the system begins at **v0.0.0** and automatically increments versions based on your commits:
+
+- **Patch versions** (v0.0.0 → v0.0.1) for features, bug fixes, and other changes
+- **Minor versions** (v0.0.0 → v0.1.0) for breaking changes
+
+This allows you to develop and iterate while AgileFlow tracks your progress automatically.
+
+## Version 1.0.0 - Your First Stable Release
+
+**Version 1.0.0 is a significant milestone** that represents your first stable, production-ready release. This version should be **created manually** when your team decides the software is ready for its first stable release.
+
+To create version 1.0.0:
+
+```bash
+# Create the tag manually
+git tag -a v1.0.0 -m "First stable release"
+
+# Push the tag to remote
+git push origin v1.0.0
+```
+
+After v1.0.0 is created, AgileFlow will continue to automatically generate subsequent versions (v1.0.1, v1.1.0, v2.0.0, etc.) based on your commit history.
+
+> [!NOTE]
+> The transition to 1.0.0 is a deliberate decision that should be made by your team when you're ready to declare API stability and production readiness. AgileFlow will not automatically create 1.0.0 from 0.x.x versions.
 
 ## Release Notes
 
