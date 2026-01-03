@@ -6,7 +6,8 @@ const {
   fetchTagsLocally,
   validateBranchName,
   getAllBranchCommits,
-  processCurrentVersion,
+  expandCommitInfo,
+  calculateNextVersionAndChangelog,
 } = require('./utils');
 
 
@@ -29,11 +30,17 @@ function main(branch = 'main') {
     const allCommits = getAllBranchCommits(branch);
     console.log(`Found ${allCommits.length} commits in branch history`);
 
-    // Process commits to get latest version and group by conventional commit types
-    console.log(`\nProcessing commits for current version...`);
-    const { latestVersion, conventionalCommits } = processCurrentVersion(allCommits);
-    console.log(`Latest version: ${latestVersion || 'none found'}`);    
-    console.log(JSON.stringify(conventionalCommits, null, 2)); 
+    // Expand commit info to get latest version and filtered commits
+    console.log(`\nExpanding commit info...`);
+    const expandedInfo = expandCommitInfo(allCommits);
+    console.log(`Latest version: ${expandedInfo.latestVersion || 'none found'}`);
+    console.log(`Found ${expandedInfo.commits.length} commits since latest version`);
+    
+    // Calculate next version and generate changelog
+    console.log(`\nCalculating next version and changelog...`);
+    const { nextVersion, changelog } = calculateNextVersionAndChangelog(expandedInfo);
+    console.log(`Next version: ${nextVersion}`);
+    console.log(`\nChangelog:\n${changelog}`); 
 
     // COMMENTED OUT - Refactoring in progress
     /*

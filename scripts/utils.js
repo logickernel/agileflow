@@ -92,15 +92,15 @@ function parseConventionalCommit(message) {
 }
 
 /**
- * Processes commits to find the latest version and group by conventional commit types.
+ * Expands commit information by finding the latest version and filtering commits.
  * Filters out commits that are older than the latest commit with a semver tag.
  * Commits are expected to be ordered from newest to oldest.
  * @param {Array<{hash: string, datetime: string, author: string, message: string, tags: Array<string>}>} commits - Array of commit objects
- * @returns {{latestVersion: string|null, commits: Array, conventionalCommits: Object}} Object with latestVersion, filtered commits array, and conventional commits grouped by type
+ * @returns {{latestVersion: string|null, commits: Array}} Object with latestVersion and filtered commits array
  */
-function processCurrentVersion(commits) {
+function expandCommitInfo(commits) {
   if (!commits || commits.length === 0) {
-    return { latestVersion: null, commits: [], conventionalCommits: {} };
+    return { latestVersion: null, commits: [] };
   }
   
   // Find the index of the latest commit (first in array) that has a semver tag
@@ -126,27 +126,237 @@ function processCurrentVersion(commits) {
     filteredCommits = commits.slice(0, latestSemverTagIndex + 1);
   }
   
-  // Group commits by conventional commit type
-  const conventionalCommits = {};
-  
-  for (const commit of filteredCommits) {
-    const parsed = parseConventionalCommit(commit.message);
-    if (parsed) {
-      const type = parsed.type;
-      if (!conventionalCommits[type]) {
-        conventionalCommits[type] = [];
-      }
-      conventionalCommits[type].push({
-        ...commit,
-        conventional: parsed,
-      });
-    }
-  }
-  
   return {
     latestVersion: latestSemverTag || null,
     commits: filteredCommits,
-    conventionalCommits: conventionalCommits,
+  };
+}
+
+/**
+ * Extracts issue reference from commit message (e.g., #123 or (#123)).
+ * @param {string} message - The commit message
+ * @returns {string|null} Issue reference like "(#123)" or null if not found
+ */
+function extractIssueReference(message) {
+  if (!message) return null;
+  
+  // Look for patterns like #123 or (#123) anywhere in the message
+  const issuePattern = /\(?#(\d+)\)?/;
+  const match = message.match(issuePattern);
+  if (match) {
+    return `(#${match[1]})`;
+  }
+  return null;
+}
+
+/**
+ * Formats the first line of commit message for changelog, removing the type prefix.
+ * @param {string} subject - The first line of the commit message
+ * @param {Object} parsed - Parsed conventional commit info
+ * @param {string} fullMessage - Full commit message to check for BREAKING CHANGE:
+ * @returns {string} Formatted description
+ */
+function formatChangelogDescription(subject, parsed, fullMessage) {
+  if (!parsed) {
+    // Not a conventional commit, use subject as-is
+    return subject;
+  }
+  
+  let description = parsed.description;
+  
+  // Add BREAKING prefix if it's a breaking change (check both ! and BREAKING CHANGE:)
+  const isBreaking = parsed.breaking || /BREAKING CHANGE:/i.test(fullMessage);
+  if (isBreaking) {
+    description = `BREAKING: ${description}`;
+  }
+  
+  return description;
+}
+
+/**
+ * Calculates the next version and generates a changelog from expanded commit info.
+ * @param {{latestVersion: string|null, commits: Array}} expandedInfo - Output from expandCommitInfo
+ * @returns {{nextVersion: string, changelog: string}} Object with nextVersion and changelog
+ */
+function calculateNextVersionAndChangelog(expandedInfo) {
+  const { latestVersion, commits } = expandedInfo;
+  
+  // Parse current version
+  let currentMajor = 0;
+  let currentMinor = 0;
+  let currentPatch = 0;
+  
+  if (latestVersion) {
+    const versionMatch = latestVersion.match(/^v(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.-]+)?$/);
+    if (versionMatch) {
+      currentMajor = Number(versionMatch[1]);
+      currentMinor = Number(versionMatch[2]);
+      currentPatch = Number(versionMatch[3]);
+    }
+  }
+  
+  const isPreOneZero = currentMajor === 0;
+  
+  // Analyze commits to determine version bump
+  let hasBreaking = false;
+  let hasFeat = false;
+  let hasPatchTypes = false; // fix, perf, refactor, test, build, ci, revert
+  let hasNoBumpTypes = false; // style, docs, chore
+  
+  const typeOrder = ['feat', 'fix', 'perf', 'refactor', 'style', 'test', 'docs', 'build', 'ci', 'chore', 'revert'];
+  const patchTypes = ['fix', 'perf', 'refactor', 'test', 'build', 'ci', 'revert'];
+  const noBumpTypes = ['style', 'docs', 'chore'];
+  
+  // Group commits by type for changelog
+  const commitsByType = {};
+  for (const type of typeOrder) {
+    commitsByType[type] = [];
+  }
+  
+  for (const commit of commits) {
+    const parsed = parseConventionalCommit(commit.message);
+    if (parsed) {
+      const type = parsed.type;
+      
+      // Check for breaking changes (both ! indicator and BREAKING CHANGE: in body)
+      const isBreaking = parsed.breaking || /BREAKING CHANGE:/i.test(commit.message);
+      if (isBreaking) {
+        hasBreaking = true;
+      }
+      
+      // Track commit types
+      if (type === 'feat') {
+        hasFeat = true;
+      } else if (patchTypes.includes(type)) {
+        hasPatchTypes = true;
+      } else if (noBumpTypes.includes(type)) {
+        hasNoBumpTypes = true;
+      }
+      
+      // Group for changelog
+      if (commitsByType[type]) {
+        commitsByType[type].push(commit);
+      }
+    }
+  }
+  
+  // Determine version bump
+  let versionBump = 'none';
+  if (isPreOneZero) {
+    // For 0.x.x versions
+    if (hasBreaking) {
+      versionBump = 'minor'; // 0.y.z → 0.(y+1).0
+    } else if (hasFeat) {
+      versionBump = 'minor'; // 0.y.z → 0.(y+1).0
+    } else if (hasPatchTypes) {
+      versionBump = 'patch'; // 0.y.z → 0.y.(z+1)
+    }
+    // style/docs/chore don't bump version
+  } else {
+    // For 1.x.x+ versions
+    if (hasBreaking) {
+      versionBump = 'major'; // X.y.z → (X+1).0.0
+    } else if (hasFeat) {
+      versionBump = 'minor'; // X.y.z → X.(y+1).0
+    } else if (hasPatchTypes) {
+      versionBump = 'patch'; // X.y.z → X.y.(z+1)
+    }
+    // style/docs/chore don't bump version
+  }
+  
+  // Calculate next version
+  let nextMajor = currentMajor;
+  let nextMinor = currentMinor;
+  let nextPatch = currentPatch;
+  
+  switch (versionBump) {
+    case 'major':
+      nextMajor += 1;
+      nextMinor = 0;
+      nextPatch = 0;
+      break;
+    case 'minor':
+      nextMinor += 1;
+      nextPatch = 0;
+      break;
+    case 'patch':
+      nextPatch += 1;
+      break;
+    case 'none':
+    default:
+      break;
+  }
+  
+  const nextVersion = `v${nextMajor}.${nextMinor}.${nextPatch}`;
+  
+  // Generate changelog
+  const changelogLines = [];
+  
+  for (const type of typeOrder) {
+    const typeCommits = commitsByType[type];
+    if (!typeCommits || typeCommits.length === 0) continue;
+    
+    changelogLines.push(`### ${type}`);
+    
+    // Group by scope
+    const byScope = {};
+    const noScope = [];
+    
+    for (const commit of typeCommits) {
+      const parsed = parseConventionalCommit(commit.message);
+      if (!parsed) continue;
+      
+      const scope = parsed.scope;
+      const issueRef = extractIssueReference(commit.message);
+      const subject = commit.message.split('\n')[0].trim();
+      
+      // Format description from subject, removing type prefix
+      const description = formatChangelogDescription(subject, parsed, commit.message);
+      
+      const entry = {
+        scope: scope,
+        description: description,
+        issueRef: issueRef,
+      };
+      
+      if (scope) {
+        if (!byScope[scope]) {
+          byScope[scope] = [];
+        }
+        byScope[scope].push(entry);
+      } else {
+        noScope.push(entry);
+      }
+    }
+    
+    // Add commits without scope first
+    for (const entry of noScope) {
+      const issuePart = entry.issueRef || '';
+      changelogLines.push(`- ${entry.description} ${issuePart}`);
+    }
+    
+    // Add commits with scope, sorted by scope name
+    const scopes = Object.keys(byScope).sort();
+    for (const scope of scopes) {
+      for (const entry of byScope[scope]) {
+        const issuePart = entry.issueRef || '';
+        changelogLines.push(`- **${scope}**: ${entry.description} ${issuePart}`);
+      }
+    }
+    
+    changelogLines.push(''); // Empty line between sections
+  }
+  
+  // Remove trailing empty line
+  if (changelogLines.length > 0 && changelogLines[changelogLines.length - 1] === '') {
+    changelogLines.pop();
+  }
+  
+  const changelog = changelogLines.join('\n');
+  
+  return {
+    nextVersion,
+    changelog,
   };
 }
 
@@ -220,7 +430,8 @@ module.exports = {
   fetchTagsLocally,
   validateBranchName,
   getAllBranchCommits,
-  processCurrentVersion,
+  expandCommitInfo,
+  calculateNextVersionAndChangelog,
   parseConventionalCommit,
 };
 
