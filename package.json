@@ -1,0 +1,39 @@
+{
+  "name": "@logickernel/agileflow",
+  "version": "0.1.0",
+  "description": "Automatic semantic versioning and changelog generation based on conventional commits",
+  "main": "src/index.js",
+  "bin": {
+    "agileflow": "bin/agileflow"
+  },
+  "files": [
+    "bin",
+    "src",
+    "templates",
+    "docs",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "semantic-versioning",
+    "conventional-commits",
+    "changelog",
+    "versioning",
+    "git",
+    "ci-cd",
+    "gitlab",
+    "automation",
+    "release-management"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@code.logickernel.com:kernel/agileflow.git"
+  },
+  "author": "",
+  "license": "ISC"
+}
