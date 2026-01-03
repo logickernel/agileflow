@@ -5,41 +5,22 @@ const {
   ensureGitRepo,
   fetchTagsLocally,
   validateBranchName,
-  getAllBranchCommits,
-  expandCommitInfo,
-  calculateNextVersionAndChangelog,
+  processVersionInfo,
 } = require('./utils');
 
 
 
 
-function main(branch = 'main') {
+async function main(branch = 'main') {
   try {
     console.log('Starting AgileFlow versioning process...');
 
-    ensureGitRepo();
-    console.log('Git repository verified');
-
-    validateBranchName(branch);
-
-    console.log('Fetching tags locally (non-destructive)...');
-    fetchTagsLocally();
-
-    // Get all commits from the branch
-    console.log(`\nRetrieving all commits from branch: ${branch}`);
-    const allCommits = getAllBranchCommits(branch);
-    console.log(`Found ${allCommits.length} commits in branch history`);
-
-    // Expand commit info to get latest version and filtered commits
-    console.log(`\nExpanding commit info...`);
-    const expandedInfo = expandCommitInfo(allCommits);
-    console.log(`Latest version: ${expandedInfo.latestVersion || 'none found'}`);
-    console.log(`Found ${expandedInfo.commits.length} commits since latest version`);
+    // Process version info (includes validation and tag fetching)
+    const { previousVersion, nextVersion, commits, conventionalCommits, changelog } = await processVersionInfo(branch);
     
-    // Calculate next version and generate changelog
-    console.log(`\nCalculating next version and changelog...`);
-    const { nextVersion, changelog } = calculateNextVersionAndChangelog(expandedInfo);
+    console.log(`Previous version: ${previousVersion || 'none found'}`);
     console.log(`Next version: ${nextVersion}`);
+    console.log(`Found ${commits.length} commits since latest version`);
     console.log(`\nChangelog:\n${changelog}`); 
 
     // COMMENTED OUT - Refactoring in progress
@@ -223,7 +204,10 @@ if (require.main === module) {
       break;
     }
   }
-  main(branch);
+  main(branch).catch(err => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
 } else {
   // Export main function when required as a module
   module.exports = main;

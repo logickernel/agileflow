@@ -332,7 +332,7 @@ function calculateNextVersionAndChangelog(expandedInfo) {
     // Add commits without scope first
     for (const entry of noScope) {
       const issuePart = entry.issueRef || '';
-      changelogLines.push(`- ${entry.description} ${issuePart}`);
+      changelogLines.push(`- ${entry.description}${issuePart}`);
     }
     
     // Add commits with scope, sorted by scope name
@@ -340,7 +340,7 @@ function calculateNextVersionAndChangelog(expandedInfo) {
     for (const scope of scopes) {
       for (const entry of byScope[scope]) {
         const issuePart = entry.issueRef || '';
-        changelogLines.push(`- **${scope}**: ${entry.description} ${issuePart}`);
+        changelogLines.push(`- **${scope}**: ${entry.description}${issuePart}`);
       }
     }
     
@@ -358,6 +358,65 @@ function calculateNextVersionAndChangelog(expandedInfo) {
     nextVersion,
     changelog,
   };
+}
+
+/**
+ * Processes version information for a branch, returning version details and changelog.
+ * @param {string} branch - The branch to process
+ * @returns {Promise<{previousVersion: string|null, nextVersion: string, commits: Array, conventionalCommits: Object, changelog: string}>} Promise resolving to version info
+ */
+async function processVersionInfo(branch) {
+  try {
+    // Validate git repository
+    ensureGitRepo();
+    
+    // Validate branch name
+    validateBranchName(branch);
+    
+    // Fetch tags locally
+    fetchTagsLocally();
+    
+    // Get all commits from the branch
+    const allCommits = getAllBranchCommits(branch);
+    
+    // Expand commit info to get latest version and filtered commits
+    const expandedInfo = expandCommitInfo(allCommits);
+    const { latestVersion, commits } = expandedInfo;
+    
+    // Generate conventionalCommits by grouping filtered commits by type
+    const conventionalCommits = {};
+    const typeOrder = ['feat', 'fix', 'perf', 'refactor', 'style', 'test', 'docs', 'build', 'ci', 'chore', 'revert'];
+    
+    for (const type of typeOrder) {
+      conventionalCommits[type] = [];
+    }
+    
+    for (const commit of commits) {
+      const parsed = parseConventionalCommit(commit.message);
+      if (parsed) {
+        const type = parsed.type;
+        if (conventionalCommits[type]) {
+          conventionalCommits[type].push({
+            ...commit,
+            conventional: parsed,
+          });
+        }
+      }
+    }
+    
+    // Calculate next version and generate changelog
+    const { nextVersion, changelog } = calculateNextVersionAndChangelog(expandedInfo);
+    
+    return {
+      previousVersion: latestVersion,
+      nextVersion,
+      commits,
+      conventionalCommits,
+      changelog,
+    };
+  } catch (error) {
+    throw new Error(`Failed to process version info: ${error.message}`);
+  }
 }
 
 /**
@@ -432,6 +491,7 @@ module.exports = {
   getAllBranchCommits,
   expandCommitInfo,
   calculateNextVersionAndChangelog,
+  processVersionInfo,
   parseConventionalCommit,
 };
 
