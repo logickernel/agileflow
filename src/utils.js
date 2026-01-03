@@ -67,6 +67,21 @@ const TYPE_ORDER = ['feat', 'fix', 'perf', 'refactor', 'style', 'test', 'docs', 
 const PATCH_TYPES = ['fix', 'perf', 'refactor', 'test', 'build', 'ci', 'revert'];
 const SEMVER_PATTERN = /^v(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.-]+)?$/;
 
+// Friendly header names for changelog
+const TYPE_HEADERS = {
+  feat: 'Features:',
+  fix: 'Fixes:',
+  perf: 'Performance:',
+  refactor: 'Refactors:',
+  style: 'Style:',
+  test: 'Tests:',
+  docs: 'Documentation:',
+  build: 'Build:',
+  ci: 'CI:',
+  chore: 'Chores:',
+  revert: 'Reverts:',
+};
+
 /**
  * Fetches tags from remote (non-destructive) if a remote is configured.
  * @returns {boolean} True if tags were fetched, false if using local tags only
@@ -243,6 +258,16 @@ function analyzeCommitsForVersioning(commits) {
 }
 
 /**
+ * Capitalizes the first letter of a string.
+ * @param {string} str - The string to capitalize
+ * @returns {string} Capitalized string
+ */
+function capitalize(str) {
+  if (!str) return str;
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
  * Generates changelog entries for a commit type section.
  * @param {Array} commits - Commits of this type
  * @returns {Array<string>} Changelog lines
@@ -271,11 +296,13 @@ function generateTypeChangelog(commits) {
   
   const lines = [];
   for (const entry of noScope) {
-    lines.push(`- ${entry.description}${entry.issueRef}`);
+    const ref = entry.issueRef ? ` ${entry.issueRef}` : '';
+    lines.push(`- ${capitalize(entry.description)}${ref}`);
   }
   for (const scope of Object.keys(byScope).sort()) {
     for (const entry of byScope[scope]) {
-      lines.push(`- **${scope}**: ${entry.description}${entry.issueRef}`);
+      const ref = entry.issueRef ? ` ${entry.issueRef}` : '';
+      lines.push(`- ${scope}: ${capitalize(entry.description)}${ref}`);
     }
   }
   return lines;
@@ -300,7 +327,7 @@ function calculateNextVersionAndChangelog(expandedInfo) {
     const typeCommits = analysis.commitsByType[type];
     if (!typeCommits?.length) continue;
     
-    changelogLines.push(`### ${type}`);
+    changelogLines.push(TYPE_HEADERS[type] || `${capitalize(type)}:`);
     changelogLines.push(...generateTypeChangelog(typeCommits));
     changelogLines.push('');
   }

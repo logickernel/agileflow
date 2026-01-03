@@ -55,7 +55,7 @@ function displayVersionInfo(info, quiet) {
   console.log(`Next version: ${nextVersion || 'no bump needed'}`);
   console.log(`Commits since current version: ${commits.length}`);
   if (changelog) {
-    console.log(`\nChangelog:\n${changelog}`);
+    console.log(`\n${changelog}`);
   }
 }
 
