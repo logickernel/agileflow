@@ -27,7 +27,10 @@ function main() {
   if (!cmd || cmd.startsWith('--')) {
     const args = parseArgs(cmd ? [cmd, ...rest] : rest);
     const localMain = require('./local.js');
-    localMain(args.branch);
+    localMain(args.branch).catch(err => {
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
     return;
   }
 

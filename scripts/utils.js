@@ -23,7 +23,6 @@ function fetchTagsLocally() {
     const remotes = runWithOutput('git remote').trim();
     if (remotes) {
       run('git fetch --tags --prune --prune-tags', { stdio: 'ignore' });
-      console.log('Tags fetched successfully');
       return true;
     } else {
       console.log('No remote configured, using local tags only');
