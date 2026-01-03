@@ -1,6 +1,6 @@
 {
   "name": "@logickernel/agileflow",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Automatic semantic versioning and changelog generation based on conventional commits",
   "main": "src/index.js",
   "bin": {

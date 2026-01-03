@@ -22,7 +22,6 @@ Welcome to the AgileFlow documentation! This folder contains detailed guides and
 - **[Release Management](./release-management.md)** - How to manage releases and versions effectively
 
 ### Reference
-- **[GitLab CI Template](./gitlab-ci-template.md)** - Complete reference for the AgileFlow GitLab CI template
 - **[CLI Reference](./cli-reference.md)** - Command-line interface documentation
 - **[Configuration](./configuration.md)** - Configuration options and environment variables
 

@@ -1,6 +1,66 @@
 'use strict';
 
-const { runWithOutput, ensureGitRepo } = require('./git-utils');
+const { execSync } = require('child_process');
+const fs = require('fs');
+
+/**
+ * Executes a shell command and returns the output.
+ * @param {string} command - The command to execute
+ * @param {Object} options - Execution options
+ * @returns {string} Command output
+ * @throws {Error} If command fails
+ */
+function runWithOutput(command, options = {}) {
+  try {
+    return execSync(command, { stdio: 'pipe', encoding: 'utf8', ...options });
+  } catch (error) {
+    const captured = {
+      stdout: error?.stdout ? String(error.stdout) : '',
+      stderr: error?.stderr ? String(error.stderr) : '',
+      message: error?.message || 'Command failed',
+      status: typeof error?.status === 'number' ? error.status : 1,
+    };
+    try {
+      Object.defineProperty(error, '_captured', { value: captured });
+    } catch {
+      error._captured = captured;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Executes a shell command without returning output.
+ * @param {string} command - The command to execute
+ * @param {Object} options - Execution options
+ * @throws {Error} If command fails
+ */
+function run(command, options = {}) {
+  execSync(command, { stdio: 'pipe', ...options });
+}
+
+/**
+ * Ensures the current directory is a git repository.
+ * @throws {Error} If the current directory is not a git repository
+ */
+function ensureGitRepo() {
+  if (!fs.existsSync('.git')) {
+    throw new Error('Current directory is not a git repository (missing .git directory).');
+  }
+}
+
+/**
+ * Gets the current branch name.
+ * @returns {string} Current branch name
+ * @throws {Error} If in detached HEAD state
+ */
+function getCurrentBranch() {
+  const branch = runWithOutput('git branch --show-current').trim();
+  if (!branch) {
+    throw new Error('Repository is in a detached HEAD state. Please check out a branch and try again.');
+  }
+  return branch;
+}
 
 // Conventional commit type configuration
 const TYPE_ORDER = ['feat', 'fix', 'perf', 'refactor', 'style', 'test', 'docs', 'build', 'ci', 'chore', 'revert'];
@@ -9,34 +69,16 @@ const SEMVER_PATTERN = /^v(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.-]+)?$/;
 
 /**
  * Fetches tags from remote (non-destructive) if a remote is configured.
- * This is a safe operation that doesn't modify the working directory.
  * @returns {boolean} True if tags were fetched, false if using local tags only
  */
-function fetchTagsLocally() {
+function fetchTags() {
   try {
     const remotes = runWithOutput('git remote').trim();
-    if (!remotes) {
-      return false;
-    }
+    if (!remotes) return false;
     runWithOutput('git fetch --tags --prune --prune-tags');
     return true;
   } catch {
     return false;
-  }
-}
-
-/**
- * Validates that the current branch is the expected name.
- * @param {string} expectedName - The expected name of the branch
- * @throws {Error} If the current branch is not the expected name or in detached HEAD state
- */
-function validateBranchName(expectedName) {
-  const branch = runWithOutput('git branch --show-current').trim();
-  if (!branch) {
-    throw new Error('Repository is in a detached HEAD state. Please check out a branch and try again.');
-  }
-  if (branch !== expectedName) {
-    throw new Error(`Current branch is "${branch}", not "${expectedName}". Switch to ${expectedName} or use --branch ${branch}.`);
   }
 }
 
@@ -57,18 +99,13 @@ function getTagsForCommit(commitSha) {
 /**
  * Parses a conventional commit message.
  * @param {string} message - The commit message to parse
- * @returns {{type: string, breaking: boolean, scope: string, description: string}|null} Parsed commit or null if not conventional
+ * @returns {{type: string, breaking: boolean, scope: string, description: string}|null}
  */
 function parseConventionalCommit(message) {
   if (!message) return null;
-  
-  // Get the first line (subject) of the commit message
   const subject = message.split('\n')[0].trim();
-  
-  // Conventional commit pattern: type[!]?(scope)?: description
   const match = subject.match(/^(\w+)(!)?(?:\(([^)]+)\))?:\s+(.+)$/);
   if (!match) return null;
-  
   return {
     type: match[1].toLowerCase(),
     breaking: Boolean(match[2]),
@@ -79,17 +116,14 @@ function parseConventionalCommit(message) {
 
 /**
  * Expands commit information by finding the latest version and filtering commits.
- * Filters out commits that are older than the latest commit with a semver tag.
- * Commits are expected to be ordered from newest to oldest.
- * @param {Array<{hash: string, datetime: string, author: string, message: string, tags: Array<string>}>} commits - Array of commit objects
- * @returns {{latestVersion: string|null, commits: Array}} Object with latestVersion and filtered commits array
+ * @param {Array} commits - Array of commit objects (newest to oldest)
+ * @returns {{latestVersion: string|null, commits: Array}} Filtered commits since last version
  */
 function expandCommitInfo(commits) {
   if (!commits?.length) {
     return { latestVersion: null, commits: [] };
   }
   
-  // Find the first commit (newest) that has a semver tag
   const taggedIndex = commits.findIndex(commit => 
     commit.tags?.some(tag => SEMVER_PATTERN.test(tag))
   );
@@ -99,16 +133,17 @@ function expandCommitInfo(commits) {
   }
   
   const latestVersion = commits[taggedIndex].tags.find(tag => SEMVER_PATTERN.test(tag));
+  // Exclude the tagged commit itself - only return commits since the tag
   return {
     latestVersion,
-    commits: commits.slice(0, taggedIndex + 1),
+    commits: commits.slice(0, taggedIndex),
   };
 }
 
 /**
- * Extracts issue reference from commit message (e.g., #123 or (#123)).
+ * Extracts issue reference from commit message.
  * @param {string} message - The commit message
- * @returns {string|null} Issue reference like "(#123)" or null if not found
+ * @returns {string|null} Issue reference like "(#123)" or null
  */
 function extractIssueReference(message) {
   const match = message?.match(/\(?#(\d+)\)?/);
@@ -116,33 +151,26 @@ function extractIssueReference(message) {
 }
 
 /**
- * Formats the first line of commit message for changelog, removing the type prefix.
- * @param {string} subject - The first line of the commit message
+ * Formats commit description for changelog.
+ * @param {string} subject - First line of commit message
  * @param {Object} parsed - Parsed conventional commit info
- * @param {string} fullMessage - Full commit message to check for BREAKING CHANGE:
+ * @param {string} fullMessage - Full commit message
  * @returns {string} Formatted description
  */
 function formatChangelogDescription(subject, parsed, fullMessage) {
-  if (!parsed) {
-    // Not a conventional commit, use subject as-is
-    return subject;
-  }
-  
+  if (!parsed) return subject;
   let description = parsed.description;
-  
-  // Add BREAKING prefix if it's a breaking change (check both ! and BREAKING CHANGE:)
   const isBreaking = parsed.breaking || /BREAKING CHANGE:/i.test(fullMessage);
   if (isBreaking) {
     description = `BREAKING: ${description}`;
   }
-  
   return description;
 }
 
 /**
- * Parses a semver version string into its components.
- * @param {string|null} version - Version string like "v1.2.3" or "v1.2.3-beta"
- * @returns {{major: number, minor: number, patch: number}} Parsed version or {0,0,0} if invalid
+ * Parses a semver version string into components.
+ * @param {string|null} version - Version string like "v1.2.3"
+ * @returns {{major: number, minor: number, patch: number}}
  */
 function parseVersion(version) {
   if (!version) return { major: 0, minor: 0, patch: 0 };
@@ -152,14 +180,13 @@ function parseVersion(version) {
 }
 
 /**
- * Determines the version bump type based on commit analysis.
- * @param {{hasBreaking: boolean, hasFeat: boolean, hasPatchTypes: boolean}} analysis - Commit analysis
+ * Determines version bump type based on commit analysis.
+ * @param {{hasBreaking: boolean, hasFeat: boolean, hasPatchTypes: boolean}} analysis
  * @param {boolean} isPreOneZero - Whether current version is 0.x.x
- * @returns {'major'|'minor'|'patch'|'none'} The version bump type
+ * @returns {'major'|'minor'|'patch'|'none'}
  */
 function determineVersionBumpType(analysis, isPreOneZero) {
   const { hasBreaking, hasFeat, hasPatchTypes } = analysis;
-  
   if (isPreOneZero) {
     if (hasBreaking || hasFeat) return 'minor';
     if (hasPatchTypes) return 'patch';
@@ -173,17 +200,17 @@ function determineVersionBumpType(analysis, isPreOneZero) {
 
 /**
  * Applies a version bump to the current version.
- * @param {{major: number, minor: number, patch: number}} current - Current version
- * @param {'major'|'minor'|'patch'|'none'} bump - Bump type
- * @returns {string} Next version string like "v1.2.3"
+ * @param {{major: number, minor: number, patch: number}} current
+ * @param {'major'|'minor'|'patch'|'none'} bump
+ * @returns {string|null} Next version string or null if no bump
  */
 function applyVersionBump(current, bump) {
-  let { major, minor, patch } = current;
+  const { major, minor, patch } = current;
   switch (bump) {
     case 'major': return `v${major + 1}.0.0`;
     case 'minor': return `v${major}.${minor + 1}.0`;
     case 'patch': return `v${major}.${minor}.${patch + 1}`;
-    default: return `v${major}.${minor}.${patch}`;
+    default: return null;
   }
 }
 
@@ -255,9 +282,9 @@ function generateTypeChangelog(commits) {
 }
 
 /**
- * Calculates the next version and generates a changelog from expanded commit info.
- * @param {{latestVersion: string|null, commits: Array}} expandedInfo - Output from expandCommitInfo
- * @returns {{nextVersion: string, changelog: string}} Object with nextVersion and changelog
+ * Calculates the next version and generates a changelog.
+ * @param {{latestVersion: string|null, commits: Array}} expandedInfo
+ * @returns {{nextVersion: string|null, changelog: string}}
  */
 function calculateNextVersionAndChangelog(expandedInfo) {
   const { latestVersion, commits } = expandedInfo;
@@ -278,7 +305,6 @@ function calculateNextVersionAndChangelog(expandedInfo) {
     changelogLines.push('');
   }
   
-  // Remove trailing empty line
   if (changelogLines.at(-1) === '') {
     changelogLines.pop();
   }
@@ -287,54 +313,18 @@ function calculateNextVersionAndChangelog(expandedInfo) {
 }
 
 /**
- * Processes version information for a branch, returning version details and changelog.
- * @param {string} branch - The branch to process
- * @returns {Promise<{previousVersion: string|null, nextVersion: string, commits: Array, conventionalCommits: Object, changelog: string}>} Promise resolving to version info
- */
-async function processVersionInfo(branch) {
-  ensureGitRepo();
-  validateBranchName(branch);
-  fetchTagsLocally();
-  
-  const allCommits = getAllBranchCommits(branch);
-  const expandedInfo = expandCommitInfo(allCommits);
-  const { latestVersion, commits } = expandedInfo;
-  
-  // Group commits by conventional type
-  const conventionalCommits = Object.fromEntries(TYPE_ORDER.map(t => [t, []]));
-  for (const commit of commits) {
-    const parsed = parseConventionalCommit(commit.message);
-    if (parsed && conventionalCommits[parsed.type]) {
-      conventionalCommits[parsed.type].push({ ...commit, conventional: parsed });
-    }
-  }
-  
-  const { nextVersion, changelog } = calculateNextVersionAndChangelog(expandedInfo);
-  
-  return {
-    previousVersion: latestVersion,
-    nextVersion,
-    commits,
-    conventionalCommits,
-    changelog,
-  };
-}
-
-/**
- * Retrieves all commits in the history of the specified branch, including merged commits.
- * Returns a simplified array with commit hash, datetime, author, commit message, and tags.
+ * Retrieves all commits in the history of the specified branch.
  * @param {string} branch - The branch to get commits from
- * @returns {Array<{hash: string, datetime: string, author: string, message: string, tags: Array<string>}>} Array of commit objects
+ * @returns {Array<{hash: string, datetime: string, author: string, message: string, tags: Array<string>}>}
  */
 function getAllBranchCommits(branch) {
   try {
-    // Verify the branch exists
     runWithOutput(`git rev-parse --verify ${branch}`);
   } catch {
     return [];
   }
   
-  const RS = '\x1E'; // Record Separator
+  const RS = '\x1E';
   const COMMIT_SEP = `${RS}${RS}`;
   
   try {
@@ -363,14 +353,37 @@ function getAllBranchCommits(branch) {
   }
 }
 
+/**
+ * Processes version information for the current branch.
+ * @returns {Promise<{currentVersion: string|null, nextVersion: string|null, commits: Array, changelog: string}>}
+ */
+async function processVersionInfo() {
+  ensureGitRepo();
+  const branch = getCurrentBranch();
+  fetchTags();
+  
+  const allCommits = getAllBranchCommits(branch);
+  const expandedInfo = expandCommitInfo(allCommits);
+  const { latestVersion, commits } = expandedInfo;
+  const { nextVersion, changelog } = calculateNextVersionAndChangelog(expandedInfo);
+  
+  return {
+    currentVersion: latestVersion,
+    nextVersion,
+    commits,
+    changelog,
+  };
+}
+
 module.exports = {
+  run,
+  runWithOutput,
   ensureGitRepo,
-  fetchTagsLocally,
-  validateBranchName,
+  getCurrentBranch,
+  fetchTags,
   getAllBranchCommits,
   expandCommitInfo,
   calculateNextVersionAndChangelog,
   processVersionInfo,
   parseConventionalCommit,
 };
-

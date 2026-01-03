@@ -1,110 +1,281 @@
 # CLI Reference
 
-AgileFlow provides a simple command-line interface for CI/CD operations. The CLI is designed to be lightweight and focused on specific CI/CD tasks.
+AgileFlow provides a simple command-line interface for automatic semantic versioning and changelog generation.
 
 ## Installation
 
-The AgileFlow CLI is included in the Docker image and is automatically available when using the GitLab CI template. For local development, you can run the CLI directly from the scripts directory.
+AgileFlow can be run directly with npx (no installation required):
+
+```bash
+npx @logickernel/agileflow
+```
+
+Or install globally:
+
+```bash
+npm install -g @logickernel/agileflow
+agileflow
+```
 
 ## Usage
 
 ```bash
-agileflow <command> [options]
+agileflow [options]
+agileflow <command>
 ```
 
 ## Commands
 
-### gitlab-ci
+### Default (no command)
 
-Configures git, computes semantic version tags from the release branch, and pushes to GitLab.
+Analyzes the current branch and displays version information without creating any tags.
 
 ```bash
-agileflow gitlab-ci
+agileflow
 ```
-
-**What it does:**
-- Configures git user with environment variables
-- Analyzes commit history to determine next semantic version
-- Generates comprehensive release notes from conventional commits
-- Creates and pushes version tags to the repository
-- Outputs version information for CI/CD pipeline consumption
-
-**Environment Variables Required:**
-- `GITLAB_USER_NAME` - GitLab username for commit authorship
-- `GITLAB_USER_EMAIL` - GitLab email for commit authorship
-- `CI_SERVER_HOST` - GitLab server hostname
-- `CI_PROJECT_PATH` - GitLab project path
-- `AGILEFLOW_TOKEN` - GitLab access token with API permissions
 
 **Output:**
-- Creates a `VERSION` file with the generated version
-- Pushes version tag to the repository
-- Provides version information via dotenv artifacts
+```
+Current version: v1.2.3
+Next version: v1.2.4
+Commits since current version: 3
 
-**Example:**
-```bash
-export GITLAB_USER_NAME="AgileFlow Bot"
-export GITLAB_USER_EMAIL="agileflow@example.com"
-export CI_SERVER_HOST="gitlab.example.com"
-export CI_PROJECT_PATH="group/project"
-export AGILEFLOW_TOKEN="glpat-xxxxxxxxxxxxxxxxxxxx"
+Changelog:
+### fix
+- resolve authentication issue
 
-agileflow gitlab-ci
+### feat
+- add new login flow
 ```
 
-## Help
+### push
 
-Get help information:
+Creates an annotated git tag and pushes it to the origin remote using native git commands.
+
+```bash
+agileflow push
+```
+
+**Requirements:**
+- Git credentials configured for push access
+- No additional environment variables needed
+
+**Behavior:**
+- Calculates the next version
+- Creates an annotated tag with the changelog as the message
+- Pushes the tag to origin
+- If no version bump is needed, skips tag creation
+
+### gitlab
+
+Creates a version tag via the GitLab API. Designed for use in GitLab CI pipelines.
+
+```bash
+agileflow gitlab
+```
+
+**Required Environment Variable:**
+- `AGILEFLOW_TOKEN` - GitLab access token with `api` scope
+
+**Auto-provided by GitLab CI:**
+- `CI_SERVER_HOST` - GitLab server hostname
+- `CI_PROJECT_PATH` - Project path (e.g., "group/project")
+- `CI_COMMIT_SHA` - Current commit SHA
+
+**Example GitLab CI job:**
+```yaml
+agileflow:
+  stage: version
+  image: node:20-alpine
+  script:
+    - npx @logickernel/agileflow gitlab
+  only:
+    - main
+```
+
+### github
+
+Creates a version tag via the GitHub API. Designed for use in GitHub Actions workflows.
+
+```bash
+agileflow github
+```
+
+**Required Environment Variable:**
+- `AGILEFLOW_TOKEN` - GitHub Personal Access Token with `contents: write` permission
+
+**Auto-provided by GitHub Actions:**
+- `GITHUB_REPOSITORY` - Repository name (e.g., "owner/repo")
+- `GITHUB_SHA` - Current commit SHA
+
+**Example GitHub Actions step:**
+```yaml
+- name: Create version tag
+  env:
+    AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
+  run: npx @logickernel/agileflow github
+```
+
+## Options
+
+### --quiet
+
+Only output the next version string. Useful for capturing the version in scripts.
+
+```bash
+agileflow --quiet
+# Output: v1.2.4
+```
+
+If no version bump is needed, outputs nothing.
+
+```bash
+VERSION=$(npx @logickernel/agileflow --quiet)
+if [ -n "$VERSION" ]; then
+  echo "New version: $VERSION"
+else
+  echo "No version bump needed"
+fi
+```
+
+### --help, -h
+
+Display help information.
 
 ```bash
 agileflow --help
-agileflow -h
-agileflow help
 ```
+
+### --version, -v
+
+Display the AgileFlow CLI version.
+
+```bash
+agileflow --version
+```
+
+## Exit Codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | Error (missing token, git error, API error, etc.) |
 
 ## Error Handling
 
-The CLI provides detailed error messages for common issues:
+AgileFlow provides detailed error messages for common issues:
 
-- **Missing environment variables** - Clear indication of what's required
-- **Git repository issues** - Helpful messages for git-related problems
-- **API authentication failures** - Specific guidance for token issues
-- **Network problems** - Clear error messages for connectivity issues
+### Authentication Errors
 
-## Integration
+**GitLab:**
+```
+AGILEFLOW_TOKEN environment variable is required but not set.
 
-The CLI is primarily designed for use within GitLab CI pipelines via the AgileFlow template. It automatically handles:
+To fix this:
+1. Create a project access token: https://gitlab.com/your/project/-/settings/access_tokens
+   - Name: AgileFlow Bot
+   - Role: maintainer
+   - Scopes: api
+2. Add it as a CI/CD variable: https://gitlab.com/your/project/-/settings/ci_cd
+   - Variable key: AGILEFLOW_TOKEN
+   - Protect variable: Yes (recommended)
+```
 
-- Git configuration
-- Version calculation
-- Tag creation and pushing
-- Release note generation
-- CI/CD pipeline integration
+**GitHub:**
+```
+AGILEFLOW_TOKEN environment variable is required but not set.
 
-## Troubleshooting
+To fix this:
+1. Create a Personal Access Token with "contents: write" permission
+2. Add it as a repository secret named AGILEFLOW_TOKEN
+3. In your workflow, add: env: AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
+```
 
-### Common CLI Issues
+### Git Repository Errors
 
-**Permission Denied Errors**
-- Ensure the `AGILEFLOW_TOKEN` has sufficient permissions
-- Check that the token has "api" scope and maintainer role
-- Verify the token hasn't expired
+```
+Current directory is not a git repository (missing .git directory).
+```
 
-**Git Configuration Errors**
-- Ensure `GITLAB_USER_NAME` and `GITLAB_USER_EMAIL` are set
-- Check that the git repository is properly initialized
-- Verify write access to the repository
+### Detached HEAD State
 
-**Version Calculation Issues**
-- Check that conventional commit format is being used
-- Ensure there are commits since the last version tag
-- Verify the repository has proper tag history
+```
+Repository is in a detached HEAD state. Please check out a branch and try again.
+```
 
-For more detailed troubleshooting, see the [Troubleshooting Guide](./troubleshooting.md).
+## Examples
+
+### Preview Version Locally
+
+```bash
+cd my-project
+npx @logickernel/agileflow
+```
+
+### Get Version for Use in Scripts
+
+```bash
+VERSION=$(npx @logickernel/agileflow --quiet)
+docker build -t myapp:$VERSION .
+```
+
+### GitLab CI Pipeline
+
+```yaml
+stages:
+  - version
+  - build
+  - deploy
+
+agileflow:
+  stage: version
+  image: node:20-alpine
+  script:
+    - VERSION=$(npx @logickernel/agileflow gitlab --quiet)
+    - echo "VERSION=$VERSION" >> version.env
+  artifacts:
+    reports:
+      dotenv: version.env
+  only:
+    - main
+
+build:
+  stage: build
+  script:
+    - docker build -t myapp:$VERSION .
+  needs:
+    - agileflow
+```
+
+### GitHub Actions Workflow
+
+```yaml
+name: Release
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Create version tag
+        env:
+          AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
+        run: npx @logickernel/agileflow github
+```
 
 ## Related Documentation
 
 - [Getting Started](./getting-started.md) - Quick start guide
-- [GitLab CI Template](./gitlab-ci-template.md) - CI/CD integration
 - [Conventional Commits](./conventional-commits.md) - Commit message format
+- [Version-Centric CI/CD](./version-centric-cicd.md) - Methodology overview
 - [Troubleshooting](./troubleshooting.md) - Common issues and solutions

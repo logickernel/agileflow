@@ -1,50 +1,114 @@
 'use strict';
 
 const { version } = require('../package.json');
+const { processVersionInfo } = require('./utils');
 
 function printHelp() {
-  console.log(`agileflow - Automatic semantic versioning and changelog generation
+  console.log(`agileflow - Automatic semantic versioning and changelog generation tool.
 
 Usage:
   agileflow [options]
   agileflow <command>
 
 Commands:
-  gitlab-ci       Configure git, compute semver tag, and push to GitLab (CI mode)
+  <none>   Prints the current version, next version, commits, and changelog
+  push     Push a semantic version tag to the remote repository (native git)
+  gitlab   Push a semantic version tag via GitLab API (for GitLab CI)
+  github   Push a semantic version tag via GitHub API (for GitHub Actions)
 
 Options:
-  --branch <name>  Allow running on specified branch (default: main)
-  -h, --help       Show this help message
-  -v, --version    Show version number
+  --quiet        Only output the next version (or empty if no bump)
+  -h, --help     Show this help message
+  -v, --version  Show version number
 
-Examples:
-  agileflow                   # Run on main branch
-  agileflow --branch develop  # Run on develop branch
-  agileflow gitlab-ci
-
-For more information, visit: https://code.logickernel.com/kernel/agileflow
+For more information, visit: https://code.logickernel.com/tools/agileflow
 `);
 }
 
+/**
+ * Parses command line arguments.
+ * @param {Array<string>} args - Command line arguments
+ * @returns {{quiet: boolean}}
+ */
 function parseArgs(args) {
-  const parsed = { branch: 'main' };
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--branch' && i + 1 < args.length) {
-      parsed.branch = args[i + 1];
-      i++;
-    }
-  }
-  return parsed;
+  return {
+    quiet: args.includes('--quiet'),
+  };
 }
 
-async function runLocal(args) {
-  const { branch } = parseArgs(args);
-  const localMain = require('./local.js');
-  await localMain(branch);
+/**
+ * Displays version info to the console.
+ * @param {{currentVersion: string|null, nextVersion: string|null, commits: Array, changelog: string}} info
+ * @param {boolean} quiet - Only output the next version
+ */
+function displayVersionInfo(info, quiet) {
+  const { currentVersion, nextVersion, commits, changelog } = info;
+  
+  if (quiet) {
+    if (nextVersion) {
+      console.log(nextVersion);
+    }
+    return;
+  }
+  
+  console.log(`Current version: ${currentVersion || 'none'}`);
+  console.log(`Next version: ${nextVersion || 'no bump needed'}`);
+  console.log(`Commits since current version: ${commits.length}`);
+  if (changelog) {
+    console.log(`\nChangelog:\n${changelog}`);
+  }
+}
+
+/**
+ * Handles a push command.
+ * @param {string} pushType - 'push', 'gitlab', or 'github'
+ * @param {{quiet: boolean}} options
+ */
+async function handlePushCommand(pushType, options) {
+  const info = await processVersionInfo();
+  
+  // Display version info
+  displayVersionInfo(info, options.quiet);
+  
+  // Skip push if no version bump needed
+  if (!info.nextVersion) {
+    if (!options.quiet) {
+      console.log('\nNo version bump needed. Skipping tag creation.');
+    }
+    return;
+  }
+  
+  // Get the appropriate push module
+  let pushModule;
+  switch (pushType) {
+    case 'push':
+      pushModule = require('./git-push');
+      break;
+    case 'gitlab':
+      pushModule = require('./gitlab-push');
+      break;
+    case 'github':
+      pushModule = require('./github-push');
+      break;
+  }
+  
+  // Create tag message from changelog
+  const tagMessage = info.changelog || info.nextVersion;
+  
+  if (!options.quiet) {
+    console.log(`\nCreating tag ${info.nextVersion}...`);
+  }
+  
+  await pushModule.pushTag(info.nextVersion, tagMessage);
+  
+  if (!options.quiet) {
+    console.log(`Tag ${info.nextVersion} created and pushed successfully.`);
+  }
 }
 
 async function main() {
   const [, , cmd, ...rest] = process.argv;
+  const options = parseArgs(cmd ? [cmd, ...rest] : rest);
 
   // Handle help
   if (cmd === '-h' || cmd === '--help' || cmd === 'help') {
@@ -58,14 +122,13 @@ async function main() {
     process.exit(0);
   }
 
-  // Handle gitlab-ci command
-  if (cmd === 'gitlab-ci') {
-    console.error('Error: gitlab-ci command is not yet implemented');
-    console.error('This feature will be available in a future release.');
-    process.exit(1);
+  // Handle push commands
+  if (cmd === 'push' || cmd === 'gitlab' || cmd === 'github') {
+    await handlePushCommand(cmd, options);
+    return;
   }
 
-  // Unknown command
+  // Unknown command (not an option)
   if (cmd && !cmd.startsWith('--')) {
     console.error(`Error: Unknown command "${cmd}"`);
     console.error();
@@ -73,8 +136,9 @@ async function main() {
     process.exit(1);
   }
 
-  // Default: run version calculation
-  await runLocal(cmd ? [cmd, ...rest] : rest);
+  // Default: show version info
+  const info = await processVersionInfo();
+  displayVersionInfo(info, options.quiet);
 }
 
 process.on('unhandledRejection', (err) => {

@@ -5,205 +5,189 @@ Welcome to AgileFlow! This guide will help you get up and running with AgileFlow
 ## What You'll Learn
 
 By the end of this guide, you'll have:
-- ✅ AgileFlow installed in your GitLab project
-- ✅ A working CI/CD pipeline that automatically generates versions
-- ✅ Understanding of how the version-centric approach works
-- ✅ Confidence to customize the pipeline for your needs
+- AgileFlow running in your project
+- Automatic semantic versioning based on conventional commits
+- Understanding of how the version-centric approach works
 
 ## Prerequisites
 
 Before you begin, ensure you have:
-- A GitLab project with CI/CD enabled
-- Access to modify `.gitlab-ci.yml` files and CI/CD variables
-- Basic understanding of Git and CI/CD concepts
+- Node.js 14+ installed (for local usage)
+- A Git repository with commit history
+- Basic understanding of Git and conventional commits
 
-## Quick Start (5 minutes)
+## Quick Start
 
-### Step 1: Include the AgileFlow Template
+### Local Usage
 
-Add this line to the top of your `.gitlab-ci.yml` file:
-
-```yaml
-include:
-  - remote: https://code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
-```
-
-### Step 2: Configure the AGILEFLOW_TOKEN
-
-AgileFlow needs a GitLab access token to create version tags via the API. Set this in your GitLab project:
-
-1. Go to **Settings > CI/CD > Variables**
-2. Add the `AGILEFLOW_TOKEN` variable:
-
-| Variable | Value | Type | Protect | Mask |
-|----------|-------|------|---------|------|
-| `AGILEFLOW_TOKEN` | Your GitLab API token | Variable | Yes | No |
-
-**Creating the AGILEFLOW_TOKEN:**
-- **Project Access Token (Recommended)**: Go to **Settings > Access Tokens** in your project
-- **Personal Access Token**: Go to your user **Settings > Access Tokens**
-- Set **Name**: `AgileFlow Bot`, **Scopes**: `api`, **Role**: `maintainer` or higher
-
-### Step 3: Add Your First Job
-
-Below the include statement, add a simple build job:
-
-```yaml
-build:
-  stage: build
-  script:
-    - echo "Building version ${VERSION}"
-    - docker build -t myapp:${VERSION} .
-    - docker push myapp:${VERSION}
-  needs:
-    - agileflow
-```
-
-### Step 4: Commit and Push
+Run AgileFlow directly with npx to see your current and next version:
 
 ```bash
-git add .gitlab-ci.yml
-git commit -m "feat: add AgileFlow CI/CD pipeline"
-git push
+npx @logickernel/agileflow
 ```
 
-That's it! 🎉 Your first AgileFlow pipeline is now running.
-
-## What Happens Next
-
-1. **Pipeline Starts**: GitLab CI automatically detects your changes
-2. **Version Generation**: AgileFlow analyzes your commit history and generates the next semantic version
-3. **Build Process**: Your build job runs with the generated version
-4. **Version Tag**: A new version tag is created via GitLab API (not git push)
-
-## Understanding the Pipeline
-
-Your pipeline now has 6 stages:
-
+Example output:
 ```
-version → test → build → deploy → e2e → clean
+Current version: v1.2.3
+Next version: v1.2.4
+Commits since current version: 3
+
+Changelog:
+### fix
+- resolve authentication issue
+- correct null handling in user lookup
+
+### docs
+- update README with usage examples
 ```
 
-- **version**: AgileFlow generates semantic versions automatically using GitLab API
-- **test**: Run tests against source code before building (add your test jobs here)
-- **build**: Your application builds with the generated version
-- **deploy**: Deploy the versioned artifacts (add your deployment jobs here)
-- **e2e**: Run end-to-end tests against deployed versions (add your e2e test jobs here)
-- **clean**: Cleanup temporary resources (optional)
+### Quiet Mode
+
+Use `--quiet` to only output the next version (useful for scripts):
+
+```bash
+VERSION=$(npx @logickernel/agileflow --quiet)
+echo "Next version will be: $VERSION"
+```
+
+## CI/CD Integration
+
+### GitLab CI
+
+1. **Configure the AGILEFLOW_TOKEN**
+
+   Go to **Settings > CI/CD > Variables** and add:
+
+   | Variable | Value | Protect | Mask |
+   |----------|-------|---------|------|
+   | `AGILEFLOW_TOKEN` | Your GitLab API token | Yes | Yes |
+
+   Create the token at **Settings > Access Tokens** with:
+   - **Name**: AgileFlow Bot
+   - **Role**: Maintainer
+   - **Scopes**: api
+
+2. **Add AgileFlow to your pipeline**
+
+   ```yaml
+   stages:
+     - version
+     - build
+
+   agileflow:
+     stage: version
+     image: node:20-alpine
+     script:
+       - npx @logickernel/agileflow gitlab
+     only:
+       - main
+   
+   build:
+     stage: build
+     script:
+       - echo "Building..."
+     needs:
+       - agileflow
+   ```
+
+### GitHub Actions
+
+1. **Configure the AGILEFLOW_TOKEN**
+
+   Go to **Settings > Secrets and variables > Actions** and add a secret:
+   - **Name**: `AGILEFLOW_TOKEN`
+   - **Value**: A Personal Access Token with `contents: write` permission
+
+2. **Add AgileFlow to your workflow**
+
+   ```yaml
+   name: Release
+   on:
+     push:
+       branches: [main]
+
+   jobs:
+     version:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+           with:
+             fetch-depth: 0  # Required for version history
+         
+         - uses: actions/setup-node@v4
+           with:
+             node-version: '20'
+         
+         - name: Create version tag
+           env:
+             AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
+           run: npx @logickernel/agileflow github
+   ```
+
+### Native Git Push
+
+If you prefer using native git commands (requires git credentials):
+
+```bash
+npx @logickernel/agileflow push
+```
+
+This creates an annotated tag and pushes it to the origin remote.
 
 ## How AgileFlow Works
 
-### No Git Push Required
-- **AgileFlow uses GitLab API** to create version tags
-- **No repository write permissions** needed for CI/CD jobs
-- **More secure** than traditional git push approaches
-- **Works with protected branches** without special permissions
+### Version Calculation
+- Analyzes commit messages since the last version tag
+- Uses conventional commits to determine version bump type
+- Generates semantic versions automatically (v1.0.0, v1.0.1, etc.)
 
-### Version Generation
-- **Analyzes commit messages** since the last version
-- **Uses conventional commits** to determine version bump type
-- **Creates semantic versions** automatically (v1.0.0, v1.0.1, etc.)
-- **Generates release notes** from commit history
+### Version Bump Rules
 
-## Next Steps
+| Commit Type | Example | Version Bump |
+|-------------|---------|--------------|
+| Breaking change | `feat!: redesign API` | Major (1.0.0 → 2.0.0) |
+| Feature | `feat: add login` | Minor (1.0.0 → 1.1.0) |
+| Fix | `fix: resolve crash` | Patch (1.0.0 → 1.0.1) |
+| Performance | `perf: optimize query` | Patch |
+| Refactor | `refactor: simplify logic` | Patch |
+| Docs only | `docs: update README` | No bump |
+| Chore | `chore: update deps` | No bump |
 
-Now that you have the basics working, explore these areas:
+### No Bump Needed
 
-### 1. Add Deployment Jobs
-```yaml
-deploy-staging:
-  stage: deploy
-  script:
-    - kubectl set image deployment/myapp myapp=myapp:${VERSION}
-  environment:
-    name: staging
-  needs:
-    - build
-```
-
-### 2. Add Testing
-```yaml
-# Unit tests run before building
-unit-tests:
-  stage: test
-  script:
-    - npm test
-    - npm run lint
-  needs:
-    - agileflow
-
-# Integration tests run after deployment
-integration-tests:
-  stage: e2e
-  script:
-    - ./run-tests.sh --version ${VERSION}
-  needs:
-    - deploy-staging
-```
-
-### 3. Customize for Multiple Services
-```yaml
-build-backend:
-  stage: build
-  script:
-    - docker build -t backend:${VERSION} ./backend
-    - docker push backend:${VERSION}
-  needs:
-    - agileflow
-
-build-frontend:
-  stage: build
-  script:
-    - docker build -t frontend:${VERSION} ./frontend
-    - docker push frontend:${VERSION}
-  needs:
-    - agileflow
-```
+If all commits since the last version are docs/chore/style types, AgileFlow will report "no bump needed" and skip tag creation in push commands.
 
 ## Common Questions
 
 ### Q: How does AgileFlow determine the next version?
-A: AgileFlow analyzes your commit messages using conventional commits. Each merge to main increments the patch version (v1.0.0 → v1.0.1). Use `feat:` for minor versions and `feat!:` for major versions.
+A: AgileFlow analyzes your commit messages using conventional commits. Features bump the minor version, fixes bump the patch version, and breaking changes bump the major version.
 
-### Q: Can I use this with existing CI/CD pipelines?
-A: Yes! AgileFlow is designed to work alongside existing pipelines. Just include the template and gradually migrate your jobs to use the `${VERSION}` variable.
+### Q: What if there's no version tag yet?
+A: AgileFlow starts from v0.0.0 and calculates the first version based on your commits.
 
-### Q: What if I need different versions for different environments?
-A: AgileFlow generates one version per pipeline run. Deploy the same version everywhere to eliminate environment drift. Use environment-specific configuration instead of different versions.
+### Q: Can I use this locally before pushing?
+A: Yes! Run `npx @logickernel/agileflow` to preview the next version without creating any tags.
 
-### Q: How do I rollback to a previous version?
-A: Simply redeploy the previous version tag. Since all environments use the same version, rollbacks are consistent and predictable.
-
-### Q: Why doesn't AgileFlow need git push permissions?
-A: AgileFlow uses the GitLab API to create tags remotely instead of pushing them with git commands. This is more secure and doesn't require repository write access.
+### Q: What happens if no version bump is needed?
+A: The push commands (`push`, `gitlab`, `github`) will skip tag creation and exit successfully.
 
 ## Troubleshooting
 
-### Pipeline Fails on Version Stage
-- Check that the `AGILEFLOW_TOKEN` is set correctly
-- Ensure the token has `api` scope and `maintainer` role
-- Verify your GitLab CI/CD settings
-- Check the `agileflow` job logs for specific errors
+### "Not a git repository" Error
+- Ensure you're running AgileFlow from within a git repository
+- Check that the `.git` directory exists
 
-### VERSION Variable Not Available
-- Ensure the `agileflow` job completed successfully
-- Check that your jobs have `needs: - agileflow` dependency
-- Verify the dotenv artifact is properly configured
+### "AGILEFLOW_TOKEN not set" Error
+- Ensure the environment variable is configured in your CI/CD settings
+- Verify the token has the required permissions
 
-### Build Jobs Fail
-- Check that you're using `${VERSION}` correctly
-- Ensure proper job dependencies with `needs:`
-- Verify your build scripts work with the version variable
+### No Version Bump Detected
+- Ensure you're using conventional commit format
+- Check that there are commits since the last version tag
+- Verify commits include bump-triggering types (feat, fix, perf, etc.)
 
-## Getting Help
+## Next Steps
 
-- 📚 [Complete Documentation](./README.md) - Browse all available guides
-- 🔧 [GitLab CI Template Reference](./gitlab-ci-template.md) - Detailed template documentation
-- 💡 [Version-Centric CI/CD Approach](./version-centric-cicd.md) - Deep dive into the methodology
-- 🐛 [Troubleshooting](./troubleshooting.md) - Common issues and solutions
-
-## Congratulations! 🎉
-
-You've successfully set up AgileFlow and are now using a modern, version-centric CI/CD approach. Your deployments will be more predictable, your rollbacks will be simpler, and your team will have better visibility into what's running where.
-
-Ready to dive deeper? Explore the [advanced topics](./README.md#advanced-topics) or customize your pipeline further!
+- Read the [CLI Reference](./cli-reference.md) for all available commands
+- Learn about [Conventional Commits](./conventional-commits.md)
+- Explore [Version-Centric CI/CD](./version-centric-cicd.md) methodology
