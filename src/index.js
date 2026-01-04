@@ -61,7 +61,7 @@ function displayVersionInfo(info, quiet) {
   }
   
   console.log(`\nCurrent version: ${currentVersion || 'none'}`);
-  console.log(`New version: ${newVersion || 'no bump needed'}`);
+  console.log(`New version:     ${newVersion || 'no bump needed'}`);
   if (changelog) {
     console.log(`\nChangelog:\n\n${changelog}`);
   }

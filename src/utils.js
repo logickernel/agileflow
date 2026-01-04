@@ -170,13 +170,16 @@ function extractIssueReference(message) {
  * @param {string} subject - First line of commit message
  * @param {Object} parsed - Parsed conventional commit info
  * @param {string} fullMessage - Full commit message
+ * @param {boolean} isBreakingSection - Whether this is for the breaking changes section
  * @returns {string} Formatted description
  */
-function formatChangelogDescription(subject, parsed, fullMessage) {
+function formatChangelogDescription(subject, parsed, fullMessage, isBreakingSection = false) {
   if (!parsed) return subject;
   let description = parsed.description;
   const isBreaking = parsed.breaking || /BREAKING CHANGE:/i.test(fullMessage);
-  if (isBreaking) {
+  
+  // Only add BREAKING prefix if not in breaking changes section
+  if (isBreaking && !isBreakingSection) {
     description = `BREAKING: ${description}`;
   }
   return description;
@@ -230,12 +233,24 @@ function applyVersionBump(current, bump) {
 }
 
 /**
+ * Checks if a commit is a breaking change.
+ * @param {Object} commit - Commit object
+ * @param {Object} parsed - Parsed conventional commit info
+ * @returns {boolean}
+ */
+function isBreakingChange(commit, parsed) {
+  if (!parsed) return false;
+  return parsed.breaking || /BREAKING CHANGE:/i.test(commit.message);
+}
+
+/**
  * Analyzes commits to determine version bump requirements.
  * @param {Array} commits - Array of commit objects
- * @returns {{hasBreaking: boolean, hasFeat: boolean, hasPatchTypes: boolean, commitsByType: Object}}
+ * @returns {{hasBreaking: boolean, hasFeat: boolean, hasPatchTypes: boolean, commitsByType: Object, breakingCommits: Array}}
  */
 function analyzeCommitsForVersioning(commits) {
   const commitsByType = Object.fromEntries(TYPE_ORDER.map(t => [t, []]));
+  const breakingCommits = [];
   let hasBreaking = false, hasFeat = false, hasPatchTypes = false;
   
   for (const commit of commits) {
@@ -243,18 +258,23 @@ function analyzeCommitsForVersioning(commits) {
     if (!parsed) continue;
     
     const { type, breaking } = parsed;
-    const isBreaking = breaking || /BREAKING CHANGE:/i.test(commit.message);
+    const isBreaking = isBreakingChange(commit, parsed);
     
-    if (isBreaking) hasBreaking = true;
-    if (type === 'feat') hasFeat = true;
-    else if (PATCH_TYPES.includes(type)) hasPatchTypes = true;
-    
-    if (commitsByType[type]) {
-      commitsByType[type].push(commit);
+    if (isBreaking) {
+      hasBreaking = true;
+      breakingCommits.push(commit);
+    } else {
+      // Only add to type sections if not breaking
+      if (type === 'feat') hasFeat = true;
+      else if (PATCH_TYPES.includes(type)) hasPatchTypes = true;
+      
+      if (commitsByType[type]) {
+        commitsByType[type].push(commit);
+      }
     }
   }
   
-  return { hasBreaking, hasFeat, hasPatchTypes, commitsByType };
+  return { hasBreaking, hasFeat, hasPatchTypes, commitsByType, breakingCommits };
 }
 
 /**
@@ -270,9 +290,10 @@ function capitalize(str) {
 /**
  * Generates changelog entries for a commit type section.
  * @param {Array} commits - Commits of this type
+ * @param {boolean} isBreakingSection - Whether this is for the breaking changes section
  * @returns {Array<string>} Changelog lines
  */
-function generateTypeChangelog(commits) {
+function generateTypeChangelog(commits, isBreakingSection = false) {
   const byScope = {};
   const noScope = [];
   
@@ -283,7 +304,7 @@ function generateTypeChangelog(commits) {
     const subject = commit.message.split('\n')[0].trim();
     const entry = {
       scope: parsed.scope,
-      description: formatChangelogDescription(subject, parsed, commit.message),
+      description: formatChangelogDescription(subject, parsed, commit.message, isBreakingSection),
       issueRef: extractIssueReference(commit.message) || '',
     };
     
@@ -323,6 +344,15 @@ function calculateNextVersionAndChangelog(expandedInfo) {
   
   // Generate changelog
   const changelogLines = [];
+  
+  // Add breaking changes section first if any
+  if (analysis.breakingCommits.length > 0) {
+    changelogLines.push('BREAKING CHANGES:');
+    changelogLines.push(...generateTypeChangelog(analysis.breakingCommits, true));
+    changelogLines.push('');
+  }
+  
+  // Add regular type sections
   for (const type of TYPE_ORDER) {
     const typeCommits = analysis.commitsByType[type];
     if (!typeCommits?.length) continue;
