@@ -20,17 +20,15 @@ AgileFlow works with your CI/CD engine to **automatically create a new version t
 npx @logickernel/agileflow
 ```
 
-```
-Current version: v1.2.3
-Next version: v1.2.4
-
-Changelog:
-### fix
-- resolve authentication issue
-- correct null handling in user lookup
-```
-
 ### Create a Version Tag
+
+
+**Push to Remote Git Repository:**
+```bash
+npx @logickernel/agileflow push
+```
+
+#### CD/CI
 
 **GitHub Actions:**
 ```bash
@@ -40,11 +38,6 @@ npx @logickernel/agileflow github
 **GitLab CI:**
 ```bash
 npx @logickernel/agileflow gitlab
-```
-
-**Native Git:**
-```bash
-npx @logickernel/agileflow push
 ```
 
 **Learn More**: [Getting Started Guide](./docs/getting-started.md) • [CLI Reference](./docs/cli-reference.md)
