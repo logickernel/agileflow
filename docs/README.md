@@ -1,46 +1,60 @@
 # AgileFlow Documentation
 
-Welcome to the AgileFlow documentation! This folder contains detailed guides and explanations for different aspects of the AgileFlow system.
+Welcome to the AgileFlow documentation! AgileFlow is a lightweight, platform-agnostic tool for automatic semantic versioning and changelog generation.
+
+```bash
+npx @logickernel/agileflow
+```
 
 ## Quick Navigation
 
-- **New to AgileFlow?** Start with [Getting Started](./getting-started.md)
-- **Want to understand the approach?** Read [Version-Centric CI/CD](./version-centric-cicd.md)
-- **Ready to install?** Follow [Installation & Setup](./installation.md)
-- **Need help?** Check [Troubleshooting](./troubleshooting.md)
+| I want to... | Read this |
+|--------------|-----------|
+| Get started quickly | [Getting Started](./getting-started.md) |
+| Set up CI/CD integration | [Installation Guide](./installation.md) |
+| Understand the CLI | [CLI Reference](./cli-reference.md) |
+| Learn the methodology | [Version-Centric CI/CD](./version-centric-cicd.md) |
+| Fix an issue | [Troubleshooting](./troubleshooting.md) |
 
-## Available Documentation
+## Documentation Index
+
+### Getting Started
+- **[Getting Started](./getting-started.md)** — Quick start guide for new users
+- **[Installation Guide](./installation.md)** — Setup for GitHub Actions and GitLab CI
+- **[CLI Reference](./cli-reference.md)** — Commands, options, and examples
 
 ### Core Concepts
-- **[Version-Centric CI/CD Approach](./version-centric-cicd.md)** - Comprehensive guide to AgileFlow's revolutionary CI/CD paradigm
-- **[Installation & Setup](./installation.md)** - Step-by-step installation instructions for different platforms
-- **[Conventional Commits](./conventional-commits.md)** - Detailed guide to commit message formatting and types
-
-### User Guides
-- **[Getting Started](./getting-started.md)** - Quick start guide for new AgileFlow users
-- **[Branching Strategy](./branching-strategy.md)** - Complete guide to AgileFlow's branching approach
-- **[Release Management](./release-management.md)** - How to manage releases and versions effectively
+- **[Version-Centric CI/CD](./version-centric-cicd.md)** — The methodology behind AgileFlow
+- **[Branching Strategy](./branching-strategy.md)** — How to structure your Git workflow
+- **[Conventional Commits](./conventional-commits.md)** — Commit message format and version impact
+- **[Release Management](./release-management.md)** — Managing releases and versions
 
 ### Reference
-- **[GitLab CI Template](./gitlab-ci-template.md)** - Complete reference for the AgileFlow GitLab CI template
-- **[CLI Reference](./cli-reference.md)** - Command-line interface documentation
-- **[Configuration](./configuration.md)** - Configuration options and environment variables
+- **[Configuration](./configuration.md)** — Environment variables and options
+- **[Best Practices](./best-practices.md)** — Recommended patterns and tips
+- **[Migration Guide](./migration-guide.md)** — Transitioning from other CI/CD approaches
+- **[Troubleshooting](./troubleshooting.md)** — Common issues and solutions
 
-### Advanced Topics
-- **[Migration Guide](./migration-guide.md)** - How to transition from traditional CI/CD approaches
-- **[Best Practices](./best-practices.md)** - Recommended practices and patterns
-- **[Troubleshooting](./troubleshooting.md)** - Common issues and solutions
+## Platform Support
+
+AgileFlow works with any Git repository and provides native integrations for:
+
+- **GitHub Actions** — Uses GitHub API for tag creation
+- **GitLab CI** — Uses GitLab API for tag creation
+- **Any CI/CD** — Native git push for other platforms
 
 ## Contributing to Documentation
 
-We welcome contributions to improve our documentation! Please:
+We welcome improvements to our documentation! Please:
 
 1. Follow the existing style and tone
 2. Use clear, concise language
-3. Include practical examples where helpful
+3. Include practical examples
 4. Test any code examples or commands
-5. Submit changes via merge requests
+5. Submit changes via pull/merge requests
 
 ## External Resources
 
-- [Main README](../README.md) - Project overview and quick start
+- [Main README](../README.md) — Project overview and quick start
+- [Conventional Commits Specification](https://www.conventionalcommits.org/)
+- [Semantic Versioning Specification](https://semver.org/)

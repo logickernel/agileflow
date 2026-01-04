@@ -1,166 +1,289 @@
-# Version-Centric CI/CD Approach
+# Version-Centric CI/CD
 
-AgileFlow introduces a revolutionary approach to CI/CD that prioritizes **version management over environment-based deployments**. This paradigm shift eliminates the complexity of managing multiple deployment branches and environments, replacing them with a streamlined, version-focused workflow.
+AgileFlow enables a **version-centric approach** to CI/CD where versioning is decoupled from build and deployment. This architecture simplifies pipelines and provides flexibility.
 
-## Traditional Git-Based Flows vs. AgileFlow
+## The Decoupled Architecture
 
-### Traditional Approach (Branch-Based Environments)
-Traditional CI/CD pipelines often rely on branch-based environment management:
-
-```mermaid
-graph LR
-    A[main branch] --> B[staging branch]
-    B --> C[production branch]
-    D[feature branch] --> A
-    E[hotfix branch] --> A
+```
+┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
+│  Merge to main  │         │  Tag: v1.2.3    │         │  Build/Deploy   │
+│                 │ ──────▶ │                 │ ──────▶ │                 │
+│  AgileFlow      │         │  (event)        │         │  Your pipelines │
+│  creates tag    │         │                 │         │                 │
+└─────────────────┘         └─────────────────┘         └─────────────────┘
 ```
 
-**Problems with Traditional Approach:**
-- **Environment Drift**: Different branches can diverge, leading to "works in staging, breaks in production"
-- **Complex Branch Management**: Multiple long-lived branches require constant synchronization
-- **Deployment Uncertainty**: Hard to know exactly what version is running in each environment
-- **Rollback Complexity**: Rolling back requires managing multiple branch states
-- **Version Inconsistency**: Different environments may run different versions
+### How It Works
 
-### AgileFlow Approach (Version-Centric)
-AgileFlow simplifies this by making **every deployment, test, and operation version-centric**:
+1. **On merge to main**: AgileFlow analyzes commits and creates a version tag
+2. **Tag creation event**: Triggers your build and deploy pipelines
+3. **Build/Deploy**: Uses the tag as the version identifier
 
-```mermaid
-graph LR
-    A[main branch] --> B[Version v1.2.3]
-    B --> C[Deploy to Staging]
-    B --> D[Deploy to Production]
-    B --> E[Run Integration Tests]
-    B --> F[Performance Testing]
-```
+### Benefits
 
-**Benefits of Version-Centric Approach:**
-- **Single Source of Truth**: All environments run the exact same version
-- **Predictable Deployments**: Every deployment uses a well-identified, immutable version
-- **Simplified Rollbacks**: Rollback to any previous version with confidence
-- **Consistent Testing**: All tests run against the same version that will be deployed
-- **Clear Audit Trail**: Every deployment is tied to a specific, documented version
+- **Separation of concerns** — Versioning is independent from build/deploy
+- **Flexibility** — Any process can hook into tag creation
+- **Simplicity** — Each pipeline has one responsibility
+- **Reusability** — Same build pipeline for all versions
+- **Auditability** — Clear version trail for every deployment
 
-## Simplified Pipeline Stages
+---
 
-AgileFlow's CI/CD pipeline consists of just 6 focused stages:
+## Traditional vs. Version-Centric
 
-### 1. **Version** Stage
-- **Purpose**: Generate semantic version and comprehensive release notes
-- **Output**: `VERSION` variable available to all subsequent stages
-- **Automation**: Uses AgileFlow tool to analyze commit history and determine next version
-- **Artifacts**: Version tag pushed to repository, release notes generated
-
-### 2. **Test** Stage
-- **Purpose**: Run tests against the source code before building
-- **Input**: Uses the source code and `VERSION` variable from the version stage
-- **Output**: Test results and validation that the code is ready for building
-- **Benefits**: Catch issues early before building artifacts
-
-### 3. **Build** Stage
-- **Purpose**: Create application artifacts and Docker images
-- **Input**: Uses the `VERSION` variable from the version stage
-- **Output**: Versioned artifacts (e.g., `app:v1.2.3`, `frontend:v1.2.3`)
-- **Consistency**: All builds use the same version identifier
-
-### 4. **Deploy** Stage
-- **Purpose**: Deploy the versioned artifacts to various environments
-- **Approach**: Deploy the same version to staging, production, etc.
-- **Benefits**: Identical behavior across all environments
-- **Rollback**: Simple version-based rollback (e.g., "rollback to v1.2.2")
-
-### 5. **E2E** Stage
-- **Purpose**: Run end-to-end tests against the deployed version
-- **Scope**: Integration tests, end-to-end tests, performance tests
-- **Target**: Tests run against the actual deployed version
-- **Confidence**: Tests validate exactly what will run in production
-
-### 6. **Clean** Stage
-- **Purpose**: Cleanup temporary resources and artifacts
-- **Maintenance**: Remove old Docker images, temporary files, etc.
-- **Optimization**: Keep only necessary version artifacts
-
-## Real-World Example
-
-Here's how the version-centric approach works in practice:
+### Traditional (Coupled)
 
 ```yaml
-# .gitlab-ci.yml
-include:
-  - local: templates/AgileFlow.gitlab-ci.yml
+# Everything in one pipeline
+on: push to main
+  → calculate version
+  → build
+  → deploy staging
+  → deploy production
+```
 
-# Test stage runs tests against source code
-test:
-  stage: test
+**Problems:**
+- Complex, monolithic pipelines
+- Version logic mixed with build logic
+- Hard to rerun individual steps
+
+### Version-Centric (Decoupled)
+
+```yaml
+# Pipeline 1: Versioning
+on: push to main
+  → AgileFlow creates tag
+
+# Pipeline 2: Release
+on: tag created
+  → build with tag version
+  → deploy staging
+  → deploy production
+```
+
+**Benefits:**
+- Simple, focused pipelines
+- Versioning completely separate
+- Easy to rerun builds for any version
+
+---
+
+## Implementation
+
+### GitHub Actions
+
+**Versioning workflow** (`.github/workflows/version.yml`):
+```yaml
+name: Version
+on:
+  push:
+    branches: [main]
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create version tag
+        env:
+          AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
+        run: npx @logickernel/agileflow github
+```
+
+**Release workflow** (`.github/workflows/release.yml`):
+```yaml
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Build
+        run: docker build -t myapp:$VERSION .
+
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - run: kubectl set image deployment/myapp myapp=myapp:$VERSION
+
+  deploy-production:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - run: kubectl set image deployment/myapp myapp=myapp:$VERSION
+```
+
+### GitLab CI
+
+```yaml
+stages:
+  - version
+  - build
+  - deploy
+
+# Versioning - runs on merge to main
+agileflow:
+  stage: version
+  image: node:20-alpine
   script:
-    - npm test
-    - npm run lint
+    - npx @logickernel/agileflow gitlab
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
 
-# Build stage uses VERSION from agileflow job
+# Build - runs on tag creation
 build:
   stage: build
   script:
-    - docker build -t myapp:${VERSION} .
-    - docker push myapp:${VERSION}
-  needs:
-    - test
+    - docker build -t myapp:$CI_COMMIT_TAG .
+    - docker push myapp:$CI_COMMIT_TAG
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
 
-# Deploy stage deploys the same version everywhere
-deploy-testing:
-  stage: deploy
-  script:
-    - kubectl set image deployment/myapp myapp=myapp:${VERSION}
-  environment:
-    name: testing
-  needs:
-    - build
-
+# Deploy - runs on tag creation
 deploy-staging:
   stage: deploy
   script:
-    - kubectl set image deployment/myapp myapp=myapp:${VERSION}
+    - kubectl set image deployment/myapp myapp=myapp:$CI_COMMIT_TAG
   environment:
     name: staging
-  when: manual
-  needs:
-    - build
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
 
 deploy-production:
   stage: deploy
   script:
-    - kubectl set image deployment/myapp myapp=myapp:${VERSION}
+    - kubectl set image deployment/myapp myapp=myapp:$CI_COMMIT_TAG
   environment:
     name: production
   when: manual
-  needs:
-    - build
-
-# E2E stage validates the deployed version
-integration-tests:
-  stage: e2e
-  script:
-    - ./run-tests.sh --version ${VERSION}
-  needs:
-    - deploy-testing
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
 ```
+
+---
+
+## Version-Centric Deployments
+
+### All Environments Use the Same Version
+
+```
+Tag v1.2.3
+    │
+    ├──▶ Build: myapp:v1.2.3
+    │
+    ├──▶ Staging: myapp:v1.2.3
+    │
+    └──▶ Production: myapp:v1.2.3
+```
+
+No environment drift — every environment runs identical code.
+
+### Simple Rollbacks
+
+```bash
+# Rollback = deploy previous tag
+kubectl set image deployment/myapp myapp=myapp:v1.2.2
+```
+
+### Clear Audit Trail
+
+```bash
+# What version is running?
+kubectl get deployment myapp -o jsonpath='{.spec.template.spec.containers[0].image}'
+# myapp:v1.2.3
+
+# What's in that version?
+git show v1.2.3
+```
+
+---
+
+## Advanced Patterns
+
+### Conditional Deployments
+
+Deploy only specific version types:
+
+```yaml
+# Only deploy minor/major versions to production
+deploy-production:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.0$/'
+```
+
+### Multiple Services
+
+Same version for all services in a monorepo:
+
+```yaml
+build-backend:
+  script:
+    - docker build -t backend:$CI_COMMIT_TAG ./backend
+
+build-frontend:
+  script:
+    - docker build -t frontend:$CI_COMMIT_TAG ./frontend
+```
+
+### Notifications
+
+Announce new versions:
+
+```yaml
+notify:
+  script:
+    - |
+      curl -X POST "$SLACK_WEBHOOK" \
+        -d "{\"text\": \"Released $CI_COMMIT_TAG\"}"
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
+```
+
+---
 
 ## Key Advantages
 
-1. **Eliminates Environment Drift**: Staging and production always run identical versions
-2. **Simplifies Operations**: DevOps teams work with versions, not branch states
-3. **Improves Reliability**: Every deployment is predictable and auditable
-4. **Reduces Complexity**: No need to manage multiple deployment branches
-5. **Enhances Security**: Version-based deployments provide clear audit trails
-6. **Facilitates Compliance**: Easy to demonstrate what version is running where
+1. **Eliminates environment drift** — All environments run identical versions
+2. **Simplifies operations** — Work with versions, not branch states
+3. **Enables easy rollbacks** — Just redeploy a previous tag
+4. **Provides clear audit trail** — Every deployment tied to a version
+5. **Decouples concerns** — Versioning separate from build/deploy
+
+---
 
 ## Migration Path
 
-If you're currently using a traditional branch-based approach:
+If using a traditional coupled approach:
 
-1. **Start with AgileFlow**: Include the template and let it generate versions
-2. **Gradually Simplify**: Remove environment-specific branches over time
-3. **Update Deployments**: Modify deployment scripts to use `${VERSION}` variable
-4. **Standardize Testing**: Run all tests against the versioned artifacts
-5. **Document Changes**: Update runbooks to reference versions instead of branches
+1. **Add AgileFlow** — Create versioning workflow
+2. **Add tag-triggered workflow** — For build/deploy
+3. **Test both workflows** — Verify tags trigger releases
+4. **Remove old logic** — Clean up version calculation from build pipeline
 
-This approach transforms your CI/CD from a complex, branch-managed system into a simple, version-driven pipeline where every deployment is predictable, auditable, and reliable.
+---
+
+## Related Documentation
+
+- [Getting Started](./getting-started.md) — Quick start
+- [Installation Guide](./installation.md) — Setup instructions
+- [Branching Strategy](./branching-strategy.md) — Git workflow
+- [Best Practices](./best-practices.md) — Recommended patterns

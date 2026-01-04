@@ -2,260 +2,217 @@
 
 # AgileFlow
 
-In today's fast-paced software development landscape, maintaining clarity, consistency, and efficiency in the release process is essential. AgileFlow is a streamlined yet powerful versioning system, branching strategy, and CI/CD tool designed for software teams of all sizes and projects of any scale.
+In today's fast-paced software development landscape, maintaining clarity, consistency, and efficiency in the release process is essential. AgileFlow is a streamlined yet powerful versioning system designed for software teams of all sizes and projects of any scale.
 
-AgileFlow enforces Semantic Versioning and integrates a robust branching strategy for development and deployment. It seamlessly works with GitLab CI pipelines to ensure a structured, efficient, and predictable development lifecycle. **All versions are calculated from the main branch's commit history**, ensuring consistent versioning and release notes. Whether for small projects or large-scale deployments, AgileFlow is an indispensable tool that simplifies versioning and release management.
+AgileFlow enforces Semantic Versioning and integrates seamlessly with your CI/CD pipeline to ensure a structured, efficient, and predictable development lifecycle. **All versions are calculated from the main branch's commit history** using [Conventional Commits](https://www.conventionalcommits.org/), ensuring consistent versioning and release notes. Whether for small projects or large-scale deployments, AgileFlow simplifies versioning and release management.
 
 ![AgileFlow workflow example diagram](./media/diagram.jpg)
 
-AgileFlow works integrated with the CI/CD engine to **automatically create a new version** every time there's a merge into the main branch, incrementing the patch number based on the latest identifiable version in the repository.
+AgileFlow works with your CI/CD engine to **automatically create a new version tag** every time there's a merge into the main branch. Your existing build and deploy pipelines then trigger on tag creation, creating a clean separation between versioning and release processes. This decoupled architecture means AgileFlow focuses solely on versioning, while your build and deploy workflows remain independent.
 
-# Installation
+---
 
-## GitLab CI
+## Quick Start
 
-AgileFlow integrates with GitLab CI to automate version tagging. Add the following line at the top of `.gitlab-ci.yml`:
+### Preview Your Next Version
 
-```yml
-include:
-  - remote: https://code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
+```bash
+npx @logickernel/agileflow
 ```
 
-Introducing a simple workflow in which an environment variable $VERSION is available.
+```
+Current version: v1.2.3
+Next version: v1.2.4
 
-**Learn More**: [Complete Installation Guide](./docs/installation.md) - Step-by-step setup for different platforms
-
-> [!NOTE]
-> AgileFlow uses the GitLab API to create version tags remotely, eliminating the need for repository write permissions. You'll need to configure the `AGILEFLOW_TOKEN` environment variable with API access. See the [Installation Guide](./docs/installation.md) for complete setup instructions.
-
-
-# Core Principles
-
-## Main Branch Strategy
-
-The main branch is the core of the AgileFlow framework. It serves as the single source of truth for all releases and versioning.
-
-**Key Benefits:**
-- **Single Version Sequence**: All versions (v1.0.0, v1.0.1, v1.1.0, etc.) are created from the same branch
-- **Simplified Workflow**: No need to manage multiple release branches
-- **Consistent History**: All releases share the same commit history and lineage
-- **Easy Rollbacks**: Simple to revert to any previous version since all versions are on the same branch
-
-**Version Management:**
-- Patch versions (v1.0.0 → v1.0.1) are automatically incremented on each merge to main
-- Minor versions (v1.0.0 → v1.1.0) are created by merging significant features
-- Major versions (v1.0.0 → v2.0.0) are created for breaking changes
-
-**Learn More**: [Branching Strategy Guide](./docs/branching-strategy.md) - Complete guide to AgileFlow's branching approach
-
-## Development Branches
-
-Development branches are used for feature additions and bug fixes. They branch off the main branch and merge back into it when ready. Consider using expressive names depending on their purpose, e.g.: `dev/*`, `feat/*`, `fix/*`, and `hotfix/*`.
-
-After the contribution is ready, the development branch is merged into main, preferably using a [Merge Request](https://docs.gitlab.com/ee/user/project/merge_requests/) or similar.
-
-**Learn More**: [Getting Started Guide](./docs/getting-started.md) - Quick start for new AgileFlow users
-
-# Version-Centric CI/CD Approach
-
-AgileFlow introduces a revolutionary approach to CI/CD that prioritizes **version management over environment-based deployments**. This paradigm shift eliminates the complexity of managing multiple deployment branches and environments, replacing them with a streamlined, version-focused workflow.
-
-## What Makes AgileFlow Different?
-
-- **Version-Centric**: Every deployment, test, and operation is performed on well-identified versions
-- **Simplified Pipeline**: Just 6 focused stages (version, test, build, deploy, e2e, clean)
-- **Eliminates Environment Drift**: All environments run identical versions
-- **Predictable Deployments**: Every deployment uses a well-identified, immutable version
-- **Simple Rollbacks**: Rollback to any previous version with confidence
-
-## Pipeline Stages
-
-Your pipeline consists of 6 focused stages that work together seamlessly:
-
-1. **Version** - AgileFlow generates semantic versions automatically
-2. **Test** - Run tests against the source code before building
-3. **Build** - Create versioned artifacts using the generated version
-4. **Deploy** - Deploy the same version everywhere (staging, production, etc.)
-5. **E2E** - Run end-to-end tests against the deployed version
-6. **Clean** - Cleanup temporary resources and artifacts
-
-**Learn More**: [Version-Centric CI/CD Deep Dive](./docs/version-centric-cicd.md) - Comprehensive guide to AgileFlow's revolutionary CI/CD paradigm
-
-# Conventional Commits
-
-Conventional Commits encode the intent of a change in the commit subject so that humans (and tools) can generate clear release notes and version bumps.
-
-## Commit Format
-
-```text
-type[!]?(scope)?: description
-
-[optional body]
-
-[optional footer(s)]
+Changelog:
+### fix
+- resolve authentication issue
+- correct null handling in user lookup
 ```
 
-## Key Commit Types
+### Create a Version Tag
 
-- **feat** - New features (minor version bump)
-- **fix** - Bug fixes (patch version bump)
-- **perf** - Performance improvements (patch version bump)
-- **refactor** - Code refactoring (patch version bump)
-- **build** - Build system changes (patch version bump)
-- **ci** - CI/CD changes (patch version bump)
-- **revert** - Revert previous commits (patch version bump)
-- **docs** - Documentation updates (no version bump)
-- **test** - Test additions/changes (patch version bump)
-- **style** - Code style changes (no version bump)
-- **chore** - Maintenance tasks (no version bump)
-- **!** - Breaking changes (major version bump)
+**GitHub Actions:**
+```bash
+npx @logickernel/agileflow github
+```
 
-## Example Commits
+**GitLab CI:**
+```bash
+npx @logickernel/agileflow gitlab
+```
+
+**Native Git:**
+```bash
+npx @logickernel/agileflow push
+```
+
+**Learn More**: [Getting Started Guide](./docs/getting-started.md) • [CLI Reference](./docs/cli-reference.md)
+
+---
+
+## CI/CD Integration
+
+AgileFlow uses a **two-step decoupled approach**:
+
+### Step 1: Version Creation (AgileFlow)
+
+Create a workflow that runs AgileFlow when code is merged to main:
+
+**GitHub Actions** (`.github/workflows/version.yml`):
+```yaml
+name: Version
+on:
+  push:
+    branches: [main]
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create version tag
+        env:
+          AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
+        run: npx @logickernel/agileflow github
+```
+
+**GitLab CI** (`.gitlab-ci.yml`):
+```yaml
+agileflow:
+  stage: version
+  image: node:20-alpine
+  script:
+    - npx @logickernel/agileflow gitlab
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+```
+
+### Step 2: Build & Deploy (Your Pipelines)
+
+Configure your existing build and deploy pipelines to trigger on tag creation. When AgileFlow creates a version tag (e.g., `v1.2.3`), your CI/CD platform triggers your release workflow. Use the tag name as the version identifier for your builds and deployments.
+
+**Learn More**: [Installation Guide](./docs/installation.md) for detailed setup instructions and examples.
+
+### Benefits of Decoupled Architecture
+
+- **Separation of concerns** — Versioning is independent from build/deploy
+- **Flexibility** — Hook any process to tag creation
+- **Reusability** — Same build pipeline works for any version
+- **Simplicity** — Each pipeline has a single responsibility
+
+**Learn More**: [Installation Guide](./docs/installation.md) • [Configuration](./docs/configuration.md)
+
+---
+
+## Conventional Commits
+
+AgileFlow uses [Conventional Commits](https://www.conventionalcommits.org/) to automatically determine version bumps and generate release notes. Commit messages follow a structured format that encodes the intent of each change:
 
 ```text
-feat(auth): add OIDC login flow
+type(scope): description
+
+feat(auth): add OAuth2 login flow
 fix(api): correct null handling in user lookup
 perf(cache)!: switch to Redis cluster
 docs: update README with usage examples
 ```
 
-**Learn More**: [Conventional Commits Guide](./docs/conventional-commits.md) - Complete guide to commit message formatting and types
+The commit type (`feat`, `fix`, `perf`, etc.) indicates what kind of change was made, while the optional scope identifies the area affected. Breaking changes are marked with `!` or a `BREAKING CHANGE:` footer.
 
-# Release Management
-
-## Automatic Version Generation
-
-AgileFlow automatically analyzes your commit history and determines the next semantic version based on conventional commits. Each merge to main triggers a new version:
-
-- **Patch versions** (v1.0.0 → v1.0.1) for bug fixes, performance improvements, build changes, CI changes, refactors, reverts, and tests
-- **Minor versions** (v1.0.0 → v1.1.0) for new features
-- **Major versions** (v1.0.0 → v2.0.0) for breaking changes
-
-## Release Notes
-
-AgileFlow generates comprehensive release notes by grouping changes according to their intent:
-
-```text
-v1.2.4
-
-Features:
-- auth: add OIDC login flow
-
-Bug fixes:
-- api: correct null handling in user lookup
-
-Performance improvements:
-- cache: optimize Redis connection pooling
-
-Build system:
-- update webpack to v5
-- upgrade React to 18.2.0
-
-CI:
-- fix pipeline configuration
-
-Refactors:
-- simplify authentication logic
-
-Tests:
-- add integration tests for auth flow
-- increase test coverage to 85%
-
-Reverts:
-- "feat: add experimental feature"
-
-Documentation:
-- update README with usage examples
-```
-
-**Learn More**: [Release Management Guide](./docs/release-management.md) - How to manage releases and versions effectively
-
-# GitLab CI Integration
-
-## Template Usage
-
-Include the AgileFlow template in your `.gitlab-ci.yml`:
-
-```yaml
-include:
-  - local: templates/AgileFlow.gitlab-ci.yml
-
-# Your custom jobs using the VERSION variable
-build:
-  stage: build
-  script:
-    - docker build -t myapp:${VERSION} .
-    - docker push myapp:${VERSION}
-  needs:
-    - agileflow
-```
-
-> [!NOTE]
-> If you prefer to use the remote template, you can use:
-> ```yaml
-> include:
->   - remote: https://code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
-> ```
-
-## Key Benefits
-
-- **Automated Versioning**: The `agileflow` job generates versions automatically
-- **VERSION Variable**: Available to all subsequent stages
-- **Consistent Deployments**: Deploy the same version everywhere
-- **Simplified Rollbacks**: Rollback to any previous version with confidence
-
-**Learn More**: [GitLab CI Template Reference](./docs/gitlab-ci-template.md) - Complete reference for the AgileFlow GitLab CI template
-
-# Getting Started
-
-## Quick Setup (5 minutes)
-
-1. **Include the template** in your `.gitlab-ci.yml`
-2. **Add your first job** using the `${VERSION}` variable
-3. **Commit and push** - AgileFlow automatically generates versions
-
-## Next Steps
-
-- Add deployment jobs for staging and production
-- Implement testing against deployed versions
-- Customize for multiple services
-- Set up environment-specific configurations
-
-**Learn More**: [Getting Started Guide](./docs/getting-started.md) - Step-by-step setup and examples
-
-# Advanced Topics
-
-## Migration from Traditional CI/CD
-
-If you're currently using a traditional branch-based approach:
-
-1. **Start with AgileFlow** - Include the template and let it generate versions
-2. **Gradually simplify** - Remove environment-specific branches over time
-3. **Update deployments** - Modify scripts to use `${VERSION}` variable
-4. **Standardize testing** - Run tests against the deployed version
-5. **Document changes** - Update runbooks to reference versions
-
-## Best Practices
-
-- Always use the `${VERSION}` variable from AgileFlow
-- Deploy the same version to all environments
-- Test against deployed versions, not source code
-- Use conventional commits for automatic versioning
-- Keep deployment scripts identical across environments
-
-**Learn More**: [Advanced Topics](./docs/README.md#advanced-topics) - Migration guides, best practices, and troubleshooting
-
-# Documentation
-
-For comprehensive guides and detailed explanations, see our [documentation folder](./docs/README.md).
-
-## Quick Navigation
-
-- **New to AgileFlow?** Start with [Getting Started](./docs/getting-started.md)
-- **Want to understand the approach?** Read [Version-Centric CI/CD](./docs/version-centric-cicd.md)
-- **Ready to implement?** Follow [GitLab CI Template Reference](./docs/gitlab-ci-template.md)
-- **Need help?** Check [Troubleshooting](./docs/troubleshooting.md)
+**Learn More**: [Conventional Commits Guide](./docs/conventional-commits.md)
 
 ---
 
-**Ready to transform your CI/CD?** Start with AgileFlow today and experience the benefits of a version-centric, streamlined deployment process! 🚀
+## Release Management
+
+### Automatic Versioning
+
+Each merge to main triggers automatic version generation based on commit types. See the [Version Calculation](#version-calculation) table below for details on how versions are bumped in 0.x.x vs 1.0.0+.
+
+New projects start at **v0.0.0** and automatically increment based on commits. AgileFlow will keep automatically generating versions as you develop (0.0.1, 0.0.2, 0.1.0, etc.). When your product has reached maturity and you have a stable API ready for production, create version 1.0.0 manually.
+
+<details>
+<summary><strong>Version 1.0.0 — First Stable Release</strong></summary>
+
+Version 1.0.0 represents your first stable API and marks the transition from initial development to a stable, production-ready release. This version **must be created manually** when your team decides the API is stable and ready for production use.
+
+Create it when ready:
+
+```bash
+git tag -a v1.0.0 -m "First stable release"
+git push origin v1.0.0
+```
+
+After 1.0.0, AgileFlow continues automatic versioning with standard semantic versioning rules: features bump minor, fixes bump patch, and breaking changes bump major.
+
+</details>
+
+**Learn More**: [Release Management Guide](./docs/release-management.md)
+
+---
+
+## Version Calculation
+
+AgileFlow analyzes commits since the last version tag to determine the appropriate version bump:
+
+| Commit Type | Example | 0.x.x | 1.0.0+ |
+|-------------|---------|-------|--------|
+| Breaking change | `feat!: redesign API` | **Minor** (0.1.0 → 0.2.0) | **Major** (1.0.0 → 2.0.0) |
+| Feature | `feat: add login` | **Minor** | **Minor** |
+| Fix | `fix: resolve crash` | **Patch** | **Patch** |
+| Performance | `perf: optimize query` | **Patch** | **Patch** |
+| Refactor | `refactor: simplify logic` | **Patch** | **Patch** |
+| Build/CI | `build: update deps` | **Patch** | **Patch** |
+| Docs only | `docs: update README` | No bump | No bump |
+| Style changes | `style: update variable name` | No bump | No bump |
+
+---
+
+## Core Principles
+
+### Main Branch Strategy
+
+The main branch is the single source of truth for all releases:
+
+- **Single Version Sequence** — All versions created from the same branch
+- **Simplified Workflow** — No release branches needed
+- **Consistent History** — All releases share the same commit history
+- **Easy Rollbacks** — Deploy any previous version tag
+
+### Version-Centric Deployments
+
+Every environment runs the same immutable version:
+
+```
+Tag v1.2.3 ──▶ Build ──▶ Staging
+                    ──▶ Production
+                    ──▶ Any environment
+```
+
+**Learn More**: [Branching Strategy](./docs/branching-strategy.md) • [Version-Centric CI/CD](./docs/version-centric-cicd.md)
+
+---
+
+## Documentation
+
+| Guide | Description |
+|-------|-------------|
+| [Getting Started](./docs/getting-started.md) | Quick start for new users |
+| [Installation](./docs/installation.md) | Setup for GitHub Actions and GitLab CI |
+| [CLI Reference](./docs/cli-reference.md) | Command-line options and usage |
+| [Configuration](./docs/configuration.md) | Environment variables and options |
+| [Conventional Commits](./docs/conventional-commits.md) | Commit message formatting |
+| [Branching Strategy](./docs/branching-strategy.md) | Development workflow |
+| [Version-Centric CI/CD](./docs/version-centric-cicd.md) | Pipeline methodology |
+| [Release Management](./docs/release-management.md) | Managing releases effectively |
+| [Migration Guide](./docs/migration-guide.md) | Transitioning from other approaches |
+| [Best Practices](./docs/best-practices.md) | Recommended patterns |
+| [Troubleshooting](./docs/troubleshooting.md) | Common issues and solutions |
