@@ -112,6 +112,53 @@ Configure your existing build and deploy pipelines to trigger on tag creation. W
 
 ---
 
+## Conventional Commits
+
+AgileFlow uses [Conventional Commits](https://www.conventionalcommits.org/) to automatically determine version bumps and generate release notes. Commit messages follow a structured format that encodes the intent of each change:
+
+```text
+type(scope): description
+
+feat(auth): add OAuth2 login flow
+fix(api): correct null handling in user lookup
+perf(cache)!: switch to Redis cluster
+docs: update README with usage examples
+```
+
+The commit type (`feat`, `fix`, `perf`, etc.) indicates what kind of change was made, while the optional scope identifies the area affected. Breaking changes are marked with `!` or a `BREAKING CHANGE:` footer.
+
+**Learn More**: [Conventional Commits Guide](./docs/conventional-commits.md)
+
+---
+
+## Release Management
+
+### Automatic Versioning
+
+Each merge to main triggers automatic version generation based on commit types. See the [Version Calculation](#version-calculation) table below for details on how versions are bumped in 0.x.x vs 1.0.0+.
+
+New projects start at **v0.0.0** and automatically increment based on commits. AgileFlow will keep automatically generating versions as you develop (0.0.1, 0.0.2, 0.1.0, etc.). When your product has reached maturity and you have a stable API ready for production, create version 1.0.0 manually.
+
+<details>
+<summary><strong>Version 1.0.0 — First Stable Release</strong></summary>
+
+Version 1.0.0 represents your first stable API and marks the transition from initial development to a stable, production-ready release. This version **must be created manually** when your team decides the API is stable and ready for production use.
+
+Create it when ready:
+
+```bash
+git tag -a v1.0.0 -m "First stable release"
+git push origin v1.0.0
+```
+
+After 1.0.0, AgileFlow continues automatic versioning with standard semantic versioning rules: features bump minor, fixes bump patch, and breaking changes bump major.
+
+</details>
+
+**Learn More**: [Release Management Guide](./docs/release-management.md)
+
+---
+
 ## Version Calculation
 
 AgileFlow analyzes commits since the last version tag to determine the appropriate version bump:
@@ -125,19 +172,7 @@ AgileFlow analyzes commits since the last version tag to determine the appropria
 | Refactor | `refactor: simplify logic` | **Patch** | **Patch** |
 | Build/CI | `build: update deps` | **Patch** | **Patch** |
 | Docs only | `docs: update README` | No bump | No bump |
-
-### Conventional Commits
-
-```text
-type(scope): description
-
-feat(auth): add OAuth2 login flow
-fix(api): correct null handling in user lookup
-perf(cache)!: switch to Redis cluster
-docs: update README with usage examples
-```
-
-**Learn More**: [Conventional Commits Guide](./docs/conventional-commits.md)
+| Style changes | `style: update variable name` | No bump | No bump |
 
 ---
 
@@ -163,34 +198,6 @@ Tag v1.2.3 ──▶ Build ──▶ Staging
 ```
 
 **Learn More**: [Branching Strategy](./docs/branching-strategy.md) • [Version-Centric CI/CD](./docs/version-centric-cicd.md)
-
----
-
-## Release Management
-
-### Automatic Versioning
-
-Each merge to main triggers automatic version generation based on commit types. See the [Version Calculation](#version-calculation) table above for details on how versions are bumped in 0.x.x vs 1.0.0+.
-
-New projects start at **v0.0.0** and automatically increment based on commits. See the table above for version bump behavior during initial development.
-
-<details>
-<summary><strong>Version 1.0.0 — First Stable Release</strong></summary>
-
-Version 1.0.0 represents your first stable API and marks the transition from initial development to a stable, production-ready release. This version **must be created manually** when your team decides the API is stable and ready for production use.
-
-Create it when ready:
-
-```bash
-git tag -a v1.0.0 -m "First stable release"
-git push origin v1.0.0
-```
-
-After 1.0.0, AgileFlow continues automatic versioning with standard semantic versioning rules: features bump minor, fixes bump patch, and breaking changes bump major.
-
-</details>
-
-**Learn More**: [Release Management Guide](./docs/release-management.md)
 
 ---
 
