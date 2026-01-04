@@ -1,5 +1,5 @@
 agileflow:
-  image: node:20-alpine
+  image: node:20
   script:
     - npm install @logickernel/agileflow
     - ./node_modules/.bin/agileflow gitlab
