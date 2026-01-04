@@ -97,56 +97,9 @@ agileflow:
 
 ### Step 2: Build & Deploy (Your Pipelines)
 
-Create separate workflows triggered by tag creation:
+Configure your existing build and deploy pipelines to trigger on tag creation. When AgileFlow creates a version tag (e.g., `v1.2.3`), your CI/CD platform triggers your release workflow. Use the tag name as the version identifier for your builds and deployments.
 
-**GitHub Actions** (`.github/workflows/release.yml`):
-```yaml
-name: Release
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Get version from tag
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: Build
-        run: |
-          echo "Building $VERSION"
-          docker build -t myapp:$VERSION .
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy
-        run: kubectl set image deployment/myapp myapp=myapp:$VERSION
-```
-
-**GitLab CI** (`.gitlab-ci.yml`):
-```yaml
-build:
-  stage: build
-  script:
-    - echo "Building $CI_COMMIT_TAG"
-    - docker build -t myapp:$CI_COMMIT_TAG .
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v/'
-
-deploy:
-  stage: deploy
-  script:
-    - kubectl set image deployment/myapp myapp=myapp:$CI_COMMIT_TAG
-  rules:
-    - if: '$CI_COMMIT_TAG =~ /^v/'
-  when: manual
-```
+**Learn More**: [Installation Guide](./docs/installation.md) for detailed setup instructions and examples.
 
 ### Benefits of Decoupled Architecture
 
