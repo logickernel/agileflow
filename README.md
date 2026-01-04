@@ -2,41 +2,13 @@
 
 # AgileFlow
 
-**Automatic semantic versioning and changelog generation for modern CI/CD pipelines.**
+In today's fast-paced software development landscape, maintaining clarity, consistency, and efficiency in the release process is essential. AgileFlow is a streamlined yet powerful versioning system designed for software teams of all sizes and projects of any scale.
 
-AgileFlow is a lightweight, platform-agnostic tool that brings order to your release process. It analyzes your commit history using [Conventional Commits](https://www.conventionalcommits.org/) and automatically generates semantic versions and comprehensive release notes.
-
-```bash
-npx @logickernel/agileflow
-```
-
-## Why AgileFlow?
-
-- **Zero Configuration** — Works out of the box with any Git repository
-- **Platform Agnostic** — Native integrations for GitHub Actions and GitLab CI
-- **Decoupled Architecture** — Creates version tags that trigger your existing pipelines
-- **Simple Integration** — Just a Node.js image and an access token
-- **Semantic Versioning** — Automatic version bumps based on commit types
+AgileFlow enforces Semantic Versioning and integrates seamlessly with your CI/CD pipeline to ensure a structured, efficient, and predictable development lifecycle. **All versions are calculated from the main branch's commit history** using [Conventional Commits](https://www.conventionalcommits.org/), ensuring consistent versioning and release notes. Whether for small projects or large-scale deployments, AgileFlow simplifies versioning and release management.
 
 ![AgileFlow workflow example diagram](./media/diagram.jpg)
 
-## How It Works
-
-AgileFlow operates as a **decoupled versioning step** in your CI/CD:
-
-```
-┌─────────────────┐         ┌─────────────────┐
-│  Merge to main  │         │   Tag: v1.2.3   │
-│                 │ ──────▶ │                 │
-│  (triggers      │         │  (triggers your │
-│   AgileFlow)    │         │   build/deploy) │
-└─────────────────┘         └─────────────────┘
-```
-
-1. **On merge to main**: AgileFlow analyzes commits and creates a version tag
-2. **On tag creation**: Your existing CI/CD pipelines handle build and deployment
-
-This separation means AgileFlow focuses solely on versioning, while your build and deploy processes remain independent and can be triggered by the tag event.
+AgileFlow works with your CI/CD engine to **automatically create a new version tag** every time there's a merge into the main branch. Your existing build and deploy pipelines then trigger on tag creation, creating a clean separation between versioning and release processes. This decoupled architecture means AgileFlow focuses solely on versioning, while your build and deploy workflows remain independent.
 
 ---
 
