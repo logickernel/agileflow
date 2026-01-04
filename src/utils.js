@@ -52,14 +52,23 @@ function ensureGitRepo() {
 /**
  * Gets the current branch name.
  * @returns {string} Current branch name
- * @throws {Error} If in detached HEAD state
+ * @throws {Error} If in detached HEAD state and no CI environment variable is available
  */
 function getCurrentBranch() {
   const branch = runWithOutput('git branch --show-current').trim();
-  if (!branch) {
-    throw new Error('Repository is in a detached HEAD state. Please check out a branch and try again.');
+  if (branch) {
+    return branch;
   }
-  return branch;
+  
+  // Handle detached HEAD state (common in CI environments)
+  // GitLab CI provides CI_COMMIT_BRANCH (for branches) or CI_COMMIT_REF_NAME (for branches/tags)
+  // GitHub Actions provides GITHUB_REF_NAME (for branches/tags)
+  const ciBranch = process.env.CI_COMMIT_BRANCH || process.env.CI_COMMIT_REF_NAME || process.env.GITHUB_REF_NAME;
+  if (ciBranch) {
+    return ciBranch;
+  }
+  
+  throw new Error('Repository is in a detached HEAD state. Please check out a branch and try again.');
 }
 
 // Conventional commit type configuration
@@ -375,17 +384,25 @@ function calculateNextVersionAndChangelog(expandedInfo) {
  * @returns {Array<{hash: string, datetime: string, author: string, message: string, tags: Array<string>}>}
  */
 function getAllBranchCommits(branch) {
+  // Try to resolve the branch (may be a local branch or remote branch like origin/main)
+  let branchRef = branch;
   try {
     runWithOutput(`git rev-parse --verify ${branch}`);
   } catch {
-    return [];
+    // Try with origin/ prefix (common in CI environments where local branch doesn't exist)
+    try {
+      runWithOutput(`git rev-parse --verify origin/${branch}`);
+      branchRef = `origin/${branch}`;
+    } catch {
+      return [];
+    }
   }
   
   const RS = '\x1E';
   const COMMIT_SEP = `${RS}${RS}`;
   
   try {
-    const logCmd = `git log --format=%H${RS}%ai${RS}%an${RS}%B${COMMIT_SEP} ${branch}`;
+    const logCmd = `git log --format=%H${RS}%ai${RS}%an${RS}%B${COMMIT_SEP} ${branchRef}`;
     const output = runWithOutput(logCmd).trim();
     if (!output) return [];
     
