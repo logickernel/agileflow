@@ -119,8 +119,8 @@ AgileFlow analyzes commits since the last version tag to determine the appropria
 | Commit Type | Example | 0.x.x | 1.0.0+ |
 |-------------|---------|-------|--------|
 | Breaking change | `feat!: redesign API` | **Minor** (0.1.0 → 0.2.0) | **Major** (1.0.0 → 2.0.0) |
-| Feature | `feat: add login` | **Patch** (0.0.0 → 0.0.1) | **Minor** (1.0.0 → 1.1.0) |
-| Fix | `fix: resolve crash` | **Patch** (0.0.0 → 0.0.1) | **Patch** (1.0.0 → 1.0.1) |
+| Feature | `feat: add login` | **Minor** | **Minor** |
+| Fix | `fix: resolve crash` | **Patch** | **Patch** |
 | Performance | `perf: optimize query` | **Patch** | **Patch** |
 | Refactor | `refactor: simplify logic` | **Patch** | **Patch** |
 | Build/CI | `build: update deps` | **Patch** | **Patch** |
