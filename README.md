@@ -216,17 +216,3 @@ Tag v1.2.3 ──▶ Build ──▶ Staging
 | [Migration Guide](./docs/migration-guide.md) | Transitioning from other approaches |
 | [Best Practices](./docs/best-practices.md) | Recommended patterns |
 | [Troubleshooting](./docs/troubleshooting.md) | Common issues and solutions |
-
----
-
-## Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
-
----
-
-**Ready to simplify your release process?** Get started with AgileFlow today! 🚀
-
-```bash
-npx @logickernel/agileflow
-```
