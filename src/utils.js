@@ -309,9 +309,9 @@ function generateTypeChangelog(commits) {
 }
 
 /**
- * Calculates the next version and generates a changelog.
+ * Calculates the new version and generates a changelog.
  * @param {{latestVersion: string|null, commits: Array}} expandedInfo
- * @returns {{nextVersion: string|null, changelog: string}}
+ * @returns {{newVersion: string|null, changelog: string}}
  */
 function calculateNextVersionAndChangelog(expandedInfo) {
   const { latestVersion, commits } = expandedInfo;
@@ -319,7 +319,7 @@ function calculateNextVersionAndChangelog(expandedInfo) {
   const analysis = analyzeCommitsForVersioning(commits);
   
   const bump = determineVersionBumpType(analysis, current.major === 0);
-  const nextVersion = applyVersionBump(current, bump);
+  const newVersion = applyVersionBump(current, bump);
   
   // Generate changelog
   const changelogLines = [];
@@ -336,7 +336,7 @@ function calculateNextVersionAndChangelog(expandedInfo) {
     changelogLines.pop();
   }
   
-  return { nextVersion, changelog: changelogLines.join('\n') };
+  return { newVersion, changelog: changelogLines.join('\n') };
 }
 
 /**
@@ -382,7 +382,7 @@ function getAllBranchCommits(branch) {
 
 /**
  * Processes version information for the current branch.
- * @returns {Promise<{currentVersion: string|null, nextVersion: string|null, commits: Array, changelog: string}>}
+ * @returns {Promise<{currentVersion: string|null, newVersion: string|null, commits: Array, changelog: string}>}
  */
 async function processVersionInfo() {
   ensureGitRepo();
@@ -392,11 +392,11 @@ async function processVersionInfo() {
   const allCommits = getAllBranchCommits(branch);
   const expandedInfo = expandCommitInfo(allCommits);
   const { latestVersion, commits } = expandedInfo;
-  const { nextVersion, changelog } = calculateNextVersionAndChangelog(expandedInfo);
+  const { newVersion, changelog } = calculateNextVersionAndChangelog(expandedInfo);
   
   return {
     currentVersion: latestVersion,
-    nextVersion,
+    newVersion,
     commits,
     changelog,
   };

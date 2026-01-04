@@ -38,24 +38,32 @@ function parseArgs(args) {
 
 /**
  * Displays version info to the console.
- * @param {{currentVersion: string|null, nextVersion: string|null, commits: Array, changelog: string}} info
- * @param {boolean} quiet - Only output the next version
+ * @param {{currentVersion: string|null, newVersion: string|null, commits: Array, changelog: string}} info
+ * @param {boolean} quiet - Only output the new version
  */
 function displayVersionInfo(info, quiet) {
-  const { currentVersion, nextVersion, commits, changelog } = info;
+  const { currentVersion, newVersion, commits, changelog } = info;
   
   if (quiet) {
-    if (nextVersion) {
-      console.log(nextVersion);
+    if (newVersion) {
+      console.log(newVersion);
     }
     return;
   }
   
-  console.log(`Current version: ${currentVersion || 'none'}`);
-  console.log(`Next version: ${nextVersion || 'no bump needed'}`);
-  console.log(`Commits since current version: ${commits.length}`);
+  
+  // List commits
+  console.log(`Commits since current version (${commits.length}):`);
+  for (const commit of commits) {
+    const subject = commit.message.split('\n')[0].trim();
+    const shortHash = commit.hash.substring(0, 7);
+    console.log(`  ${shortHash} ${subject}`);
+  }
+  
+  console.log(`\nCurrent version: ${currentVersion || 'none'}`);
+  console.log(`New version: ${newVersion || 'no bump needed'}`);
   if (changelog) {
-    console.log(`\n${changelog}`);
+    console.log(`\nChangelog:\n\n${changelog}`);
   }
 }
 
@@ -71,10 +79,7 @@ async function handlePushCommand(pushType, options) {
   displayVersionInfo(info, options.quiet);
   
   // Skip push if no version bump needed
-  if (!info.nextVersion) {
-    if (!options.quiet) {
-      console.log('\nNo version bump needed. Skipping tag creation.');
-    }
+  if (!info.newVersion) {
     return;
   }
   
@@ -93,16 +98,16 @@ async function handlePushCommand(pushType, options) {
   }
   
   // Create tag message from changelog
-  const tagMessage = info.changelog || info.nextVersion;
+  const tagMessage = info.changelog || info.newVersion;
   
   if (!options.quiet) {
-    console.log(`\nCreating tag ${info.nextVersion}...`);
+    console.log(`\nCreating tag ${info.newVersion}...`);
   }
   
-  await pushModule.pushTag(info.nextVersion, tagMessage);
+  await pushModule.pushTag(info.newVersion, tagMessage);
   
   if (!options.quiet) {
-    console.log(`Tag ${info.nextVersion} created and pushed successfully.`);
+    console.log(`Tag ${info.newVersion} created and pushed successfully.`);
   }
 }
 
