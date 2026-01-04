@@ -189,8 +189,9 @@ stages:
 # Versioning job - runs on merge to main
 agileflow:
   stage: version
-  image: node:20-alpine
+  image: node:20
   script:
+    - npm install @logickernel/agileflow
     - npx @logickernel/agileflow gitlab
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
@@ -199,9 +200,7 @@ agileflow:
 build:
   stage: build
   script:
-    - echo "Building version $CI_COMMIT_TAG"
-    - docker build -t myapp:$CI_COMMIT_TAG .
-    - docker push myapp:$CI_COMMIT_TAG
+    # Script to build your software, usually a docker image that is pulled to a registry
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v/'
 
@@ -209,7 +208,7 @@ build:
 deploy-staging:
   stage: deploy
   script:
-    - kubectl set image deployment/myapp myapp=myapp:$CI_COMMIT_TAG
+    # Script to deploy your software in staging
   environment:
     name: staging
   rules:
@@ -218,7 +217,7 @@ deploy-staging:
 deploy-production:
   stage: deploy
   script:
-    - kubectl set image deployment/myapp myapp=myapp:$CI_COMMIT_TAG
+    # Script to deploy your software in production
   environment:
     name: production
   rules:

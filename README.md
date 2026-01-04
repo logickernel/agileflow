@@ -80,9 +80,9 @@ jobs:
 **GitLab CI** (`.gitlab-ci.yml`):
 ```yaml
 agileflow:
-  stage: version
-  image: node:20-alpine
+  image: node:20
   script:
+    - npm install @logickernel/agileflow gitlab
     - npx @logickernel/agileflow gitlab
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
