@@ -114,15 +114,17 @@ Configure your existing build and deploy pipelines to trigger on tag creation. W
 
 ## Version Calculation
 
-AgileFlow analyzes commits since the last version tag:
+AgileFlow analyzes commits since the last version tag to determine the appropriate version bump:
 
-| Commit Type | Example | Version Bump |
-|-------------|---------|--------------|
-| Breaking change | `feat!: redesign API` | **Major** (1.0.0 → 2.0.0) |
-| Feature | `feat: add login` | **Minor** (1.0.0 → 1.1.0) |
-| Fix | `fix: resolve crash` | **Patch** (1.0.0 → 1.0.1) |
-| Performance | `perf: optimize query` | **Patch** |
-| Docs only | `docs: update README` | No bump |
+| Commit Type | Example | 0.x.x | 1.0.0+ |
+|-------------|---------|-------|--------|
+| Breaking change | `feat!: redesign API` | **Minor** (0.1.0 → 0.2.0) | **Major** (1.0.0 → 2.0.0) |
+| Feature | `feat: add login` | **Patch** (0.0.0 → 0.0.1) | **Minor** (1.0.0 → 1.1.0) |
+| Fix | `fix: resolve crash` | **Patch** (0.0.0 → 0.0.1) | **Patch** (1.0.0 → 1.0.1) |
+| Performance | `perf: optimize query` | **Patch** | **Patch** |
+| Refactor | `refactor: simplify logic` | **Patch** | **Patch** |
+| Build/CI | `build: update deps` | **Patch** | **Patch** |
+| Docs only | `docs: update README` | No bump | No bump |
 
 ### Conventional Commits
 
@@ -168,26 +170,25 @@ Tag v1.2.3 ──▶ Build ──▶ Staging
 
 ### Automatic Versioning
 
-Each merge to main triggers automatic version generation:
+Each merge to main triggers automatic version generation based on commit types. See the [Version Calculation](#version-calculation) table above for details on how versions are bumped in 0.x.x vs 1.0.0+.
 
-- **Patch** (v1.0.0 → v1.0.1) — Bug fixes, refactors, performance improvements
-- **Minor** (v1.0.0 → v1.1.0) — New features
-- **Major** (v1.0.0 → v2.0.0) — Breaking changes
+New projects start at **v0.0.0** and automatically increment based on commits. See the table above for version bump behavior during initial development.
 
-### Initial Development (0.x.x)
+<details>
+<summary><strong>Version 1.0.0 — First Stable Release</strong></summary>
 
-New projects start at **v0.0.0**. During initial development:
-- Features and fixes bump the patch version
-- Breaking changes bump the minor version
+Version 1.0.0 represents your first stable API and marks the transition from initial development to a stable, production-ready release. This version **must be created manually** when your team decides the API is stable and ready for production use.
 
-### First Stable Release
-
-Version 1.0.0 represents your first stable release. Create it manually when ready:
+Create it when ready:
 
 ```bash
 git tag -a v1.0.0 -m "First stable release"
 git push origin v1.0.0
 ```
+
+After 1.0.0, AgileFlow continues automatic versioning with standard semantic versioning rules: features bump minor, fixes bump patch, and breaking changes bump major.
+
+</details>
 
 **Learn More**: [Release Management Guide](./docs/release-management.md)
 
