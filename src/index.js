@@ -12,9 +12,9 @@ Usage:
 
 Commands:
   <none>   Prints the current version, next version, commits, and changelog
-  push     Push a semantic version tag to the remote repository (native git)
-  gitlab   Push a semantic version tag via GitLab API (for GitLab CI)
-  github   Push a semantic version tag via GitHub API (for GitHub Actions)
+  push     Push a semantic version tag to the remote repository
+  gitlab   Create a semantic version tag via GitLab API (for GitLab CI)
+  github   Create a semantic version tag via GitHub API (for GitHub Actions)
 
 Options:
   --quiet        Only output the next version (or empty if no bump)
@@ -26,11 +26,32 @@ For more information, visit: https://code.logickernel.com/tools/agileflow
 }
 
 /**
- * Parses command line arguments.
+ * Valid options that can be passed to commands.
+ */
+const VALID_OPTIONS = ['--quiet', '--help', '-h', '--version', '-v'];
+
+/**
+ * Valid commands.
+ */
+const VALID_COMMANDS = ['push', 'gitlab', 'github'];
+
+/**
+ * Parses command line arguments and validates them.
  * @param {Array<string>} args - Command line arguments
  * @returns {{quiet: boolean}}
+ * @throws {Error} If invalid options are found
  */
 function parseArgs(args) {
+  // Check for invalid options
+  for (const arg of args) {
+    if (arg.startsWith('--') && !VALID_OPTIONS.includes(arg)) {
+      throw new Error(`Unknown option: ${arg}`);
+    }
+    if (arg.startsWith('-') && !arg.startsWith('--') && !VALID_OPTIONS.includes(arg)) {
+      throw new Error(`Unknown option: ${arg}`);
+    }
+  }
+  
   return {
     quiet: args.includes('--quiet'),
   };
@@ -113,7 +134,17 @@ async function handlePushCommand(pushType, options) {
 
 async function main() {
   const [, , cmd, ...rest] = process.argv;
-  const options = parseArgs(cmd ? [cmd, ...rest] : rest);
+  
+  let options;
+  try {
+    options = parseArgs(cmd ? [cmd, ...rest] : rest);
+  } catch (err) {
+    console.error(`Error: ${err.message}`);
+    console.error();
+    printHelp();
+    process.exit(1);
+    return;
+  }
 
   // Handle help
   if (cmd === '-h' || cmd === '--help' || cmd === 'help') {
@@ -134,11 +165,20 @@ async function main() {
   }
 
   // Unknown command (not an option)
-  if (cmd && !cmd.startsWith('--')) {
+  if (cmd && !cmd.startsWith('--') && !cmd.startsWith('-')) {
     console.error(`Error: Unknown command "${cmd}"`);
     console.error();
     printHelp();
     process.exit(1);
+  }
+
+  // Invalid option (starts with -- but not valid)
+  if (cmd && cmd.startsWith('--') && !VALID_OPTIONS.includes(cmd)) {
+    console.error(`Error: Unknown option "${cmd}"`);
+    console.error();
+    printHelp();
+    process.exit(1);
+    return;
   }
 
   // Default: show version info
