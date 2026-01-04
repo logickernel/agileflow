@@ -1,341 +1,367 @@
 # Troubleshooting Guide
 
-This guide helps you resolve common issues when using AgileFlow. If you encounter a problem not covered here, check the community discussions or open an issue in the project repository.
+This guide helps you resolve common issues when using AgileFlow.
 
 ## Quick Diagnosis
 
-### Check Pipeline Status
-
-First, verify your pipeline status:
+### Check Your Setup
 
 ```bash
-# Check if AgileFlow job completed successfully
-gitlab-ci status
+# Verify git repository
+git status
 
-# View pipeline logs
-gitlab-ci logs agileflow
+# Check existing version tags
+git tag --sort=-version:refname | head -5
 
-# Check if VERSION variable is available
-echo $VERSION
+# Preview next version
+npx @logickernel/agileflow
 ```
 
 ### Common Symptoms
 
-- **Pipeline fails on version stage**
-- **VERSION variable not available**
-- **Build jobs fail with version errors**
-- **Deployment inconsistencies**
-- **Release notes not generated**
+| Symptom | Likely Cause | Section |
+|---------|--------------|---------|
+| No tag created | Token permissions | [Authentication](#authentication-errors) |
+| Wrong version | Commit format | [Version Generation](#version-generation-issues) |
+| Tag created but no build | Release workflow config | [Release Workflow](#release-workflow-issues) |
 
-## Installation Issues
+---
 
-### Job Token Permissions Not Available
+## Authentication Errors
 
-**Problem**: You don't see the "Allow Git push requests to the repository" option in GitLab CI/CD settings.
+### GitHub: "Resource not accessible by integration"
 
-**Solution**:
-1. Check if you're using a self-managed GitLab instance
-2. Enable the feature flag `allow_push_repository_for_job_token`
-3. Ensure you have admin access to the GitLab instance
+**Cause:** Token lacks required permissions.
 
-```bash
-# For self-managed GitLab, enable the feature flag
-sudo gitlab-rake gitlab:features:enable allow_push_repository_for_job_token
-```
+**Solution:**
+1. Create a Fine-grained Personal Access Token
+2. Grant `Contents: Read and write` permission
+3. Ensure repository is in token scope
+4. Update `AGILEFLOW_TOKEN` secret
 
-**Alternative**: Use a personal access token with write permissions to the repository.
+### GitHub: "Bad credentials"
 
-### Template Include Fails
+**Cause:** Token invalid or expired.
 
-**Problem**: The AgileFlow template include statement fails with a network error.
+**Solution:**
+1. Check token hasn't expired
+2. Regenerate token
+3. Update secret
 
-**Solutions**:
-1. **Check network connectivity** to `code.logickernel.com`
-2. **Use local template** if remote access is restricted:
+### GitLab: "403 Forbidden"
 
-```yaml
-# .gitlab-ci.yml
-include:
-  - local: templates/AgileFlow.gitlab-ci.yml
-```
+**Cause:** Token lacks permissions.
 
-3. **Copy template locally** and include from your repository:
+**Solution:**
+1. Verify `api` scope
+2. Ensure `Maintainer` role
+3. Check token not expired
+4. For protected branches, ensure variable is protected
 
-```bash
-# Download template to your repository
-curl -o templates/AgileFlow.gitlab-ci.yml \
-  https://code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
-```
+### GitLab: "401 Unauthorized"
 
-### Docker Image Pull Fails
+**Cause:** Invalid or missing token.
 
-**Problem**: Cannot pull the AgileFlow Docker image.
+**Solution:**
+1. Verify `AGILEFLOW_TOKEN` variable exists
+2. Check variable protection settings
+3. Regenerate if needed
 
-**Solutions**:
-1. **Check Docker daemon** is running
-2. **Verify image name** and tag
-3. **Check registry access** and authentication
-4. **Use alternative image** if available
-
-```bash
-# Test Docker connectivity
-docker pull hello-world
-
-# Check AgileFlow image availability
-docker pull registry.logickernel.com/kernel/agileflow:latest
-```
+---
 
 ## Version Generation Issues
 
-### VERSION Variable Not Available
+### No Tag Created
 
-**Problem**: The `${VERSION}` variable is not available in subsequent pipeline stages.
+**Possible causes:**
 
-**Causes and Solutions**:
-
-1. **AgileFlow job failed**
+1. **No conventional commits**
    ```bash
-   # Check agileflow job status
-   gitlab-ci logs agileflow
-   
-   # Ensure job completed successfully
-   gitlab-ci status agileflow
-   ```
-
-2. **Missing job dependency**
-   ```yaml
-   # ✅ Good - Proper dependency
-   build:
-     stage: build
-     needs:
-       - agileflow
-   
-   # ❌ Bad - No dependency specified
-   build:
-     stage: build
-   ```
-
-### Version Not Generated
-
-**Problem**: AgileFlow doesn't create a new version tag.
-
-**Causes and Solutions**:
-
-1. **No conventional commits detected**
-   ```bash
-   # Check commit messages
+   # Check recent commits
    git log --oneline -10
    
-   # Use conventional commit format
-   git commit -m "feat: add new feature"
-   git commit -m "fix: resolve bug"
+   # Should see: feat:, fix:, perf:, etc.
    ```
 
-2. **No merge to main branch**
+2. **All commits are docs/chore/style**
    ```bash
-   # Verify you're on main branch
-   git branch
-   
-   # Check if changes were merged
-   git log --oneline --graph
+   # These don't trigger bumps:
+   docs: update README
+   chore: update deps
+   style: format code
    ```
 
-### Incorrect Version Bumping
-
-**Problem**: AgileFlow generates the wrong version number.
-
-**Causes and Solutions**:
-
-1. **Commit type not recognized**
+3. **Not on main branch**
    ```bash
-   # Use recognized commit types
-   feat: new feature          # Minor version bump
-   fix: bug fix              # Patch version bump
-   perf: performance improvement # Patch version bump
-refactor: code refactoring    # Patch version bump
-build: build system change    # Patch version bump
-ci: CI/CD change             # Patch version bump
-test: test additions/changes  # Patch version bump
-revert: revert commit         # Patch version bump
-   feat!: breaking change    # Major version bump
+   git branch --show-current
    ```
 
-2. **Breaking change not properly marked**
+**Solution:** Include bump-triggering commits (`feat`, `fix`, `perf`, etc.).
+
+### Wrong Version Calculated
+
+**Possible causes:**
+
+1. **Breaking change not marked**
    ```bash
-   # Use exclamation mark or footer
-   feat!: remove deprecated API
+   # Wrong
+   feat: remove old API
    
-   # Or use footer
-   feat: change API format
-   
-   BREAKING CHANGE: API format changed from v1 to v2
+   # Correct
+   feat!: remove old API
    ```
 
-3. **Version calculation logic issues**
+2. **Wrong commit type**
    ```bash
-   # Check commit history
-   git log --oneline --since="1 week ago"
+   # Wrong
+   fix: add new login feature
    
-   # Verify conventional commit format
-   git log --grep="^feat\|^fix\|^perf\|^refactor"
+   # Correct
+   feat: add new login feature
    ```
+
+### Commits Not Recognized
+
+**Common mistakes:**
+
+```bash
+# Wrong — missing colon
+feat add new feature
+
+# Wrong — wrong separator
+feat - add new feature
+
+# Wrong — capitalized
+Feat: add new feature
+
+# Correct
+feat: add new feature
+```
+
+---
+
+## Release Workflow Issues
+
+### Tag Created but Build Didn't Run
+
+**Cause:** Release workflow not triggered by tags.
+
+**GitHub Actions — Check workflow trigger:**
+```yaml
+# ✅ Correct
+on:
+  push:
+    tags:
+      - 'v*'
+
+# ❌ Wrong — only triggers on branch push
+on:
+  push:
+    branches: [main]
+```
+
+**GitLab CI — Check rules:**
+```yaml
+# ✅ Correct
+build:
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
+
+# ❌ Wrong — only runs on main branch
+build:
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+```
+
+### Version Not Available in Release Workflow
+
+**GitHub Actions:**
+```yaml
+# Extract version from tag
+- name: Get version
+  run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+- name: Use version
+  run: docker build -t myapp:$VERSION .
+```
+
+**GitLab CI:**
+```yaml
+# Use CI_COMMIT_TAG directly
+build:
+  script:
+    - docker build -t myapp:$CI_COMMIT_TAG .
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
+```
+
+---
+
+## Git Repository Errors
+
+### "Not a git repository"
+
+**Cause:** Running outside git repository.
+
+**Solution:**
+```bash
+ls -la .git  # Verify .git exists
+```
+
+### "Detached HEAD state"
+
+**GitHub Actions:**
+```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0
+    ref: main  # Checkout branch
+```
+
+**GitLab CI:**
+```yaml
+agileflow:
+  script:
+    - git checkout $CI_COMMIT_REF_NAME
+    - npx @logickernel/agileflow gitlab
+```
+
+### Shallow Clone Issues
+
+**Cause:** Commit history not available.
+
+**GitHub Actions:**
+```yaml
+- uses: actions/checkout@v4
+  with:
+    fetch-depth: 0  # Fetch all history
+```
+
+**GitLab CI:**
+```yaml
+variables:
+  GIT_DEPTH: 0
+```
+
+---
 
 ## Pipeline Issues
 
-### Build Stage Failures
+### Versioning Job Fails
 
-**Problem**: Build jobs fail with version-related errors.
+**Debug steps:**
 
-**Solutions**:
-
-1. **Check VERSION variable usage**
+1. **Check logs** for error messages
+2. **Verify token** is set:
    ```yaml
-   # ✅ Good - Proper variable usage
-   build:
-     script:
-       - docker build -t myapp:${VERSION} .
-   
-   # ❌ Bad - Hardcoded or incorrect variable
-   build:
-     script:
-       - docker build -t myapp:latest .
-       - docker build -t myapp:$VERSION .
+   - run: echo "Token set: ${{ secrets.AGILEFLOW_TOKEN != '' }}"
    ```
-
-2. **Verify job dependencies**
+3. **Check git state**:
    ```yaml
-   # Ensure build depends on agileflow
-   build:
-     stage: build
-     needs:
-       - agileflow
-     script:
-       - echo "Building version ${VERSION}"
+   - run: |
+       git log --oneline -5
+       git tag --sort=-version:refname | head -3
    ```
 
-3. **Check variable expansion**
-   ```yaml
-   # Test variable availability
-   build:
-     script:
-       - echo "VERSION: ${VERSION}"
-       - echo "CI_COMMIT_REF_NAME: ${CI_COMMIT_REF_NAME}"
-       - docker build -t myapp:${VERSION} .
-   ```
+### Both Workflows Running on Same Push
 
-## Release Notes Issues
+**Cause:** Main push triggers versioning, tag push triggers release — correct behavior!
 
-### Empty Release Notes
+This is expected:
+1. Push to main → Versioning workflow → Creates tag
+2. Tag push → Release workflow → Builds
 
-**Problem**: Release notes are not generated or are empty.
+---
 
-**Solutions**:
+## Debug Commands
 
-1. **Check commit message format**
-   ```bash
-   # View recent commits
-   git log --oneline -10
-   
-   # Ensure conventional commit format
-   git log --grep="^feat\|^fix\|^perf\|^refactor\|^docs\|^test\|^build\|^ci\|^chore\|^style"
-   ```
+### Verify AgileFlow
 
-2. **Verify AgileFlow configuration**
-   ```javascript
-   // agileflow.config.js
-   module.exports = {
-     releaseNotes: {
-       enabled: true,
-       format: 'conventional',
-       includeBody: true,
-       groupByType: true
-     }
-   };
-   ```
+```bash
+# Check version
+npx @logickernel/agileflow --version
 
-3. **Check tag creation**
-   ```bash
-   # List all tags
-   git tag --sort=-version:refname
-   
-   # View tag message
-   git tag -l -n99 v1.2.3
-   ```
+# Preview (no tag creation)
+npx @logickernel/agileflow
 
-### Malformed Release Notes
-
-**Problem**: Release notes are generated but poorly formatted.
-
-**Solutions**:
-
-1. **Improve commit message quality**
-   ```bash
-   # ✅ Good commit messages
-   feat(auth): add OAuth2 login support
-   fix(api): handle null user ID gracefully
-   docs: update installation guide
-   
-   # ❌ Poor commit messages
-   add oauth
-   fix bug
-   update docs
-   ```
-
-2. **Use consistent scopes**
-   ```bash
-   # Consistent scope usage
-   feat(auth): add OAuth2 login
-   feat(auth): implement JWT refresh
-   fix(auth): handle expired tokens
-   ```
-
-3. **Include meaningful descriptions**
-   ```bash
-   # Descriptive commit messages
-   feat(auth): add OAuth2 login support with Google and GitHub providers
-   
-   Implements OAuth2 authentication flow supporting multiple
-   identity providers. Includes proper error handling and
-   user session management.
-   ```
-
-## Debugging Techniques
-
-### Enable Debug Logging
-
-```yaml
-agileflow:
-  variables:
-    AGILEFLOW_DEBUG: "true"
-    AGILEFLOW_LOG_LEVEL: "debug"
-  script:
-    - agileflow gitlab-ci --verbose
+# Quiet mode
+npx @logickernel/agileflow --quiet
 ```
 
-### Check Environment Variables
+### Check Git State
 
-```yaml
-debug-env:
-  stage: build
-  script:
-    - echo "VERSION: ${VERSION}"
-    - echo "CI_COMMIT_REF_NAME: ${CI_COMMIT_REF_NAME}"
-    - echo "CI_COMMIT_SHA: ${CI_COMMIT_SHA}"
-    - env | grep -E "(VERSION|CI_|AGILEFLOW_)"
-  needs:
-    - agileflow
+```bash
+# Recent tags
+git tag --sort=-version:refname | head -5
+
+# Recent commits
+git log --oneline -10
+
+# Current branch
+git branch --show-current
 ```
 
-### Verify Git State
+### Test Tokens
 
+**GitLab:**
+```bash
+curl --header "PRIVATE-TOKEN: $AGILEFLOW_TOKEN" \
+  "https://gitlab.com/api/v4/projects"
+```
+
+**GitHub:**
+```bash
+curl -H "Authorization: token $AGILEFLOW_TOKEN" \
+  "https://api.github.com/user"
+```
+
+---
+
+## Common Patterns
+
+### Complete Debug Workflow
+
+**GitHub Actions:**
 ```yaml
-verify-git:
-  stage: build
+- name: Debug
+  run: |
+    echo "Node: $(node --version)"
+    echo "Git: $(git --version)"
+    echo "Branch: $(git branch --show-current)"
+    echo "Tags: $(git tag --sort=-version:refname | head -3)"
+    echo "Commits:"
+    git log --oneline -5
+    npx @logickernel/agileflow || echo "Exit: $?"
+```
+
+**GitLab CI:**
+```yaml
+debug:
   script:
-    - git status
+    - node --version
+    - git --version
+    - git branch --show-current
+    - git tag --sort=-version:refname | head -3
     - git log --oneline -5
-    - git tag --sort=-version:refname | head -5
-    - git remote -v
-  needs:
-    - agileflow
+    - npx @logickernel/agileflow || echo "Exit: $?"
 ```
+
+---
+
+## Getting Help
+
+If still stuck:
+
+1. **Check error messages** — Usually descriptive
+2. **Verify configuration** — Tokens, workflow triggers
+3. **Test locally** — `npx @logickernel/agileflow`
+4. **Open an issue** — Include logs and config
+
+---
+
+## Related Documentation
+
+- [Installation Guide](./installation.md) — Setup
+- [Configuration](./configuration.md) — Variables
+- [CLI Reference](./cli-reference.md) — Commands
+- [Conventional Commits](./conventional-commits.md) — Commit format

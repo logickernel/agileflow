@@ -1,390 +1,303 @@
 # Migration Guide
 
-This guide helps you transition from traditional CI/CD approaches to AgileFlow's version-centric methodology. Whether you're using GitLab CI, GitHub Actions, or other CI/CD tools, this guide will walk you through the migration process.
+This guide helps you transition to AgileFlow's decoupled, version-centric approach.
 
-## Understanding the Migration
+## What You're Changing
 
-### What You're Moving From
+### From Traditional Approach
 
-Traditional CI/CD pipelines typically use:
-- **Branch-based environments** (staging branch, production branch)
-- **Environment-specific deployments** (different code in different environments)
-- **Manual version management** (hand-editing version numbers)
-- **Complex branching strategies** (GitFlow, GitHub Flow variations)
+- Version calculation mixed with build/deploy
+- Branch-based deployments
+- Manual version management
+- Environment-specific branches
 
-### What You're Moving To
+### To AgileFlow Approach
 
-AgileFlow provides:
-- **Version-centric deployments** (same version everywhere)
-- **Automatic version generation** (based on commit history)
-- **Simplified branching** (main branch + feature branches)
-- **Consistent environments** (no more environment drift)
+- **Decoupled versioning** — AgileFlow only creates tags
+- **Tag-triggered pipelines** — Build/deploy on tag events
+- **Automatic versions** — Based on conventional commits
+- **Single main branch** — All versions from one source
 
-## Migration Strategy
+---
 
-### Phase 1: Preparation (Week 1)
+## Architecture Overview
 
-#### 1. Team Training
-- **Train team members** on conventional commits
-- **Explain the new workflow** and benefits
-- **Provide examples** of good vs. bad commit messages
-- **Set up commit message templates** in your IDE
-
-#### 2. Repository Preparation
-- **Clean up existing branches** (merge or delete old environment branches)
-- **Ensure main branch** is the primary development branch
-- **Review existing tags** and versioning strategy
-- **Backup current CI/CD configuration**
-
-#### 3. Environment Planning
-- **Identify all environments** (dev, staging, production, etc.)
-- **Document current deployment processes**
-- **Plan configuration management** (environment variables, secrets)
-- **Design rollback procedures**
-
-### Phase 2: Implementation (Week 2-3)
-
-#### 1. Add AgileFlow Template
-```yaml
-# .gitlab-ci.yml
-include:
-  - local: templates/AgileFlow.gitlab-ci.yml
-
-# Keep existing jobs for now
-build:
-  stage: build
-  script:
-    - echo "Building from branch ${CI_COMMIT_REF_NAME}"
+```
+┌─────────────────┐         ┌─────────────────┐
+│  Merge to main  │         │  Tag: v1.2.3    │
+│                 │ ──────▶ │                 │
+│  Versioning     │         │  Release        │
+│  workflow       │         │  workflow       │
+└─────────────────┘         └─────────────────┘
+       │                           │
+       ▼                           ▼
+   AgileFlow                  Build/Deploy
+   creates tag                your pipelines
 ```
 
-#### 2. Configure Environment Variables
-Set up required AgileFlow variables:
-- `GITLAB_USER_NAME`
-- `GITLAB_USER_EMAIL`
-- `CI_SERVER_HOST`
-- `CI_PROJECT_PATH`
-- `AGILEFLOW_TOKEN`
+---
 
-#### 3. Test Version Generation
-- **Commit a simple change** with conventional commit format
-- **Verify the `agileflow` job** completes successfully
-- **Check that version tags** are created
-- **Confirm `VERSION` variable** is available
+## Migration Steps
 
-### Phase 3: Gradual Migration (Week 4-6)
+### Phase 1: Preparation
 
-#### 1. Update Build Jobs
+#### Train Your Team
+
+- Introduce conventional commits
+- Explain the decoupled approach
+- Share commit message examples
+
+#### Create Access Token
+
+**GitHub:**
+1. Settings → Developer settings → Personal access tokens
+2. Create token with `contents: write`
+3. Add as secret `AGILEFLOW_TOKEN`
+
+**GitLab:**
+1. Project Settings → Access tokens
+2. Create token with `api` scope, `Maintainer` role
+3. Add as variable `AGILEFLOW_TOKEN`
+
+### Phase 2: Add Versioning Workflow
+
+**GitHub Actions** — Create `.github/workflows/version.yml`:
+
 ```yaml
-# Before: Branch-based tagging
-build:
-  stage: build
-  script:
-    - docker build -t myapp:${CI_COMMIT_REF_SLUG} .
+name: Version
+on:
+  push:
+    branches: [main]
 
-# After: Version-based tagging
-build:
-  stage: build
-  script:
-    - docker build -t myapp:${VERSION} .
-  needs:
-    - agileflow
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create version tag
+        env:
+          AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
+        run: npx @logickernel/agileflow github
 ```
 
-#### 2. Update Deployment Jobs
+**GitLab CI** — Add to `.gitlab-ci.yml`:
+
 ```yaml
-# Before: Environment-specific branches
-deploy-staging:
+agileflow:
+  stage: version
+  image: node:20-alpine
+  script:
+    - npx @logickernel/agileflow gitlab
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+```
+
+### Phase 3: Add Release Workflow
+
+**GitHub Actions** — Create `.github/workflows/release.yml`:
+
+```yaml
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Build
+        run: docker build -t myapp:$VERSION .
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy
+        run: kubectl set image deployment/myapp myapp=myapp:$VERSION
+```
+
+**GitLab CI** — Add to `.gitlab-ci.yml`:
+
+```yaml
+build:
+  stage: build
+  script:
+    - docker build -t myapp:$CI_COMMIT_TAG .
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
+
+deploy:
   stage: deploy
-  only:
-    - staging
   script:
-    - kubectl set image deployment/myapp myapp=myapp:${CI_COMMIT_REF_SLUG}
-
-# After: Version-based deployment
-deploy-staging:
-  stage: deploy
-  script:
-    - kubectl set image deployment/myapp myapp=myapp:${VERSION}
-  environment:
-    name: staging
-  needs:
-    - build
+    - kubectl set image deployment/myapp myapp=myapp:$CI_COMMIT_TAG
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
 ```
 
-#### 3. Update Testing Jobs
-```yaml
-# Before: Test against source code
-test:
-  stage: test
-  script:
-    - npm test
+### Phase 4: Remove Old Logic
 
-# After: Test against deployed version
-test:
-  stage: test
-  script:
-    - ./run-tests.sh --version ${VERSION}
-  needs:
-    - deploy-staging
-```
+Once the new workflows are working:
 
-### Phase 4: Cleanup (Week 7-8)
+1. **Remove version calculation** from existing build pipelines
+2. **Remove environment branches** (staging, production)
+3. **Remove branch-based triggers** for deployments
 
-#### 1. Remove Old Branch Logic
-```yaml
-# Remove these from your pipeline
-only:
-  - staging
-  - production
-except:
-  - main
-```
-
-#### 2. Clean Up Environment Branches
-```bash
-# Delete old environment branches
-git branch -d staging
-git branch -d production
-
-# Push deletion to remote
-git push origin --delete staging
-git push origin --delete production
-```
-
-#### 3. Update Documentation
-- **Update deployment runbooks** to reference versions
-- **Modify rollback procedures** to use version tags
-- **Update team workflows** and processes
-- **Document new practices** and conventions
+---
 
 ## Common Migration Patterns
 
-### Pattern 1: Simple Web Application
+### Simple Application
 
-#### Before (Traditional)
+**Before:**
 ```yaml
-stages:
-  - build
-  - test
-  - deploy-staging
-  - deploy-production
-
-build:
-  stage: build
-  script:
-    - docker build -t myapp:${CI_COMMIT_REF_SLUG} .
-
-deploy-staging:
-  stage: deploy-staging
-  only:
-    - staging
-  script:
-    - kubectl set image deployment/myapp myapp=myapp:${CI_COMMIT_REF_SLUG}
-
-deploy-production:
-  stage: deploy-production
-  only:
-    - production
-  script:
-    - kubectl set image deployment/myapp myapp=myapp:${CI_COMMIT_REF_SLUG}
+# Single workflow doing everything
+on: push to main
+  → calculate version
+  → build
+  → deploy
 ```
 
-#### After (AgileFlow)
+**After:**
 ```yaml
-include:
-  - local: templates/AgileFlow.gitlab-ci.yml
+# Workflow 1: version.yml
+on: push to main
+  → AgileFlow creates tag
 
-stages:
-  - version
-  - build
-  - deploy
-  - test
-  - clean
-
-build:
-  stage: build
-  script:
-    - docker build -t myapp:${VERSION} .
-  needs:
-    - agileflow
-
-deploy-staging:
-  stage: deploy
-  script:
-    - kubectl set image deployment/myapp myapp=myapp:${VERSION}
-  environment:
-    name: staging
-  needs:
-    - build
-
-deploy-production:
-  stage: deploy
-  script:
-    - kubectl set image deployment/myapp myapp=myapp:${VERSION}
-  environment:
-    name: production
-  when: manual
-  needs:
-    - build
+# Workflow 2: release.yml
+on: tag v*
+  → build
+  → deploy
 ```
 
-### Pattern 2: Microservices Architecture
+### Microservices
 
-#### Before (Traditional)
+**After (same version for all services):**
 ```yaml
+# release.yml
 build-backend:
-  stage: build
   script:
-    - docker build -t backend:${CI_COMMIT_REF_SLUG} ./backend
+    - docker build -t backend:$VERSION ./backend
 
 build-frontend:
-  stage: build
   script:
-    - docker build -t frontend:${CI_COMMIT_REF_SLUG} ./frontend
+    - docker build -t frontend:$VERSION ./frontend
 
-deploy-staging:
-  stage: deploy
-  only:
-    - staging
+deploy:
+  needs: [build-backend, build-frontend]
   script:
-    - kubectl set image deployment/backend backend=backend:${CI_COMMIT_REF_SLUG}
-    - kubectl set image deployment/frontend frontend=frontend:${CI_COMMIT_REF_SLUG}
+    - kubectl set image deployment/backend backend=backend:$VERSION
+    - kubectl set image deployment/frontend frontend=frontend:$VERSION
 ```
 
-#### After (AgileFlow)
+---
+
+## Migration Challenges
+
+### Existing Version Logic
+
+**Challenge:** Current pipeline calculates versions.
+
+**Solution:** Keep both temporarily, then remove old logic:
 ```yaml
-include:
-  - local: templates/AgileFlow.gitlab-ci.yml
-
-build-backend:
-  stage: build
-  script:
-    - docker build -t backend:${VERSION} ./backend
-  needs:
-    - agileflow
-
-build-frontend:
-  stage: build
-  script:
-    - docker build -t frontend:${VERSION} ./frontend
-  needs:
-    - agileflow
-
-deploy-staging:
-  stage: deploy
-  script:
-    - kubectl set image deployment/backend backend=backend:${VERSION}
-    - kubectl set image deployment/frontend frontend=frontend:${VERSION}
-  environment:
-    name: staging
-  needs:
-    - build-backend
-    - build-frontend
+# Phase 1: Add AgileFlow alongside existing logic
+# Phase 2: Switch release workflow to use tags
+# Phase 3: Remove old version calculation
 ```
 
-## Migration Challenges and Solutions
+### Team Learning Conventional Commits
 
-### Challenge 1: Team Resistance to Conventional Commits
+**Challenge:** Team not familiar with format.
 
-**Problem**: Team members are used to informal commit messages.
+**Solutions:**
+- Start with just `feat:` and `fix:`
+- Use commit linting
+- Provide IDE snippets
 
-**Solutions**:
-- **Provide templates** and examples
-- **Use commit hooks** to enforce format
-- **Start with simple types** (feat, fix, docs)
-- **Gradually introduce** more complex patterns
+### Existing Environment Branches
 
-### Challenge 2: Existing Environment-Specific Configurations
+**Challenge:** Using staging/production branches.
 
-**Problem**: Different environments need different settings.
+**Solution:** After migration works, delete them:
+```bash
+git branch -d staging
+git push origin --delete staging
+```
 
-**Solutions**:
-- **Use environment variables** for configuration
-- **Keep deployment scripts identical** across environments
-- **Use Kubernetes ConfigMaps** or similar for environment differences
-- **Implement feature flags** for environment-specific features
-
-### Challenge 3: Complex Deployment Dependencies
-
-**Problem**: Some services depend on others being deployed first.
-
-**Solutions**:
-- **Use `needs` dependencies** to control job order
-- **Implement health checks** between deployments
-- **Use Kubernetes readiness probes** for dependency management
-- **Consider service mesh** for complex service interactions
-
-### Challenge 4: Rollback Procedures
-
-**Problem**: Current rollback procedures are branch-based.
-
-**Solutions**:
-- **Update rollback scripts** to use version tags
-- **Implement automated rollback** jobs
-- **Document version-based rollback** procedures
-- **Test rollback processes** regularly
+---
 
 ## Testing Your Migration
 
-### 1. Pipeline Validation
-- **Verify all stages** complete successfully
-- **Check version generation** works correctly
-- **Confirm deployments** use the right versions
-- **Test rollback procedures** work as expected
+### Verify Version Creation
 
-### 2. Environment Validation
-- **Deploy to staging** and verify functionality
-- **Test production deployment** (if applicable)
-- **Verify environment consistency** (same version everywhere)
-- **Test monitoring and alerting** still work
+```bash
+# Push a conventional commit
+git commit -m "feat: test feature"
+git push
 
-### 3. Team Validation
-- **Confirm team members** understand new workflow
-- **Verify conventional commits** are being used
-- **Test deployment processes** with team members
-- **Gather feedback** and make adjustments
+# Check for new tag
+git tag --sort=-version:refname | head -1
+```
+
+### Verify Release Workflow
+
+- Confirm tag triggers your release workflow
+- Check build uses the tag as version
+- Verify deployment works
+
+### End-to-End Test
+
+1. Push conventional commit to main
+2. AgileFlow creates tag (e.g., v1.2.3)
+3. Release workflow triggers
+4. Build creates artifact tagged v1.2.3
+5. Deployment uses correct version
+
+---
 
 ## Rollback Plan
 
-### If Migration Fails
+If migration fails:
 
-1. **Revert to previous CI/CD configuration**
-2. **Restore environment branches** if deleted
-3. **Update documentation** with lessons learned
-4. **Plan next migration attempt** with improvements
+1. **Revert workflow changes**
+   ```bash
+   git revert <workflow-commit>
+   ```
 
-### Partial Rollback
+2. **Keep running old pipeline** until issues resolved
 
-1. **Keep AgileFlow template** but disable version generation
-2. **Revert specific jobs** that are causing issues
-3. **Gradually re-enable** features as issues are resolved
-4. **Maintain version tags** for future use
+3. **Document issues** for next attempt
+
+---
 
 ## Post-Migration Checklist
 
-- [ ] **All environments** are running the same version
-- [ ] **Version tags** are being created automatically
-- [ ] **Deployments** use the `${VERSION}` variable
-- [ ] **Rollback procedures** work with version tags
-- [ ] **Team members** are using conventional commits
-- [ ] **Documentation** has been updated
-- [ ] **Monitoring** shows consistent behavior
-- [ ] **Performance** meets or exceeds previous levels
+- [ ] Versioning workflow creates tags on merge to main
+- [ ] Release workflow triggers on tag creation
+- [ ] Builds use tag as version
+- [ ] Deployments use correct version
+- [ ] Team uses conventional commits
+- [ ] Old version logic removed
+- [ ] Old environment branches deleted
 
-## Getting Help
-
-If you encounter issues during migration:
-
-1. **Check the [Troubleshooting Guide](./troubleshooting.md)**
-2. **Review [Best Practices](./best-practices.md)** for guidance
-3. **Consult the [Configuration Guide](./configuration.md)** for setup help
-4. **Open an issue** in the project repository
-5. **Join community discussions** for support
+---
 
 ## Related Documentation
 
-- [Getting Started](./getting-started.md) - Quick start guide
-- [Best Practices](./best-practices.md) - Recommended practices
-- [Configuration](./configuration.md) - Environment variables
-- [GitLab CI Template](./gitlab-ci-template.md) - Template reference
-- [Troubleshooting](./troubleshooting.md) - Common issues and solutions
+- [Getting Started](./getting-started.md) — Quick start
+- [Installation Guide](./installation.md) — Setup
+- [Best Practices](./best-practices.md) — Recommendations
+- [Troubleshooting](./troubleshooting.md) — Common issues

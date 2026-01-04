@@ -1,163 +1,301 @@
-# Installation & Setup Guide
+# Installation Guide
 
-This guide covers installing and setting up AgileFlow for different platforms and use cases.
+AgileFlow requires no installation for local use — just run it with npx. For CI/CD integration, you'll configure a workflow that creates version tags, which then trigger your build and deploy pipelines.
 
 ## Prerequisites
 
-Before installing AgileFlow, ensure you have:
+- **Node.js 14+** (or a Node.js CI image)
+- **Git repository** with commit history
+- **Access token** with permission to create tags
 
-- **Git Repository**: A Git repository with GitLab CI/CD enabled
-- **GitLab Access**: Access to modify `.gitlab-ci.yml` files and CI/CD variables
-- **Basic Knowledge**: Understanding of Git, CI/CD, and Docker concepts
+## Local Usage
 
-## GitLab CI Installation
+Preview your next version without any setup:
 
-### Step 1: Include the AgileFlow Template
-
-Add this line to the top of your `.gitlab-ci.yml` file:
-
-```yaml
-include:
-  - remote: https://code.logickernel.com/kernel/agileflow/-/raw/main/templates/AgileFlow.gitlab-ci.yml
+```bash
+npx @logickernel/agileflow
 ```
 
-### Step 2: Configure the AGILEFLOW_TOKEN
+Or install globally:
 
-AgileFlow needs a GitLab access token to create version tags via the API. Set this in your GitLab project's CI/CD variables:
+```bash
+npm install -g @logickernel/agileflow
+agileflow
+```
 
-1. Go to your GitLab project
-2. Navigate to **Settings > CI/CD**
-3. Expand **Variables**
-4. Add the `AGILEFLOW_TOKEN` variable:
+---
 
-| Variable | Value | Type | Protect | Mask |
-|----------|-------|------|---------|------|
-| `AGILEFLOW_TOKEN` | Your GitLab API token | Variable | Yes | No |
+## Architecture Overview
 
-#### Creating the AGILEFLOW_TOKEN
+AgileFlow uses a **decoupled two-step approach**:
 
-You need a GitLab access token with API permissions. You can create either:
+```
+┌─────────────────┐         ┌─────────────────┐
+│  Merge to main  │         │   Tag: v1.2.3   │
+│                 │ ──────▶ │                 │
+│  (AgileFlow     │         │  (Your build/   │
+│   creates tag)  │         │   deploy runs)  │
+└─────────────────┘         └─────────────────┘
+```
 
-**Option 1: Project Access Token (Recommended)**
-1. Go to your project's **Settings > Access Tokens**
-2. Create a new token with:
-   - **Name**: `AgileFlow Bot`
-   - **Description**: `Token for AgileFlow automatic versioning`
-   - **Role**: `maintainer` or higher
-   - **Scopes**: `api`
-3. Copy the generated token
+1. **Versioning workflow**: Runs AgileFlow on merge to main → creates version tag
+2. **Release workflow**: Triggered by tag creation → builds and deploys
 
-**Option 2: Personal Access Token**
-1. Go to your user **Settings > Access Tokens**
-2. Create a new token with:
-   - **Name**: `AgileFlow Bot`
-   - **Description**: `Token for AgileFlow automatic versioning`
-   - **Scopes**: `api`
-3. Copy the generated token
+This separation keeps versioning independent from your build/deploy process.
 
-### Step 3: Add Your First Job
+---
 
-Below the include statement, add a simple build job to test the setup:
+## GitHub Actions
+
+### Step 1: Create an Access Token
+
+1. Go to **Settings → Developer settings → Personal access tokens → Fine-grained tokens**
+2. Click **Generate new token**
+3. Configure:
+   - **Name**: `AgileFlow`
+   - **Repository access**: Select your repositories
+   - **Permissions**: `Contents: Read and write`
+4. Copy the token
+
+### Step 2: Add the Token as a Secret
+
+1. Go to your repository's **Settings → Secrets and variables → Actions**
+2. Click **New repository secret**
+3. Add:
+   - **Name**: `AGILEFLOW_TOKEN`
+   - **Value**: Your token
+
+### Step 3: Create the Versioning Workflow
+
+Create `.github/workflows/version.yml`:
 
 ```yaml
+name: Version
+on:
+  push:
+    branches: [main]
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for commit history
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create version tag
+        env:
+          AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
+        run: npx @logickernel/agileflow github
+```
+
+### Step 4: Create the Release Workflow
+
+Create `.github/workflows/release.yml` to handle builds triggered by tags:
+
+```yaml
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version from tag
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Build
+        run: |
+          echo "Building version $VERSION"
+          docker build -t myapp:$VERSION .
+          docker push myapp:$VERSION
+
+  deploy-staging:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Deploy to staging
+        run: kubectl set image deployment/myapp myapp=myapp:$VERSION
+
+  deploy-production:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Deploy to production
+        run: kubectl set image deployment/myapp myapp=myapp:$VERSION
+```
+
+### Step 5: Test the Setup
+
+1. Push a commit with conventional format:
+   ```bash
+   git commit -m "feat: add new feature"
+   git push
+   ```
+2. The version workflow creates a tag (e.g., `v1.2.3`)
+3. The tag triggers the release workflow
+4. Build and deploy jobs run automatically
+
+---
+
+## GitLab CI
+
+### Step 1: Create an Access Token
+
+**Option A: Project Access Token (Recommended)**
+1. Go to project **Settings → Access tokens**
+2. Create:
+   - **Name**: `AgileFlow`
+   - **Role**: `Maintainer`
+   - **Scopes**: `api`
+3. Copy the token
+
+**Option B: Personal Access Token**
+1. Go to user **Settings → Access tokens**
+2. Create:
+   - **Name**: `AgileFlow`
+   - **Scopes**: `api`
+3. Copy the token
+
+### Step 2: Add the Token as a CI/CD Variable
+
+1. Go to project **Settings → CI/CD → Variables**
+2. Add:
+   - **Key**: `AGILEFLOW_TOKEN`
+   - **Value**: Your token
+   - **Flags**: Protected, Masked
+
+### Step 3: Configure Your Pipeline
+
+Update `.gitlab-ci.yml`:
+
+```yaml
+stages:
+  - version
+  - build
+  - deploy
+
+# Versioning job - runs on merge to main
+agileflow:
+  stage: version
+  image: node:20-alpine
+  script:
+    - npx @logickernel/agileflow gitlab
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# Build job - runs on tag creation
 build:
   stage: build
   script:
-    - echo "Building version ${VERSION}"
-    - docker build -t myapp:${VERSION} .
-    - docker push myapp:${VERSION}
-  needs:
-    - agileflow
+    - echo "Building version $CI_COMMIT_TAG"
+    - docker build -t myapp:$CI_COMMIT_TAG .
+    - docker push myapp:$CI_COMMIT_TAG
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
+
+# Deploy jobs - run on tag creation
+deploy-staging:
+  stage: deploy
+  script:
+    - kubectl set image deployment/myapp myapp=myapp:$CI_COMMIT_TAG
+  environment:
+    name: staging
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
+
+deploy-production:
+  stage: deploy
+  script:
+    - kubectl set image deployment/myapp myapp=myapp:$CI_COMMIT_TAG
+  environment:
+    name: production
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
+  when: manual
 ```
 
-### Step 4: Test the Installation
+### Step 4: Test the Setup
 
-1. Commit and push your changes:
+1. Push a commit with conventional format:
    ```bash
-   git add .gitlab-ci.yml
-   git commit -m "feat: add AgileFlow CI/CD pipeline"
+   git commit -m "feat: add new feature"
    git push
    ```
+2. The `agileflow` job creates a tag
+3. A new pipeline starts for the tag
+4. Build and deploy jobs run
 
-2. Check your GitLab CI pipeline - it should automatically start
-3. The `agileflow` job should complete successfully and generate a version
-4. Subsequent jobs should have access to the `${VERSION}` variable
+---
+
+## Other CI/CD Platforms
+
+For platforms without native API integration, use the `push` command:
+
+```yaml
+version:
+  script:
+    - git config user.name "CI Bot"
+    - git config user.email "ci@example.com"
+    - npx @logickernel/agileflow push
+```
+
+Then configure your platform to trigger pipelines on tag creation.
+
+---
 
 ## How It Works
 
-AgileFlow uses a different approach than traditional CI/CD tools:
+AgileFlow uses platform APIs to create version tags:
 
-### No Git Push Required
-- **AgileFlow does NOT push tags to your repository** using git commands
-- **Instead, it uses the GitLab API** to create tags remotely
-- **This eliminates the need** for job token permissions to push to the repository
+1. **Analyzes commits** since the last version tag
+2. **Calculates version** based on conventional commits
+3. **Creates tag** via API (GitHub/GitLab) or git push
+4. **Tag triggers** your build/deploy workflows
 
-### Version Generation Process
-1. **Analyzes commit history** on the main branch
-2. **Calculates next semantic version** based on conventional commits
-3. **Creates version tag** via GitLab API (not git push)
-4. **Makes VERSION variable available** to all subsequent pipeline stages
+### Benefits
 
-### Benefits of This Approach
-- **No repository write permissions** needed for CI/CD jobs
-- **More secure** - uses API tokens instead of git credentials
-- **Works with protected branches** without special permissions
-- **Consistent behavior** across all GitLab instances
+- **No repository write permissions** for CI jobs (uses API tokens)
+- **Decoupled architecture** — versioning separate from builds
+- **Works with protected branches**
+- **Any process can hook into tag creation**
 
-## Troubleshooting Installation
+---
 
-### Common Issues
+## Troubleshooting
 
-#### AGILEFLOW_TOKEN Permission Errors
+### Token Permission Errors
 
-**Problem**: Token permission denied errors.
+**GitHub**: Ensure token has `contents: write` permission.
 
-**Solutions**:
-- Ensure the token has `api` scope
-- Verify the token has `maintainer` role or higher
-- Check that the token hasn't expired
-- Confirm the token is for the correct project/user
+**GitLab**: Ensure token has `api` scope and `Maintainer` role.
 
-#### Template Include Fails
+### Tag Not Created
 
-**Problem**: The AgileFlow template include statement fails.
+- Check you're pushing to the main branch
+- Verify conventional commit format
+- Check pipeline logs for errors
 
-**Solutions**:
-- Check network connectivity to `code.logickernel.com`
-- Verify the remote URL is accessible from your GitLab instance
-- Check firewall rules and network policies
-- Use a local copy of the template if remote access is restricted
+### Build Not Triggered
 
-#### VERSION Variable Not Available
+- Ensure release workflow is configured for tag events
+- Check tag pattern matches (`v*` for GitHub, `/^v/` for GitLab)
 
-**Problem**: The `${VERSION}` variable is not available in subsequent pipeline stages.
-
-**Solutions**:
-- Ensure the `agileflow` job completed successfully
-- Check that your jobs have `needs: - agileflow` dependency
-- Verify the dotenv artifact is properly configured
-- Check the `agileflow` job logs for errors
-
-### Debug Configuration
-
-Add a debug job to verify the setup:
-
-```yaml
-debug-version:
-  stage: build
-  script:
-    - echo "VERSION: ${VERSION}"
-    - echo "CI_COMMIT_REF_NAME: ${CI_COMMIT_REF_NAME}"
-    - echo "CI_COMMIT_SHA: ${CI_COMMIT_SHA}"
-  needs:
-    - agileflow
-```
+---
 
 ## Next Steps
 
-After successful installation:
-
-1. **Read the [Getting Started Guide](./getting-started.md)** for your first pipeline
-2. **Explore [Conventional Commits](./conventional-commits.md)** for proper commit formatting
-3. **Review [GitLab CI Template Reference](./gitlab-ci-template.md)** for advanced configuration
-4. **Check [Troubleshooting](./troubleshooting.md)** if you encounter issues
+- [Getting Started](./getting-started.md) — Quick start guide
+- [CLI Reference](./cli-reference.md) — Commands and options
+- [Troubleshooting](./troubleshooting.md) — Common issues

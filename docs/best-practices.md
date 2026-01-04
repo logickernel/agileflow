@@ -1,339 +1,306 @@
-# Best Practices Guide
+# Best Practices
 
-This guide provides recommended practices and patterns for using AgileFlow effectively in your development workflow.
+This guide covers recommended practices for using AgileFlow effectively.
+
+## Decoupled Pipeline Architecture
+
+### Separate Versioning from Build/Deploy
+
+AgileFlow works best with a decoupled architecture:
+
+```
+Versioning Workflow     Release Workflow
+──────────────────     ─────────────────
+on: push to main       on: tag created
+  → AgileFlow            → build
+  → create tag           → deploy
+```
+
+**Benefits:**
+- Clear separation of concerns
+- Each pipeline has one responsibility
+- Easy to rerun builds independently
+
+### Version Workflow (Minimal)
+
+Keep the versioning workflow simple:
+
+```yaml
+# ✅ Good — Focused on versioning only
+name: Version
+on:
+  push:
+    branches: [main]
+jobs:
+  version:
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: npx @logickernel/agileflow github
+```
+
+### Release Workflow (Complete)
+
+Put build and deploy logic in the tag-triggered workflow:
+
+```yaml
+# ✅ Good — Triggered by tag, handles build/deploy
+name: Release
+on:
+  push:
+    tags: ['v*']
+jobs:
+  build:
+    # Build logic here
+  deploy:
+    # Deploy logic here
+```
+
+---
 
 ## Commit Message Best Practices
 
-### 1. Use Conventional Commits Consistently
+### Use Conventional Commits Consistently
 
 ```bash
-# ✅ Good - Clear and consistent
+# ✅ Good — Clear type and description
 feat(auth): add OAuth2 login support
 fix(api): handle null user ID gracefully
-docs: update installation guide
 
-# ❌ Bad - Inconsistent and unclear
+# ❌ Bad — Unclear
 add oauth
 fix bug
-update docs
 ```
 
-### 2. Add Scopes for Better Organization
+### Add Scopes for Organization
 
 ```bash
-# ✅ Good - Scoped commits
-feat(auth): implement JWT token validation
-fix(api): resolve user lookup timeout
+# ✅ Good — Scoped commits
+feat(auth): implement JWT validation
+fix(api): resolve timeout issue
 docs(readme): add troubleshooting section
-
-# ❌ Bad - No scope
-feat: implement JWT token validation
-fix: resolve user lookup timeout
-docs: add troubleshooting section
 ```
 
-### 3. Write Clear, Descriptive Messages
+### Mark Breaking Changes Properly
 
 ```bash
-# ✅ Good - Clear description
-feat(auth): add two-factor authentication with SMS
-fix(api): handle database connection failures gracefully
-docs: add comprehensive API reference
-
-# ❌ Bad - Vague description
-feat: add 2FA
-fix: fix bug
-docs: update docs
-```
-
-### 4. Use Breaking Change Indicators Properly
-
-```bash
-# ✅ Good - Breaking changes clearly marked
+# ✅ Good — Breaking change marked
 feat!: remove deprecated API endpoints
-feat(auth)!: change user ID format to UUID
-BREAKING CHANGE: modify database schema
 
-# ❌ Bad - Breaking changes not marked
-feat: remove deprecated API endpoints
-feat(auth): change user ID format to UUID
+# ✅ Good — Using footer
+feat: change API format
+
+BREAKING CHANGE: Response uses camelCase keys
+
+# ❌ Bad — Not marked
+feat: remove deprecated endpoints
 ```
 
-## Pipeline Configuration Best Practices
+---
 
-### 1. Always Use the VERSION Variable
+## Pipeline Best Practices
 
+### Use Tag as Version
+
+In your release workflow, extract the version from the tag:
+
+**GitHub Actions:**
 ```yaml
-# ✅ Good - Uses VERSION from AgileFlow
+- name: Get version
+  run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+- name: Build
+  run: docker build -t myapp:$VERSION .
+```
+
+**GitLab CI:**
+```yaml
 build:
-  stage: build
   script:
-    - docker build -t myapp:${VERSION} .
-    - docker push myapp:${VERSION}
-
-# ❌ Bad - Hardcoded or branch-based tagging
-build:
-  stage: build
-  script:
-    - docker build -t myapp:latest .
-    - docker build -t myapp:${CI_COMMIT_REF_SLUG} .
+    - docker build -t myapp:$CI_COMMIT_TAG .
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
 ```
 
-### 2. Proper Stage Dependencies
+### Deploy Same Version Everywhere
 
 ```yaml
-# ✅ Good - Clear dependency chain
-deploy:
-  stage: deploy
-  needs:
-    - build
-
-# ❌ Bad - No dependencies specified
-deploy:
-  stage: deploy
-```
-
-### 3. Environment-Specific Deployments
-
-```yaml
-# ✅ Good - Same version, different environments
+# ✅ Good — Same version for all environments
 deploy-staging:
-  environment:
-    name: staging
+  script:
+    - kubectl set image deployment/myapp myapp=myapp:$VERSION
 
 deploy-production:
-  environment:
-    name: production
-  when: manual
-```
-
-### 4. Consistent Testing
-
-```yaml
-# ✅ Good - Test against deployed version
-test:
-  stage: test
   script:
-    - ./run-tests.sh --version ${VERSION}
-  needs:
-    - deploy-staging
+    - kubectl set image deployment/myapp myapp=myapp:$VERSION
 ```
 
-## Version Management Best Practices
-
-### 1. Keep Releases Small and Focused
-
-- **Small releases** reduce risk and make debugging easier
-- **Frequent releases** provide faster feedback
-- **Focused changes** make rollbacks more predictable
-
-### 2. Test Thoroughly Before Merging
-
-- **Unit tests** should pass on feature branches
-- **Integration tests** should run before merge
-- **Documentation** should be updated with changes
-
-### 3. Use Feature Flags for Large Changes
+### Add Health Checks
 
 ```yaml
-# ✅ Good - Feature flag for gradual rollout
 deploy:
-  stage: deploy
   script:
-    - kubectl set image deployment/myapp myapp=myapp:${VERSION}
-    - kubectl patch deployment/myapp -p '{"spec":{"template":{"metadata":{"annotations":{"feature-flag/new-auth":"enabled"}}}}}'
-```
-
-### 4. Monitor Deployments
-
-```yaml
-# ✅ Good - Health checks after deployment
-deploy:
-  stage: deploy
-  script:
-    - kubectl set image deployment/myapp myapp=myapp:${VERSION}
+    - kubectl set image deployment/myapp myapp=myapp:$VERSION
     - kubectl rollout status deployment/myapp --timeout=300s
     - ./health-check.sh
 ```
 
+---
+
+## Version Management Best Practices
+
+### Keep Releases Small
+
+- Small releases reduce risk
+- Frequent releases provide faster feedback
+- Focused changes simplify rollbacks
+
+### Test Before Merging
+
+- Unit tests pass on feature branches
+- Integration tests run before merge
+- Documentation updated with changes
+
+### Plan for Rollbacks
+
+**GitHub Actions:**
+```yaml
+rollback:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: Rollback
+      run: |
+        PREVIOUS=$(git describe --tags --abbrev=0 HEAD^)
+        kubectl set image deployment/myapp myapp=myapp:$PREVIOUS
+```
+
+**GitLab CI:**
+```yaml
+rollback:
+  script:
+    - PREVIOUS=$(git describe --tags --abbrev=0 HEAD^)
+    - kubectl set image deployment/myapp myapp=myapp:$PREVIOUS
+  when: manual
+```
+
+---
+
 ## Security Best Practices
 
-### 1. Secure Environment Variables
+### Protect Tokens
 
-```yaml
-# ✅ Good - Protected and masked variables
-variables:
-  AGILEFLOW_TOKEN: $AGILEFLOW_TOKEN  # Protected and masked
-  GITLAB_USER_NAME: "AgileFlow Bot"  # Not sensitive
+**GitHub:**
+- Use repository secrets (automatically protected)
+- Rotate tokens regularly
 
-# ❌ Bad - Exposed sensitive information
-variables:
-  AGILEFLOW_TOKEN: "glpat-xxxxxxxxxxxxxxxxxxxx"
-```
+**GitLab:**
+- Mark variables as Protected and Masked
+- Use project tokens over personal tokens
 
-### 2. Minimal Token Permissions
+### Minimal Permissions
 
-- **Use project tokens** instead of personal tokens when possible
-- **Limit token scope** to only required permissions
-- **Regular token rotation** for security
+| Platform | Required Permission |
+|----------|---------------------|
+| GitHub | `contents: write` |
+| GitLab | `api` scope, `Maintainer` role |
 
-### 3. Environment Isolation
-
-```yaml
-# ✅ Good - Environment-specific configurations
-deploy-staging:
-  environment:
-    name: staging
-  variables:
-    DATABASE_URL: $STAGING_DATABASE_URL
-
-deploy-production:
-  environment:
-    name: production
-  variables:
-    DATABASE_URL: $PRODUCTION_DATABASE_URL
-```
+---
 
 ## Performance Best Practices
 
-### 1. Optimize Build Times
+### Shallow Clone for Release Workflow
+
+The release workflow doesn't need full history:
 
 ```yaml
-# ✅ Good - Cached dependencies
+# Versioning — needs full history
+version:
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history
+
+# Release — doesn't need history
 build:
-  stage: build
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - node_modules/
-      - .cache/
-  script:
-    - npm ci --cache .npm --prefer-offline
-    - npm run build
+  steps:
+    - uses: actions/checkout@v4
+      # Default shallow clone
 ```
 
-### 2. Parallel Job Execution
+### Cache Dependencies
 
 ```yaml
-# ✅ Good - Parallel builds for multiple services
+- uses: actions/cache@v4
+  with:
+    path: ~/.npm
+    key: npm-${{ hashFiles('package-lock.json') }}
+```
+
+### Parallel Jobs
+
+```yaml
+# Build jobs run in parallel
 build-backend:
-  stage: build
-  script:
-    - docker build -t backend:${VERSION} ./backend
-
+  runs-on: ubuntu-latest
 build-frontend:
-  stage: build
-  script:
-    - docker build -t frontend:${VERSION} ./frontend
-
-# Both jobs can run in parallel
+  runs-on: ubuntu-latest
 ```
 
-### 3. Efficient Artifact Management
-
-```yaml
-# ✅ Good - Selective artifacts
-build:
-  stage: build
-  artifacts:
-    paths:
-      - dist/
-      - build/
-    expire_in: 1 week
-    when: on_success
-```
-
-## Monitoring and Observability
-
-### 1. Pipeline Visibility
-
-```yaml
-# ✅ Good - Clear job names and descriptions
-build-production:
-  stage: build
-  description: "Build production artifacts with version ${VERSION}"
-  script:
-    - echo "Building version ${VERSION}"
-```
-
-### 2. Deployment Tracking
-
-```yaml
-# ✅ Good - Track deployment status
-deploy:
-  stage: deploy
-  script:
-    - kubectl set image deployment/myapp myapp=myapp:${VERSION}
-    - echo "Deployed ${VERSION} at $(date)" >> deployment.log
-```
-
-### 3. Error Reporting
-
-```yaml
-# ✅ Good - Comprehensive error handling
-deploy:
-  stage: deploy
-  script:
-    - |
-      if ! kubectl set image deployment/myapp myapp=myapp:${VERSION}; then
-        echo "Deployment failed for version ${VERSION}"
-        exit 1
-      fi
-```
-
-## Migration Best Practices
-
-### 1. Gradual Adoption
-
-- **Start with AgileFlow** on new projects
-- **Gradually migrate** existing pipelines
-- **Test thoroughly** before full migration
-
-### 2. Team Training
-
-- **Train team members** on conventional commits
-- **Document workflow changes** clearly
-- **Provide examples** and templates
-
-### 3. Rollback Planning
-
-```yaml
-# ✅ Good - Rollback capability
-rollback:
-  stage: deploy
-  script:
-    - |
-      PREVIOUS_VERSION=$(git describe --abbrev=0 --tags v${VERSION%.*}.$((10#${VERSION##*.} - 1)))
-      kubectl set image deployment/myapp myapp=myapp:${PREVIOUS_VERSION}
-  when: manual
-  allow_failure: true
-```
+---
 
 ## Documentation Best Practices
 
-### 1. Keep Documentation Updated
+### Write Meaningful Commit Messages
 
-- **Update README** with new features
-- **Document breaking changes** clearly
-- **Provide examples** for common use cases
+```bash
+# ✅ Good — Becomes clear release note
+feat(auth): add OAuth2 login with Google and GitHub providers
 
-### 2. Version-Specific Documentation
+# ❌ Bad — Poor release note
+feat: add login
+```
+
+### Include Docs in Changes
+
+```bash
+git commit -m "feat(auth): add OAuth2 login
+
+- Implement OAuth2 flow
+- Add configuration documentation
+- Update API reference"
+```
+
+---
+
+## Team Best Practices
+
+### Establish Conventions
+
+- Document commit message standards
+- Use commit linting (commitlint, husky)
+- Review commit messages in PRs
+
+### Communicate Releases
 
 ```yaml
-# ✅ Good - Generate version-specific docs
-docs:
-  stage: deploy
+notify:
   script:
     - |
-      echo "# Version ${VERSION}" > docs/versions/${VERSION}.md
-      echo "Released: $(date)" >> docs/versions/${VERSION}.md
-      echo "Changes: $(git tag -l -n99 ${VERSION})" >> docs/versions/${VERSION}.md
+      curl -X POST "$SLACK_WEBHOOK" \
+        -d "{\"text\": \"Released $VERSION\"}"
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
 ```
+
+---
 
 ## Related Documentation
 
-- [Getting Started](./getting-started.md) - Quick start guide
-- [Conventional Commits](./conventional-commits.md) - Commit message format
-- [GitLab CI Template](./gitlab-ci-template.md) - Template configuration
-- [Configuration](./configuration.md) - Environment variables
-- [Troubleshooting](./troubleshooting.md) - Common issues and solutions
+- [Getting Started](./getting-started.md) — Quick start
+- [Conventional Commits](./conventional-commits.md) — Commit format
+- [Installation Guide](./installation.md) — Setup
+- [Troubleshooting](./troubleshooting.md) — Common issues

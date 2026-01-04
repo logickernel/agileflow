@@ -1,26 +1,26 @@
-# Getting Started with AgileFlow
+# Getting Started
 
-Welcome to AgileFlow! This guide will help you get up and running with AgileFlow's version-centric CI/CD approach in just a few minutes.
+Get up and running with AgileFlow in minutes. This guide covers local usage and CI/CD integration.
 
 ## What You'll Learn
 
-By the end of this guide, you'll have:
-- AgileFlow running in your project
-- Automatic semantic versioning based on conventional commits
-- Understanding of how the version-centric approach works
+- How to preview your next version locally
+- How to set up automatic versioning in CI/CD
+- How conventional commits affect version bumps
 
 ## Prerequisites
 
-Before you begin, ensure you have:
-- Node.js 14+ installed (for local usage)
+- Node.js 14+ (for local usage)
 - A Git repository with commit history
-- Basic understanding of Git and conventional commits
+- Basic understanding of conventional commits
+
+---
 
 ## Quick Start
 
-### Local Usage
+### 1. Preview Your Next Version
 
-Run AgileFlow directly with npx to see your current and next version:
+Run AgileFlow in any Git repository:
 
 ```bash
 npx @logickernel/agileflow
@@ -30,7 +30,6 @@ Example output:
 ```
 Current version: v1.2.3
 Next version: v1.2.4
-Commits since current version: 3
 
 Changelog:
 ### fix
@@ -41,153 +40,199 @@ Changelog:
 - update README with usage examples
 ```
 
-### Quiet Mode
+### 2. Get Just the Version
 
-Use `--quiet` to only output the next version (useful for scripts):
+Use `--quiet` to output only the version (useful for scripts):
 
 ```bash
 VERSION=$(npx @logickernel/agileflow --quiet)
-echo "Next version will be: $VERSION"
+echo "Next version: $VERSION"
 ```
+
+---
 
 ## CI/CD Integration
 
-### GitLab CI
+AgileFlow uses a **decoupled architecture**:
 
-1. **Configure the AGILEFLOW_TOKEN**
+1. **AgileFlow creates a version tag** (on merge to main)
+2. **Your pipelines trigger on the tag** (build, deploy, etc.)
 
-   Go to **Settings > CI/CD > Variables** and add:
-
-   | Variable | Value | Protect | Mask |
-   |----------|-------|---------|------|
-   | `AGILEFLOW_TOKEN` | Your GitLab API token | Yes | Yes |
-
-   Create the token at **Settings > Access Tokens** with:
-   - **Name**: AgileFlow Bot
-   - **Role**: Maintainer
-   - **Scopes**: api
-
-2. **Add AgileFlow to your pipeline**
-
-   ```yaml
-   stages:
-     - version
-     - build
-
-   agileflow:
-     stage: version
-     image: node:20-alpine
-     script:
-       - npx @logickernel/agileflow gitlab
-     only:
-       - main
-   
-   build:
-     stage: build
-     script:
-       - echo "Building..."
-     needs:
-       - agileflow
-   ```
+```
+Merge to main ──▶ AgileFlow ──▶ Tag v1.2.3 ──▶ Your build/deploy
+```
 
 ### GitHub Actions
 
-1. **Configure the AGILEFLOW_TOKEN**
+**Step 1**: Add a secret `AGILEFLOW_TOKEN` with a Personal Access Token (`contents: write` permission).
 
-   Go to **Settings > Secrets and variables > Actions** and add a secret:
-   - **Name**: `AGILEFLOW_TOKEN`
-   - **Value**: A Personal Access Token with `contents: write` permission
+**Step 2**: Create `.github/workflows/version.yml`:
 
-2. **Add AgileFlow to your workflow**
+```yaml
+name: Version
+on:
+  push:
+    branches: [main]
 
-   ```yaml
-   name: Release
-   on:
-     push:
-       branches: [main]
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-   jobs:
-     version:
-       runs-on: ubuntu-latest
-       steps:
-         - uses: actions/checkout@v4
-           with:
-             fetch-depth: 0  # Required for version history
-         
-         - uses: actions/setup-node@v4
-           with:
-             node-version: '20'
-         
-         - name: Create version tag
-           env:
-             AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
-           run: npx @logickernel/agileflow github
-   ```
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create version tag
+        env:
+          AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
+        run: npx @logickernel/agileflow github
+```
+
+**Step 3**: Create `.github/workflows/release.yml` for builds:
+
+```yaml
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "Building $VERSION"
+          docker build -t myapp:$VERSION .
+```
+
+### GitLab CI
+
+**Step 1**: Add a CI/CD variable `AGILEFLOW_TOKEN` with a Project Access Token (`api` scope, `Maintainer` role).
+
+**Step 2**: Update `.gitlab-ci.yml`:
+
+```yaml
+# Runs on merge to main - creates the tag
+agileflow:
+  stage: version
+  image: node:20-alpine
+  script:
+    - npx @logickernel/agileflow gitlab
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# Runs on tag creation - builds the release
+build:
+  stage: build
+  script:
+    - echo "Building $CI_COMMIT_TAG"
+    - docker build -t myapp:$CI_COMMIT_TAG .
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
+```
 
 ### Native Git Push
 
-If you prefer using native git commands (requires git credentials):
+For other platforms:
 
 ```bash
 npx @logickernel/agileflow push
 ```
 
-This creates an annotated tag and pushes it to the origin remote.
+This creates an annotated tag and pushes it. Configure your CI to trigger on tags.
 
-## How AgileFlow Works
+---
 
-### Version Calculation
-- Analyzes commit messages since the last version tag
-- Uses conventional commits to determine version bump type
-- Generates semantic versions automatically (v1.0.0, v1.0.1, etc.)
+## How Version Bumps Work
 
-### Version Bump Rules
+AgileFlow analyzes commit messages to determine the bump:
 
 | Commit Type | Example | Version Bump |
 |-------------|---------|--------------|
-| Breaking change | `feat!: redesign API` | Major (1.0.0 → 2.0.0) |
-| Feature | `feat: add login` | Minor (1.0.0 → 1.1.0) |
-| Fix | `fix: resolve crash` | Patch (1.0.0 → 1.0.1) |
-| Performance | `perf: optimize query` | Patch |
-| Refactor | `refactor: simplify logic` | Patch |
+| Breaking change | `feat!: redesign API` | **Major** (1.0.0 → 2.0.0) |
+| Feature | `feat: add login` | **Minor** (1.0.0 → 1.1.0) |
+| Fix | `fix: resolve crash` | **Patch** (1.0.0 → 1.0.1) |
+| Performance | `perf: optimize query` | **Patch** |
 | Docs only | `docs: update README` | No bump |
-| Chore | `chore: update deps` | No bump |
+
+### Pre-1.0.0 Behavior
+
+During initial development (0.x.x):
+- Features and fixes → **patch** bump
+- Breaking changes → **minor** bump
 
 ### No Bump Needed
 
-If all commits since the last version are docs/chore/style types, AgileFlow will report "no bump needed" and skip tag creation in push commands.
+If all commits are docs/chore/style types, AgileFlow skips tag creation.
+
+---
+
+## Your First Release
+
+### Starting Fresh
+
+No version tags? AgileFlow starts from v0.0.0:
+
+```bash
+git commit -m "feat: initial project setup"
+# → Creates v0.0.1
+```
+
+### Creating v1.0.0
+
+Version 1.0.0 is your first stable release. Create it manually when ready:
+
+```bash
+git tag -a v1.0.0 -m "First stable release"
+git push origin v1.0.0
+```
+
+After v1.0.0, AgileFlow continues with standard semantic versioning.
+
+---
 
 ## Common Questions
 
-### Q: How does AgileFlow determine the next version?
-A: AgileFlow analyzes your commit messages using conventional commits. Features bump the minor version, fixes bump the patch version, and breaking changes bump the major version.
+**How does the decoupled approach work?**
 
-### Q: What if there's no version tag yet?
-A: AgileFlow starts from v0.0.0 and calculates the first version based on your commits.
+AgileFlow only creates version tags. Your build/deploy pipelines are separate workflows that trigger on tag creation. This keeps versioning independent from your build process.
 
-### Q: Can I use this locally before pushing?
-A: Yes! Run `npx @logickernel/agileflow` to preview the next version without creating any tags.
+**What if no version bump is needed?**
 
-### Q: What happens if no version bump is needed?
-A: The push commands (`push`, `gitlab`, `github`) will skip tag creation and exit successfully.
+AgileFlow skips tag creation. No tag means no build/deploy triggered.
+
+**Can I preview without creating tags?**
+
+Yes! Running `npx @logickernel/agileflow` without a command shows the next version without creating anything.
+
+---
 
 ## Troubleshooting
 
-### "Not a git repository" Error
-- Ensure you're running AgileFlow from within a git repository
-- Check that the `.git` directory exists
-
 ### "AGILEFLOW_TOKEN not set" Error
-- Ensure the environment variable is configured in your CI/CD settings
-- Verify the token has the required permissions
+- Verify the environment variable is configured
+- Check token permissions (GitHub: `contents: write`, GitLab: `api` scope)
+
+### Tag Created but Build Didn't Run
+- Ensure your release workflow triggers on `tags: ['v*']`
+- Check the tag pattern in your CI configuration
 
 ### No Version Bump Detected
-- Ensure you're using conventional commit format
-- Check that there are commits since the last version tag
-- Verify commits include bump-triggering types (feat, fix, perf, etc.)
+- Use conventional commit format (`type: description`)
+- Include bump-triggering types: `feat`, `fix`, `perf`, etc.
+
+---
 
 ## Next Steps
 
-- Read the [CLI Reference](./cli-reference.md) for all available commands
-- Learn about [Conventional Commits](./conventional-commits.md)
-- Explore [Version-Centric CI/CD](./version-centric-cicd.md) methodology
+- [CLI Reference](./cli-reference.md) — All commands and options
+- [Installation Guide](./installation.md) — Detailed setup
+- [Conventional Commits](./conventional-commits.md) — Commit format
+- [Version-Centric CI/CD](./version-centric-cicd.md) — The methodology

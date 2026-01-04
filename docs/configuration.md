@@ -1,232 +1,219 @@
 # Configuration Guide
 
-AgileFlow uses environment variables for configuration, making it easy to customize behavior across different environments and deployment scenarios.
+AgileFlow uses environment variables for configuration. Most variables are automatically provided by your CI/CD platform.
 
 ## Environment Variables
 
-### Required Variables
+### Required for CI/CD
 
-These environment variables must be set for AgileFlow to function properly:
+#### AGILEFLOW_TOKEN
 
-#### GitLab CI/CD Variables
+The access token used to create version tags via the platform API.
 
-- **`GITLAB_USER_NAME`** - Username for git commits and tag creation
-  - **Example**: `AgileFlow Bot`
-  - **Purpose**: Sets the author name for version tags and commits
-  - **Required**: Yes
+| Platform | Token Type | Required Permissions |
+|----------|------------|---------------------|
+| GitHub | Personal Access Token | `contents: write` |
+| GitLab | Project or Personal Access Token | `api` scope, `Maintainer` role |
 
-- **`GITLAB_USER_EMAIL`** - Email address for git commits and tag creation
-  - **Example**: `agileflow@example.com`
-  - **Purpose**: Sets the author email for version tags and commits
-  - **Required**: Yes
-
-- **`CI_SERVER_HOST`** - GitLab server hostname
-  - **Example**: `gitlab.example.com`
-  - **Purpose**: Used for generating commit pipeline URLs and API calls
-  - **Required**: Yes
-
-- **`CI_PROJECT_PATH`** - GitLab project path (group/project)
-  - **Example**: `mygroup/myproject`
-  - **Purpose**: Used for API calls and URL generation
-  - **Required**: Yes
-
-- **`AGILEFLOW_TOKEN`** - GitLab access token with API permissions
-  - **Example**: `glpat-xxxxxxxxxxxxxxxxxxxx`
-  - **Purpose**: Authenticates API calls for tag creation and repository access
-  - **Required**: Yes
-  - **Scopes**: `api` access required
-  - **Role**: `maintainer` or higher recommended
-
-### Optional Variables
-
-These variables can be set to customize AgileFlow behavior:
-
-#### Version Generation
-
-- **`AGILEFLOW_MAX_COMMIT_LINES`** - Maximum number of commit lines in release notes
-  - **Default**: `50`
-  - **Example**: `100`
-  - **Purpose**: Controls the length of generated release notes
-
-- **`AGILEFLOW_INCLUDE_MERGE_COMMITS`** - Whether to include merge commits in release notes
-  - **Default**: `false`
-  - **Example**: `true`
-  - **Purpose**: Controls whether merge commits appear in release notes
-
-#### Git Configuration
-
-- **`GIT_COMMITTER_NAME`** - Override committer name (if different from author)
-  - **Default**: Uses `GITLAB_USER_NAME`
-  - **Example**: `CI Bot`
-  - **Purpose**: Sets the committer name for git operations
-
-- **`GIT_COMMITTER_EMAIL`** - Override committer email (if different from author)
-  - **Default**: Uses `GITLAB_USER_EMAIL`
-  - **Example**: `ci@example.com`
-  - **Purpose**: Sets the committer email for git operations
-
-## Configuration Examples
-
-### Basic GitLab CI Configuration
-
+**GitHub Actions:**
 ```yaml
-# .gitlab-ci.yml
-variables:
-  GITLAB_USER_NAME: "AgileFlow Bot"
-  GITLAB_USER_EMAIL: "agileflow@example.com"
-  CI_SERVER_HOST: "gitlab.example.com"
-  CI_PROJECT_PATH: "mygroup/myproject"
-
-include:
-  - local: templates/AgileFlow.gitlab-ci.yml
-
-build:
-  stage: build
-  script:
-    - echo "Building version ${VERSION}"
-  needs:
-    - agileflow
+env:
+  AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
 ```
 
-### Advanced Configuration with Custom Options
-
+**GitLab CI:**
 ```yaml
-# .gitlab-ci.yml
-variables:
-  GITLAB_USER_NAME: "AgileFlow Bot"
-  GITLAB_USER_EMAIL: "agileflow@example.com"
-  CI_SERVER_HOST: "gitlab.example.com"
-  CI_PROJECT_PATH: "mygroup/myproject"
-  AGILEFLOW_MAX_COMMIT_LINES: "100"
-  AGILEFLOW_INCLUDE_MERGE_COMMITS: "false"
-
-include:
-  - local: templates/AgileFlow.gitlab-ci.yml
-
-build:
-  stage: build
-  script:
-    - echo "Building version ${VERSION}"
-  needs:
-    - agileflow
+# Set via Settings → CI/CD → Variables
+# Key: AGILEFLOW_TOKEN
+# Flags: Protected, Masked
 ```
 
-### Environment-Specific Configuration
+### Auto-Provided Variables
+
+These are automatically set by your CI/CD platform:
+
+#### GitHub Actions
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `GITHUB_REPOSITORY` | Repository name | `owner/repo` |
+| `GITHUB_SHA` | Current commit SHA | `abc123...` |
+
+#### GitLab CI
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `CI_SERVER_HOST` | GitLab server hostname | `gitlab.com` |
+| `CI_PROJECT_PATH` | Project path | `group/project` |
+| `CI_COMMIT_SHA` | Current commit SHA | `abc123...` |
+
+---
+
+## Platform Configuration
+
+### GitHub Actions
 
 ```yaml
-# .gitlab-ci.yml
-include:
-  - local: templates/AgileFlow.gitlab-ci.yml
+name: Release
+on:
+  push:
+    branches: [main]
 
-# Development environment
-build-dev:
-  stage: build
-  variables:
-    AGILEFLOW_MAX_COMMIT_LINES: "25"
-  script:
-    - echo "Building dev version ${VERSION}"
-  needs:
-    - agileflow
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for full commit history
 
-# Production environment
-build-prod:
-  stage: build
-  variables:
-    AGILEFLOW_MAX_COMMIT_LINES: "100"
-  script:
-    - echo "Building production version ${VERSION}"
-  needs:
-    - agileflow
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create version tag
+        env:
+          AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
+        run: npx @logickernel/agileflow github
 ```
 
-## Setting Variables in GitLab
+### GitLab CI
 
-### Project-Level Variables
+```yaml
+agileflow:
+  stage: version
+  image: node:20-alpine
+  script:
+    - VERSION=$(npx @logickernel/agileflow gitlab --quiet)
+    - echo "VERSION=$VERSION" >> version.env
+  artifacts:
+    reports:
+      dotenv: version.env
+  only:
+    - main
+```
 
-1. Go to your GitLab project
-2. Navigate to **Settings > CI/CD**
-3. Expand **Variables**
-4. Add each required variable:
-   - **Key**: `GITLAB_USER_NAME`
-   - **Value**: `AgileFlow Bot`
-   - **Type**: Variable
-   - **Environment scope**: All (default)
-   - **Protect variable**: Yes (recommended)
-   - **Mask variable**: No
+---
 
-### Group-Level Variables
+## Setting Up Tokens
 
-For organization-wide consistency:
+### GitHub Personal Access Token
 
-1. Go to your GitLab group
-2. Navigate to **Settings > CI/CD**
-3. Expand **Variables**
-4. Add common variables like `GITLAB_USER_NAME` and `GITLAB_USER_EMAIL`
+1. Go to **Settings → Developer settings → Personal access tokens → Fine-grained tokens**
+2. Click **Generate new token**
+3. Configure:
+   - **Name**: `AgileFlow`
+   - **Repository access**: Select your repositories
+   - **Permissions**: `Contents: Read and write`
+4. Copy the token
 
-### Instance-Level Variables
+Add as a repository secret:
+1. Go to repository **Settings → Secrets and variables → Actions**
+2. Click **New repository secret**
+3. Name: `AGILEFLOW_TOKEN`, Value: your token
 
-For self-managed GitLab instances:
+### GitLab Project Access Token
 
-1. Go to **Admin Area > Settings > CI/CD**
-2. Expand **Variables**
-3. Add instance-wide defaults
+1. Go to project **Settings → Access tokens**
+2. Create new token:
+   - **Name**: `AgileFlow`
+   - **Role**: `Maintainer`
+   - **Scopes**: `api`
+3. Copy the token
 
-## Security Considerations
+Add as a CI/CD variable:
+1. Go to project **Settings → CI/CD → Variables**
+2. Add variable:
+   - **Key**: `AGILEFLOW_TOKEN`
+   - **Value**: your token
+   - **Flags**: Protected, Masked
+
+---
+
+## Security Best Practices
 
 ### Token Security
 
-- **Protect variables**: Enable protection for sensitive variables like `AGILEFLOW_TOKEN`
-- **Mask variables**: Don't mask variables that need to be visible in logs
-- **Scope variables**: Limit variable scope to specific environments when possible
-- **Rotate tokens**: Regularly rotate access tokens
+- **Use project tokens** over personal tokens when possible
+- **Enable protection** for sensitive variables
+- **Limit scope** to only required permissions
+- **Rotate tokens** regularly
+- **Use masked variables** to hide values in logs
 
 ### Access Control
 
-- **Minimal permissions**: Use tokens with minimal required permissions
-- **Role-based access**: Ensure tokens have appropriate role assignments
-- **Audit access**: Regularly review token access and usage
+- **Minimal permissions** — Use tokens with only required access
+- **Protected branches** — Limit who can push to main
+- **Audit access** — Regularly review token usage
+
+### Example: Protected Variable
+
+**GitHub:**
+- Repository secrets are automatically protected
+- Only workflows triggered from the default branch can access them
+
+**GitLab:**
+```yaml
+# Variable settings:
+# - Protected: Yes (only available on protected branches)
+# - Masked: Yes (hidden in job logs)
+```
+
+---
 
 ## Troubleshooting Configuration
 
-### Common Configuration Issues
+### Token Permission Errors
 
-**Missing Required Variables**
+**GitHub:**
 ```
-Error: Missing required environment variable: GITLAB_USER_NAME
+Error: Resource not accessible by integration
 ```
-**Solution**: Add the missing variable to your GitLab CI/CD variables.
+- Ensure token has `contents: write` permission
+- Check repository access is granted
 
-**Invalid Token Permissions**
+**GitLab:**
 ```
-Error: Permission denied. The AGILEFLOW_TOKEN needs "api" scope and maintainer role.
+Error: 403 Forbidden
 ```
-**Solution**: Update the token to have proper permissions and role.
+- Ensure token has `api` scope
+- Verify `Maintainer` role or higher
+- Check token hasn't expired
 
-**Invalid Project Path**
+### Missing Environment Variables
+
 ```
-Error: Invalid project path format
+Error: AGILEFLOW_TOKEN environment variable is required but not set.
 ```
-**Solution**: Ensure `CI_PROJECT_PATH` follows the format `group/project`.
+- Verify the variable is configured in your CI/CD settings
+- Check variable protection settings match your branch
 
 ### Debug Configuration
 
-Add a debug job to verify configuration:
+Add a debug step to verify configuration:
 
+**GitHub Actions:**
 ```yaml
-debug-config:
-  stage: build
-  script:
-    - echo "GITLAB_USER_NAME: ${GITLAB_USER_NAME}"
-    - echo "CI_SERVER_HOST: ${CI_SERVER_HOST}"
-    - echo "CI_PROJECT_PATH: ${CI_PROJECT_PATH}"
-    - echo "AGILEFLOW_TOKEN: ${AGILEFLOW_TOKEN:0:10}..."
-  needs:
-    - agileflow
+- name: Debug
+  run: |
+    echo "Repository: $GITHUB_REPOSITORY"
+    echo "SHA: $GITHUB_SHA"
+    echo "Token set: ${{ secrets.AGILEFLOW_TOKEN != '' }}"
 ```
+
+**GitLab CI:**
+```yaml
+debug:
+  script:
+    - echo "Server: $CI_SERVER_HOST"
+    - echo "Project: $CI_PROJECT_PATH"
+    - echo "Token set: ${AGILEFLOW_TOKEN:+yes}"
+```
+
+---
 
 ## Related Documentation
 
-- [Installation Guide](./installation.md) - Setup and configuration
-- [GitLab CI Template](./gitlab-ci-template.md) - Template configuration
-- [Troubleshooting](./troubleshooting.md) - Common issues and solutions
-- [CLI Reference](./cli-reference.md) - Command-line configuration
+- [Installation Guide](./installation.md) — Complete setup instructions
+- [CLI Reference](./cli-reference.md) — Command-line options
+- [Troubleshooting](./troubleshooting.md) — Common issues and solutions
