@@ -72,7 +72,7 @@ function getCurrentBranch() {
 }
 
 // Conventional commit type configuration
-const TYPE_ORDER = ['feat', 'fix', 'perf', 'refactor', 'style', 'test', 'docs', 'build', 'ci', 'chore', 'revert'];
+const TYPE_ORDER = ['feat', 'fix', 'perf', 'refactor', 'style', 'test', 'build', 'ci', 'docs', 'chore', 'revert'];
 const PATCH_TYPES = ['fix', 'perf', 'refactor', 'test', 'build', 'ci', 'revert'];
 const SEMVER_PATTERN = /^v(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.-]+)?$/;
 
