@@ -82,7 +82,7 @@ jobs:
 agileflow:
   image: node:20
   script:
-    - npm install @logickernel/agileflow gitlab
+    - npm install -g @logickernel/agileflow
     - npx @logickernel/agileflow gitlab
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'

@@ -121,9 +121,9 @@ jobs:
 ```yaml
 # Runs on merge to main - creates the tag
 agileflow:
-  stage: version
-  image: node:20-alpine
+  image: node:20
   script:
+    - npm install -g @logickernel/agileflow
     - npx @logickernel/agileflow gitlab
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
