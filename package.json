@@ -1,6 +1,6 @@
 {
   "name": "@logickernel/agileflow",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Automatic semantic versioning and changelog generation based on conventional commits",
   "main": "src/index.js",
   "bin": {
@@ -35,6 +35,6 @@
     "type": "git",
     "url": "git@code.logickernel.com:kernel/agileflow.git"
   },
-  "author": "Víctor H. Valle <victor.valle@logickernel.com>",
+  "author": "Víctor Valle <victor.valle@logickernel.com>",
   "license": "ISC"
 }
