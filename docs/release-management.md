@@ -30,13 +30,12 @@ MAJOR.MINOR.PATCH
 
 ### Automatic Version Calculation
 
-| Commit Type | Example | Version Bump |
-|-------------|---------|--------------|
-| Breaking | `feat!: remove API` | Major |
-| Feature | `feat: add login` | Minor |
-| Fix | `fix: resolve crash` | Patch |
-| Performance | `perf: optimize` | Patch |
-| No bump | `docs: update README` | None |
+| Commit Type | Example | 0.x.x | 1.0.0+ |
+|-------------|---------|-------|--------|
+| Breaking change | `feat!: redesign API` | **Minor** (0.1.0 → 0.2.0) | **Major** (1.0.0 → 2.0.0) |
+| Feature | `feat: add login` | **Minor** | **Minor** |
+| Fix | `fix: resolve crash` | **Patch** | **Patch** |
+| Everything else | `docs: update README` | No bump | No bump |
 
 ---
 
@@ -170,7 +169,8 @@ git tag -l -n99 v1.2.4
 
 New projects start at v0.0.0:
 
-- Features/fixes → Patch bump (0.0.0 → 0.0.1)
+- Features → Minor bump (0.0.0 → 0.1.0)
+- Fixes → Patch bump (0.0.0 → 0.0.1)
 - Breaking changes → Minor bump (0.0.0 → 0.1.0)
 
 ---

@@ -161,11 +161,7 @@ AgileFlow analyzes commits since the last version tag to determine the appropria
 | Breaking change | `feat!: redesign API` | **Minor** (0.1.0 → 0.2.0) | **Major** (1.0.0 → 2.0.0) |
 | Feature | `feat: add login` | **Minor** | **Minor** |
 | Fix | `fix: resolve crash` | **Patch** | **Patch** |
-| Performance | `perf: optimize query` | **Patch** | **Patch** |
-| Refactor | `refactor: simplify logic` | **Patch** | **Patch** |
-| Build/CI | `build: update deps` | **Patch** | **Patch** |
-| Docs only | `docs: update README` | No bump | No bump |
-| Style changes | `style: update variable name` | No bump | No bump |
+| Everything else | `docs: update README` | No bump | No bump |
 
 ---
 

@@ -29,14 +29,14 @@ type(scope): description
 
 | Type | Description | 1.0.0+ | 0.x.x |
 |------|-------------|--------|-------|
-| `feat` | New features | Minor | Patch |
+| `feat` | New features | Minor | Minor |
 | `fix` | Bug fixes | Patch | Patch |
-| `perf` | Performance improvements | Patch | Patch |
-| `refactor` | Code refactoring | Patch | Patch |
-| `build` | Build system changes | Patch | Patch |
-| `ci` | CI/CD changes | Patch | Patch |
-| `test` | Test changes | Patch | Patch |
-| `revert` | Revert commits | Patch | Patch |
+| `perf` | Performance improvements | None | None |
+| `refactor` | Code refactoring | None | None |
+| `build` | Build system changes | None | None |
+| `ci` | CI/CD changes | None | None |
+| `test` | Test changes | None | None |
+| `revert` | Revert commits | None | None |
 | `docs` | Documentation | None | None |
 | `style` | Code style | None | None |
 | `chore` | Maintenance | None | None |
@@ -123,9 +123,9 @@ chore: update development dependencies
 When multiple commits exist, the highest priority wins:
 
 1. **Breaking changes** → Major (or Minor for 0.x.x)
-2. **Features** → Minor (or Patch for 0.x.x)
-3. **Fixes, Performance, etc.** → Patch
-4. **Docs, Style, Chore** → No bump
+2. **Features** → Minor
+3. **Fixes** → Patch
+4. **Everything else** → No bump
 
 ### Example
 
@@ -190,7 +190,7 @@ docs: internal notes [skip release]
 ## Non-Conventional Commits
 
 Commits not following the format:
-- Trigger **patch bump** by default
+- Trigger **no bump** by default
 - Appear under "Other changes" in release notes
 - Use `[skip release]` to prevent bump
 

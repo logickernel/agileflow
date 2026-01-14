@@ -154,19 +154,12 @@ This creates an annotated tag and pushes it. Configure your CI to trigger on tag
 
 AgileFlow analyzes commit messages to determine the bump:
 
-| Commit Type | Example | Version Bump |
-|-------------|---------|--------------|
-| Breaking change | `feat!: redesign API` | **Major** (1.0.0 → 2.0.0) |
-| Feature | `feat: add login` | **Minor** (1.0.0 → 1.1.0) |
-| Fix | `fix: resolve crash` | **Patch** (1.0.0 → 1.0.1) |
-| Performance | `perf: optimize query` | **Patch** |
-| Docs only | `docs: update README` | No bump |
-
-### Pre-1.0.0 Behavior
-
-During initial development (0.x.x):
-- Features and fixes → **patch** bump
-- Breaking changes → **minor** bump
+| Commit Type | Example | 0.x.x | 1.0.0+ |
+|-------------|---------|-------|--------|
+| Breaking change | `feat!: redesign API` | **Minor** (0.1.0 → 0.2.0) | **Major** (1.0.0 → 2.0.0) |
+| Feature | `feat: add login` | **Minor** | **Minor** |
+| Fix | `fix: resolve crash` | **Patch** | **Patch** |
+| Everything else | `docs: update README` | No bump | No bump |
 
 ### No Bump Needed
 
@@ -226,7 +219,7 @@ Yes! Running `npx @logickernel/agileflow` without a command shows the next versi
 
 ### No Version Bump Detected
 - Use conventional commit format (`type: description`)
-- Include bump-triggering types: `feat`, `fix`, `perf`, etc.
+- Include bump-triggering types: `feat` (minor) or `fix` (patch)
 
 ---
 

@@ -189,8 +189,6 @@ AgileFlow determines version bumps from commits:
 ```bash
 # Patch bump (v1.0.0 → v1.0.1)
 fix: resolve login bug
-perf: optimize queries
-refactor: simplify logic
 
 # Minor bump (v1.0.0 → v1.1.0)
 feat: add user dashboard
@@ -199,6 +197,8 @@ feat: add user dashboard
 feat!: remove deprecated API
 
 # No bump
+perf: optimize queries
+refactor: simplify logic
 docs: update README
 chore: update dependencies
 ```

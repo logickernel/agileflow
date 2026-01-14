@@ -73,7 +73,6 @@ function getCurrentBranch() {
 
 // Conventional commit type configuration
 const TYPE_ORDER = ['feat', 'fix', 'perf', 'refactor', 'style', 'test', 'build', 'ci', 'docs', 'chore', 'revert'];
-const PATCH_TYPES = ['fix', 'perf', 'refactor', 'test', 'build', 'ci', 'revert'];
 const SEMVER_PATTERN = /^v(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.-]+)?$/;
 
 // Friendly header names for changelog
@@ -208,19 +207,19 @@ function parseVersion(version) {
 
 /**
  * Determines version bump type based on commit analysis.
- * @param {{hasBreaking: boolean, hasFeat: boolean, hasPatchTypes: boolean}} analysis
+ * @param {{hasBreaking: boolean, hasFeat: boolean, hasFix: boolean}} analysis
  * @param {boolean} isPreOneZero - Whether current version is 0.x.x
  * @returns {'major'|'minor'|'patch'|'none'}
  */
 function determineVersionBumpType(analysis, isPreOneZero) {
-  const { hasBreaking, hasFeat, hasPatchTypes } = analysis;
+  const { hasBreaking, hasFeat, hasFix } = analysis;
   if (isPreOneZero) {
     if (hasBreaking || hasFeat) return 'minor';
-    if (hasPatchTypes) return 'patch';
+    if (hasFix) return 'patch';
   } else {
     if (hasBreaking) return 'major';
     if (hasFeat) return 'minor';
-    if (hasPatchTypes) return 'patch';
+    if (hasFix) return 'patch';
   }
   return 'none';
 }
@@ -255,12 +254,12 @@ function isBreakingChange(commit, parsed) {
 /**
  * Analyzes commits to determine version bump requirements.
  * @param {Array} commits - Array of commit objects
- * @returns {{hasBreaking: boolean, hasFeat: boolean, hasPatchTypes: boolean, commitsByType: Object, breakingCommits: Array}}
+ * @returns {{hasBreaking: boolean, hasFeat: boolean, hasFix: boolean, commitsByType: Object, breakingCommits: Array}}
  */
 function analyzeCommitsForVersioning(commits) {
   const commitsByType = Object.fromEntries(TYPE_ORDER.map(t => [t, []]));
   const breakingCommits = [];
-  let hasBreaking = false, hasFeat = false, hasPatchTypes = false;
+  let hasBreaking = false, hasFeat = false, hasFix = false;
   
   for (const commit of commits) {
     const parsed = parseConventionalCommit(commit.message);
@@ -275,7 +274,7 @@ function analyzeCommitsForVersioning(commits) {
     } else {
       // Only add to type sections if not breaking
       if (type === 'feat') hasFeat = true;
-      else if (PATCH_TYPES.includes(type)) hasPatchTypes = true;
+      else if (type === 'fix') hasFix = true;
       
       if (commitsByType[type]) {
         commitsByType[type].push(commit);
@@ -283,7 +282,7 @@ function analyzeCommitsForVersioning(commits) {
     }
   }
   
-  return { hasBreaking, hasFeat, hasPatchTypes, commitsByType, breakingCommits };
+  return { hasBreaking, hasFeat, hasFix, commitsByType, breakingCommits };
 }
 
 /**
