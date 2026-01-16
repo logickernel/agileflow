@@ -133,8 +133,7 @@ Each merge to main triggers automatic version generation based on commit types. 
 
 New projects start at **v0.0.0** and automatically increment based on commits. AgileFlow will keep automatically generating versions as you develop (0.0.1, 0.0.2, 0.1.0, etc.). When your product has reached maturity and you have a stable API ready for production, create version 1.0.0 manually.
 
-<details>
-<summary><strong>Version 1.0.0 — First Stable Release</strong></summary>
+### Version 1.0.0 — First Stable Release
 
 Version 1.0.0 represents your first stable API and marks the transition from initial development to a stable, production-ready release. This version **must be created manually** when your team decides the API is stable and ready for production use.
 
@@ -147,7 +146,6 @@ git push origin v1.0.0
 
 After 1.0.0, AgileFlow continues automatic versioning with standard semantic versioning rules: features bump minor, fixes bump patch, and breaking changes bump major.
 
-</details>
 
 **Learn More**: [Release Management Guide](./docs/release-management.md)
 
