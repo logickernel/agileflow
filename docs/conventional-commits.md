@@ -104,7 +104,7 @@ BREAKING CHANGE: Response now uses camelCase
 
 | Type | Description | 0.x.x | 1.0.0+ |
 |------|-------------|--------|-------|
-| BREAKING CHANGE | Changes that break backward compatibility (e.g., removed APIs, changed function signatures, modified response formats) | Minor | Major |
+| BREAKING CHANGE | Changes that break backward compatibility <br> (e.g., removed APIs, changed function signatures, modified response formats) | Minor | Major |
 | `feat` | New features | Minor | Minor |
 | `fix` | Bug fixes | Patch | Patch |
 |  | Any other type of commit | None | None |
