@@ -84,12 +84,22 @@ jobs:
 ```
 
 **GitLab CI** (`.gitlab-ci.yml`):
+
+For a job tagged with `agileflow` for a GitLab Runner:
+
+```yaml
+include:
+  - remote: https://code.logickernel.com/tools/agileflow/-/raw/main/.gitlab-ci.yml
+```
+
+Or manually:
+
 ```yaml
 agileflow:
   image: node:20
   script:
     - npm install -g @logickernel/agileflow
-    - npx @logickernel/agileflow gitlab
+    - agileflow gitlab
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
 ```
