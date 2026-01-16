@@ -56,9 +56,9 @@ flowchart TD
 
 ### Quick Decision Guide
 
-1. **Work in progress?** → `wip:` (not included in releases)
-2. **Adds new functionality?** → `feat:`
-3. **Fixes broken functionality?** → `fix:`
+1. **Adds new functionality?** → `feat:`
+2. **Fixes broken functionality?** → `fix:`
+3. **Work in progress?** → `wip:` (not included in releases)
 4. **Otherwise?** → Choose the most appropriate:
    - `docs:` — Documentation changes
    - `ci:` — CI/CD changes
