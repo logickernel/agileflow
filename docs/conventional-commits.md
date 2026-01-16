@@ -104,17 +104,12 @@ BREAKING CHANGE: Response now uses camelCase
 
 | Type | Description | 1.0.0+ | 0.x.x |
 |------|-------------|--------|-------|
+| BREAKING CHANGE | Changes that break backward compatibility (e.g., removed APIs, changed function signatures, modified response formats) | Major | Minor |
 | `feat` | New features | Minor | Minor |
 | `fix` | Bug fixes | Patch | Patch |
-| `perf` | Performance improvements | None | None |
-| `refactor` | Code refactoring | None | None |
-| `build` | Build system changes | None | None |
-| `ci` | CI/CD changes | None | None |
-| `test` | Test changes | None | None |
-| `revert` | Revert commits | None | None |
-| `docs` | Documentation | None | None |
-| `style` | Code style | None | None |
-| `chore` | Maintenance | None | None |
+|  | Any other type of commit | None | None |
+
+When multiple commits exist, the highest priority wins.
 
 ### Breaking Changes
 
@@ -129,28 +124,6 @@ feat: change response format
 
 BREAKING CHANGE: Response now uses camelCase
 ```
-
----
-
-## Version Bump Priority
-
-When multiple commits exist, the highest priority wins:
-
-1. **Breaking changes** → Major (or Minor for 0.x.x)
-2. **Features** → Minor
-3. **Fixes** → Patch
-4. **Everything else** → No bump
-
-### Example
-
-If commits since last version include:
-```
-feat: add new dashboard
-fix: resolve login bug
-docs: update README
-```
-
-Result: **Minor bump** (feat has highest priority)
 
 ---
 
@@ -188,16 +161,6 @@ v2.0.0
 - BREAKING: change authentication flow
 ```
 
----
-
-## Skip Release
-
-Use `[skip release]` to prevent version bump:
-
-```bash
-chore(deps): bump jest to 29.0.0 [skip release]
-docs: internal notes [skip release]
-```
 
 ---
 
@@ -206,7 +169,6 @@ docs: internal notes [skip release]
 Commits not following the format:
 - Trigger **no bump** by default
 - Appear under "Other changes" in release notes
-- Use `[skip release]` to prevent bump
 
 ---
 

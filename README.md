@@ -14,10 +14,16 @@ AgileFlow works with your CI/CD engine to **automatically create a new version t
 
 ## Quick Start
 
+Install the tool
+
+```bash
+npm install -g @logickernel/agileflow
+```
+
 ### Preview Your Next Version
 
 ```bash
-npx @logickernel/agileflow
+agileflow
 ```
 
 ### Create a Version Tag
@@ -25,19 +31,19 @@ npx @logickernel/agileflow
 
 **Push to Remote Git Repository:**
 ```bash
-npx @logickernel/agileflow push
+agileflow push
 ```
 
 #### CD/CI
 
 **GitHub Actions:**
 ```bash
-npx @logickernel/agileflow github
+agileflow github
 ```
 
 **GitLab CI:**
 ```bash
-npx @logickernel/agileflow gitlab
+agileflow gitlab
 ```
 
 **Learn More**: [Getting Started Guide](./docs/getting-started.md) • [CLI Reference](./docs/cli-reference.md)
