@@ -111,11 +111,6 @@ AgileFlow uses [Conventional Commits](https://www.conventionalcommits.org/) to a
 
 ```text
 type(scope): description
-
-feat(auth): add OAuth2 login flow
-fix(api): correct null handling in user lookup
-perf(cache)!: switch to Redis cluster
-docs: update README with usage examples
 ```
 
 The commit type (`feat`, `fix`, `perf`, etc.) indicates what kind of change was made, while the optional scope identifies the area affected. Breaking changes are marked with `!` or a `BREAKING CHANGE:` footer.
