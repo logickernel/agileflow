@@ -102,9 +102,9 @@ BREAKING CHANGE: Response now uses camelCase
 
 ## Commit Types and Version Impact
 
-| Type | Description | 1.0.0+ | 0.x.x |
+| Type | Description | 0.x.x | 1.0.0+ |
 |------|-------------|--------|-------|
-| BREAKING CHANGE | Changes that break backward compatibility (e.g., removed APIs, changed function signatures, modified response formats) | Major | Minor |
+| BREAKING CHANGE | Changes that break backward compatibility (e.g., removed APIs, changed function signatures, modified response formats) | Minor | Major |
 | `feat` | New features | Minor | Minor |
 | `fix` | Bug fixes | Patch | Patch |
 |  | Any other type of commit | None | None |
