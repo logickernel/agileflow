@@ -267,24 +267,6 @@ feat: added user authentication
 
 ---
 
-## Commit Type Details
-
-For detailed guidance on each type, see:
-
-- [feat](./conventional-commits/type-feat.md) — Features
-- [fix](./conventional-commits/type-fix.md) — Bug fixes
-- [perf](./conventional-commits/type-perf.md) — Performance
-- [refactor](./conventional-commits/type-refactor.md) — Refactoring
-- [build](./conventional-commits/type-build.md) — Build system
-- [ci](./conventional-commits/type-ci.md) — CI/CD
-- [test](./conventional-commits/type-test.md) — Tests
-- [docs](./conventional-commits/type-docs.md) — Documentation
-- [style](./conventional-commits/type-style.md) — Code style
-- [chore](./conventional-commits/type-chore.md) — Maintenance
-- [revert](./conventional-commits/type-revert.md) — Reverts
-
----
-
 ## Related Documentation
 
 - [Getting Started](./getting-started.md) — Quick start
