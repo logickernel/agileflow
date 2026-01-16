@@ -74,9 +74,6 @@ flowchart TD
 ### Examples
 
 ```bash
-# Work in progress
-wip: implement user authentication
-
 # Adds functionality
 feat: add user authentication
 feat(auth): add OAuth2 support
@@ -84,6 +81,9 @@ feat(auth): add OAuth2 support
 # Fixes functionality
 fix: resolve login validation error
 fix(api): handle timeout errors
+
+# Work in progress
+wip: implement user authentication
 
 # Other types
 docs: update API reference
