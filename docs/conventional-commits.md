@@ -27,29 +27,6 @@ The commit contains the following structural elements, to communicate intent to 
 
 ---
 
-## Commit Format
-
-```
-type(scope): description
-
-[optional body]
-
-[optional footer]
-```
-
-### Components
-
-| Part | Required | Description |
-|------|----------|-------------|
-| `type` | Yes | Type of change (feat, fix, etc.) |
-| `scope` | No | Area affected (auth, api, ui) |
-| `!` | No | Breaking change indicator |
-| `description` | Yes | Short summary |
-| `body` | No | Detailed explanation |
-| `footer` | No | Breaking changes, issue refs |
-
----
-
 ## How to Choose a Commit Type
 
 Use this decision flow to choose the right commit type:
