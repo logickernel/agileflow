@@ -49,7 +49,7 @@ flowchart TD
   X --> E
   D --> E
 
-  E -- "no" --> Z([Commit ready])
+  E -- "no" --> Z([Commit])
   E -- "yes" --> G[Add ! to type/scope or BREAKING CHANGE: in body]
   G --> Z
 ```
