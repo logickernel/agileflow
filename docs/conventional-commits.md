@@ -2,6 +2,31 @@
 
 AgileFlow uses [Conventional Commits](https://www.conventionalcommits.org/) to automatically determine version bumps and generate release notes.
 
+## What are Conventional Commits?
+
+The Conventional Commits specification is a lightweight convention on top of commit messages. It provides an easy set of rules for creating an explicit commit history, which makes it easier to write automated tools on top of. This convention dovetails with [SemVer](https://semver.org/), by describing the features, fixes, and breaking changes made in commit messages.
+
+The commit message should be structured as follows:
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+The commit contains the following structural elements, to communicate intent to the consumers of your library:
+
+- **`fix:`** — A commit of the type `fix` patches a bug in your codebase (this correlates with **PATCH** in Semantic Versioning).
+- **`feat:`** — A commit of the type `feat` introduces a new feature to the codebase (this correlates with **MINOR** in Semantic Versioning).
+- **`BREAKING CHANGE:`** — A commit that has a footer `BREAKING CHANGE:`, or appends a `!` after the type/scope, introduces a breaking API change (correlating with **MAJOR** in Semantic Versioning). A `BREAKING CHANGE` can be part of commits of any type.
+- **Other types** — Types other than `fix:` and `feat:` are allowed (e.g., `build:`, `chore:`, `ci:`, `docs:`, `style:`, `refactor:`, `perf:`, `test:`, and others). These have no implicit effect in Semantic Versioning (unless they include a `BREAKING CHANGE`).
+- **Scope** — A scope may be provided to a commit's type, to provide additional contextual information and is contained within parenthesis, e.g., `feat(parser): add ability to parse arrays`.
+- **Footers** — Footers other than `BREAKING CHANGE: <description>` may be provided and follow a convention similar to git trailer format.
+
+---
+
 ## Commit Format
 
 ```
@@ -209,7 +234,7 @@ Commits not following the format:
 
 ## Best Practices
 
-### 1. Use Clear Types
+1. Use Clear Types
 
 ```bash
 # ✅ Correct type
@@ -221,31 +246,20 @@ fix: add login feature  # Should be feat
 feat: fix crash         # Should be fix
 ```
 
-### 2. Add Meaningful Scopes
 
-```bash
-# ✅ Helpful scope
-feat(auth): add OAuth2 support
-fix(api): handle timeout errors
-
-# ✅ Also fine without scope
-feat: add OAuth2 support
-fix: handle timeout errors
-```
-
-### 3. Write Clear Descriptions
+2. Write Clear Descriptions
 
 ```bash
 # ✅ Clear and specific
-feat(auth): add two-factor authentication via SMS
-fix(api): prevent timeout on uploads larger than 100MB
+feat: add two-factor authentication via SMS
+fix: prevent timeout on uploads larger than 100MB
 
 # ❌ Vague
 feat: add 2fa
 fix: fix timeout
 ```
 
-### 4. Mark Breaking Changes
+3. Mark Breaking Changes
 
 ```bash
 # ✅ Properly marked
@@ -255,7 +269,7 @@ feat!: remove deprecated endpoints
 feat: remove deprecated endpoints
 ```
 
-### 5. Use Present Tense
+4. Use Present Tense
 
 ```bash
 # ✅ Present tense
@@ -263,6 +277,18 @@ feat: add user authentication
 
 # ❌ Past tense
 feat: added user authentication
+```
+
+5. Add Meaningful Scopes when applicable
+
+```bash
+# ✅ Helpful scope
+feat(auth): add OAuth2 support
+fix(api): handle timeout errors
+
+# ✅ Also fine without scope
+feat: add OAuth2 support
+fix: handle timeout errors
 ```
 
 ---
