@@ -33,14 +33,15 @@ Use this decision flow to choose the right commit type:
 
 ```mermaid
 flowchart TD
-  A{Is it work in progress?}
-  A -- "yes" --> W[wip:]
-  A -- "no" --> B{Does it add functionality?}
+  Start([Start]) --> A{Does it add functionality?}
 
-  B -- "yes" --> F[feat:]
-  B -- "no" --> C{Does it fix functionality?}
+  A -- "yes" --> F[feat:]
+  A -- "no" --> B{Does it fix functionality?}
 
-  C -- "yes" --> X[fix:]
+  B -- "yes" --> X[fix:]
+  B -- "no" --> C{Is it work in progress?}
+
+  C -- "yes" --> W[wip:]
   C -- "no" --> D[Choose best: docs, ci, style, chore, etc.]
 
   W --> E{Is it a breaking change?}
