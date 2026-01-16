@@ -25,6 +25,78 @@ type(scope): description
 
 ---
 
+## How to Choose a Commit Type
+
+Use this decision flow to choose the right commit type:
+
+```mermaid
+flowchart TD
+  A{Is it work in progress?}
+  A -- "yes" --> W[wip:]
+  A -- "no" --> B{Does it add functionality?}
+
+  B -- "yes" --> F[feat:]
+  B -- "no" --> C{Does it fix functionality?}
+
+  C -- "yes" --> X[fix:]
+  C -- "no" --> D[Choose best: docs, ci, style, chore, etc.]
+
+  W --> E{Is it a breaking change?}
+  F --> E
+  X --> E
+  D --> E
+
+  E -- "no" --> Z([Commit ready])
+  E -- "yes" --> G[Add ! to type/scope or BREAKING CHANGE: in body]
+  G --> Z
+```
+
+### Quick Decision Guide
+
+1. **Work in progress?** → `wip:` (not included in releases)
+2. **Adds new functionality?** → `feat:`
+3. **Fixes broken functionality?** → `fix:`
+4. **Otherwise?** → Choose the most appropriate:
+   - `docs:` — Documentation changes
+   - `ci:` — CI/CD changes
+   - `style:` — Code style (formatting, whitespace)
+   - `chore:` — Maintenance tasks
+   - `test:` — Test changes
+   - `refactor:` — Code refactoring
+   - `perf:` — Performance improvements
+   - `build:` — Build system changes
+   - `revert:` — Revert previous commits
+5. **Breaking change?** → Add `!` after type/scope or include `BREAKING CHANGE:` in body
+
+### Examples
+
+```bash
+# Work in progress
+wip: implement user authentication
+
+# Adds functionality
+feat: add user authentication
+feat(auth): add OAuth2 support
+
+# Fixes functionality
+fix: resolve login validation error
+fix(api): handle timeout errors
+
+# Other types
+docs: update API reference
+ci: update GitHub Actions workflow
+style: format code with prettier
+chore: update dependencies
+
+# Breaking changes
+feat!: remove deprecated API endpoints
+feat: change response format
+
+BREAKING CHANGE: Response now uses camelCase
+```
+
+---
+
 ## Commit Types and Version Impact
 
 | Type | Description | 1.0.0+ | 0.x.x |
@@ -53,67 +125,6 @@ feat!: remove deprecated API
 feat: change response format
 
 BREAKING CHANGE: Response now uses camelCase
-```
-
----
-
-## Examples
-
-### Features
-
-```bash
-feat: add user authentication
-feat(auth): implement OAuth2 login
-feat(api): add rate limiting endpoint
-```
-
-### Fixes
-
-```bash
-fix: resolve null pointer exception
-fix(auth): handle expired tokens correctly
-fix(ui): correct button alignment on mobile
-```
-
-### Performance
-
-```bash
-perf: optimize database queries
-perf(cache): implement Redis connection pooling
-```
-
-### Refactoring
-
-```bash
-refactor: simplify authentication logic
-refactor(api): extract validation middleware
-```
-
-### Breaking Changes
-
-```bash
-feat!: remove v1 API endpoints
-feat(auth)!: change token format to JWT
-
-fix: update database schema
-
-BREAKING CHANGE: User table now requires email field
-```
-
-### Documentation
-
-```bash
-docs: update installation guide
-docs(api): add authentication examples
-docs(readme): improve getting started section
-```
-
-### No Version Bump
-
-```bash
-docs: update README
-style: format code with prettier
-chore: update development dependencies
 ```
 
 ---
