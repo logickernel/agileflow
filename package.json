@@ -24,6 +24,7 @@
     "versioning",
     "git",
     "ci-cd",
+    "github",
     "gitlab",
     "automation",
     "release-management"
