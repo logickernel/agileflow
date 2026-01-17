@@ -149,6 +149,8 @@ v1.2.4
 - update API reference
 ```
 
+Chore commits are omitted from release notes unless they include a breaking change.
+
 ### Breaking Changes in Notes
 
 Breaking changes are highlighted:

@@ -72,7 +72,7 @@ function getCurrentBranch() {
 }
 
 // Conventional commit type configuration
-const TYPE_ORDER = ['feat', 'fix', 'perf', 'refactor', 'style', 'test', 'build', 'ci', 'docs', 'chore', 'revert'];
+const TYPE_ORDER = ['feat', 'fix', 'perf', 'refactor', 'style', 'test', 'build', 'ci', 'docs', 'revert'];
 const SEMVER_PATTERN = /^v(\d+)\.(\d+)\.(\d+)(-[a-zA-Z0-9.-]+)?$/;
 
 // Friendly header names for changelog
@@ -86,7 +86,6 @@ const TYPE_HEADERS = {
   docs: 'Documentation:',
   build: 'Build:',
   ci: 'CI:',
-  chore: 'Chores:',
   revert: 'Reverts:',
 };
 
