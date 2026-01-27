@@ -125,11 +125,7 @@ async function handlePushCommand(pushType, options) {
     console.log(`\nCreating tag ${info.newVersion}...`);
   }
   
-  await pushModule.pushTag(info.newVersion, tagMessage);
-  
-  if (!options.quiet) {
-    console.log(`Tag ${info.newVersion} created and pushed successfully.`);
-  }
+  await pushModule.pushTag(info.newVersion, tagMessage, options.quiet);
 }
 
 async function main() {

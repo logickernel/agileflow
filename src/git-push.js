@@ -10,9 +10,10 @@ const os = require('os');
  * Uses native git commands - requires git credentials to be configured.
  * @param {string} tagName - The tag name (e.g., "v1.2.3")
  * @param {string} message - The tag message (changelog)
+ * @param {boolean} quiet - If true, suppress success message
  * @returns {Promise<void>}
  */
-async function pushTag(tagName, message) {
+async function pushTag(tagName, message, quiet = false) {
   const safeTag = String(tagName).replace(/"/g, '\\"');
   
   // Write message to a temp file to avoid shell escaping issues with special characters
@@ -25,6 +26,10 @@ async function pushTag(tagName, message) {
     
     // Push to origin
     execSync(`git push origin "${safeTag}"`, { stdio: 'pipe' });
+    
+    if (!quiet) {
+      console.log(`Tag ${tagName} created and pushed successfully.`);
+    }
   } finally {
     // Clean up temp file
     try {

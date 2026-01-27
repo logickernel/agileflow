@@ -122,9 +122,10 @@ function makeRequest({ method, path, accessToken, body }) {
  * Uses GITHUB_REPOSITORY and GITHUB_SHA from GitHub Actions environment.
  * @param {string} tagName - The tag name
  * @param {string} message - The tag message
+ * @param {boolean} quiet - If true, suppress success message
  * @returns {Promise<void>}
  */
-async function pushTag(tagName, message) {
+async function pushTag(tagName, message, quiet = false) {
   const accessToken = process.env.AGILEFLOW_TOKEN;
   const repository = process.env.GITHUB_REPOSITORY;
   const commitSha = process.env.GITHUB_SHA;
@@ -148,6 +149,10 @@ async function pushTag(tagName, message) {
   }
   
   await createTagViaAPI(tagName, message || tagName, repository, accessToken, commitSha);
+  
+  if (!quiet) {
+    console.log(`Tag ${tagName} created and pushed successfully.`);
+  }
 }
 
 module.exports = {
