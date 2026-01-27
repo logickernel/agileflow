@@ -165,12 +165,13 @@ After 1.0.0, AgileFlow continues automatic versioning with standard semantic ver
 
 AgileFlow analyzes commits since the last version tag to determine the appropriate version bump:
 
-| Commit Type | Example | 0.x.x | 1.0.0+ |
-|-------------|---------|-------|--------|
-| Breaking change | `feat!: redesign API` | **Minor** (0.1.0 → 0.2.0) | **Major** (1.0.0 → 2.0.0) |
-| Feature | `feat: add login` | **Minor** | **Minor** |
-| Fix | `fix: resolve crash` | **Patch** | **Patch** |
-| Everything else | `docs: update README` | No bump | No bump |
+| Commit Type | Example | Changelog | 0.x.x | 1.0.0+ |
+|-------------|---------|-----------|-------|--------|
+| Breaking change | `feat!: redesign API` | Add entry | **Minor** (0.1.0 → 0.2.0) | **Major** (1.0.0 → 2.0.0) |
+| Feature | `feat: add login` | Add entry | **Minor** | **Minor** |
+| Fix | `fix: resolve crash` | Add entry | **Patch** | **Patch** |
+| Chore | `chore: update dependencies` | **No** entry | No bump | No bump |
+| Everything else | `docs: update README` | Add entry | No bump | No bump |
 
 ---
 

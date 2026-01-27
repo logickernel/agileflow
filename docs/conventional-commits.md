@@ -39,10 +39,10 @@ flowchart TD
   A -- "no" --> B{Does it fix functionality?}
 
   B -- "yes" --> X[fix:]
-  B -- "no" --> C{Is it work in progress?}
+  B -- "no" --> C{Is it worth an entry in the changelog?}
 
-  C -- "yes" --> W[wip:]
-  C -- "no" --> D[Choose best: docs, ci, style, chore, etc.]
+  C -- "yes" --> W[Choose best: docs, ci, style, etc.]
+  C -- "no" --> D[chore:]
 
   W --> E{Is it a breaking change?}
   F --> E
@@ -221,7 +221,17 @@ feat: add user authentication
 feat: added user authentication
 ```
 
-5. Add Meaningful Scopes when applicable
+5. Use Chore for *work in progress*
+
+```bash
+# ✅ Use chore so an entry is not added to the changelog
+chore: add framework for form validation
+
+# ❌ Used something else that will add a meaningless entry to the changelog
+refactor: add framework for form validation
+```
+
+6. Add Meaningful Scopes when applicable
 
 ```bash
 # ✅ Helpful scope

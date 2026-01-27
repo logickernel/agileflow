@@ -74,23 +74,21 @@ jobs:
       - name: Create version tag
         env:
           AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
-        run: npx @logickernel/agileflow github
+        run: agileflow github
 ```
 
 ### GitLab CI
 
 ```yaml
 agileflow:
-  stage: version
-  image: node:20-alpine
+  image: node:20
   script:
-    - VERSION=$(npx @logickernel/agileflow gitlab --quiet)
-    - echo "VERSION=$VERSION" >> version.env
-  artifacts:
-    reports:
-      dotenv: version.env
-  only:
-    - main
+    - npm install -g @logickernel/agileflow
+    - agileflow gitlab
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+  tags:
+    - agileflow
 ```
 
 ---
