@@ -390,25 +390,25 @@ function calculateNextVersionAndChangelog(expandedInfo) {
  * @returns {Array<{hash: string, datetime: string, author: string, message: string, tags: Array<string>}>}
  */
 function getAllBranchCommits(branch) {
-  // Try to resolve the branch (may be a local branch or remote branch like origin/main)
-  let branchRef = branch;
+  // Resolve the branch to a SHA to avoid shell injection when the branch
+  // name originates from a CI environment variable.
+  let resolvedSha;
   try {
-    runWithOutput(`git rev-parse --verify ${branch}`);
+    resolvedSha = runWithOutput(`git rev-parse --verify -- ${branch}`).trim();
   } catch {
     // Try with origin/ prefix (common in CI environments where local branch doesn't exist)
     try {
-      runWithOutput(`git rev-parse --verify origin/${branch}`);
-      branchRef = `origin/${branch}`;
+      resolvedSha = runWithOutput(`git rev-parse --verify -- origin/${branch}`).trim();
     } catch {
       return [];
     }
   }
-  
+
   const RS = '\x1E';
   const COMMIT_SEP = `${RS}${RS}`;
-  
+
   try {
-    const logCmd = `git log --format=%H${RS}%ai${RS}%an${RS}%B${COMMIT_SEP} ${branchRef}`;
+    const logCmd = `git log --format=%H${RS}%ai${RS}%an${RS}%B${COMMIT_SEP} ${resolvedSha}`;
     const output = runWithOutput(logCmd).trim();
     if (!output) return [];
     
