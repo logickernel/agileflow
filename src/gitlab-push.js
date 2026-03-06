@@ -34,10 +34,15 @@ function createTagViaAPI(tagName, message, projectPath, serverHost, accessToken,
       },
     };
     
+    const MAX_RESPONSE_BYTES = 1024 * 1024; // 1 MB
     const req = https.request(options, (res) => {
       let data = '';
-      
+
       res.on('data', (chunk) => {
+        if (data.length + chunk.length > MAX_RESPONSE_BYTES) {
+          req.destroy(new Error('GitLab API response exceeded size limit'));
+          return;
+        }
         data += chunk;
       });
       

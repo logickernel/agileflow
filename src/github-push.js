@@ -64,10 +64,15 @@ function makeRequest({ method, path, accessToken, body }) {
       },
     };
     
+    const MAX_RESPONSE_BYTES = 1024 * 1024; // 1 MB
     const req = https.request(options, (res) => {
       let data = '';
-      
+
       res.on('data', (chunk) => {
+        if (data.length + chunk.length > MAX_RESPONSE_BYTES) {
+          req.destroy(new Error('GitHub API response exceeded size limit'));
+          return;
+        }
         data += chunk;
       });
       
