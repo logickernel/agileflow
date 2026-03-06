@@ -126,12 +126,12 @@ function getTagsForCommit(commitSha) {
 function parseConventionalCommit(message) {
   if (!message) return null;
   const subject = message.split('\n')[0].trim();
-  const match = subject.match(/^(\w+)(!)?(?:\(([^)]+)\))?:\s+(.+)$/);
+  const match = subject.match(/^(\w+)(?:\(([^)]+)\))?(!)?:\s+(.+)$/);
   if (!match) return null;
   return {
     type: match[1].toLowerCase(),
-    breaking: Boolean(match[2]),
-    scope: match[3] ? String(match[3]).trim() : '',
+    breaking: Boolean(match[3]),
+    scope: match[2] ? String(match[2]).trim() : '',
     description: String(match[4]).trim(),
   };
 }
