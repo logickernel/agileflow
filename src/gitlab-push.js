@@ -96,7 +96,7 @@ function createTagViaAPI(tagName, message, projectPath, serverHost, accessToken,
  * @param {string} message - The tag message
  * @returns {Promise<void>}
  */
-async function pushTag(tagName, message, quiet = false) {
+async function pushTag(tagName, message, quiet = false, remote = 'origin') {
   const accessToken = process.env.AGILEFLOW_TOKEN;
   const serverHost = process.env.CI_SERVER_HOST;
   const projectPath = process.env.CI_PROJECT_PATH;

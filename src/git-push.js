@@ -14,8 +14,9 @@ const os = require('os');
  * @param {boolean} quiet - If true, suppress success message
  * @returns {Promise<void>}
  */
-async function pushTag(tagName, message, quiet = false) {
+async function pushTag(tagName, message, quiet = false, remote = 'origin') {
   const safeTag = String(tagName).replace(/"/g, '\\"');
+  const safeRemote = String(remote).replace(/"/g, '\\"');
   
   // Write message to a temp file to avoid shell escaping issues with special characters
   const tempFile = path.join(os.tmpdir(), `agileflow-tag-${crypto.randomBytes(8).toString('hex')}.txt`);
@@ -25,8 +26,8 @@ async function pushTag(tagName, message, quiet = false) {
     // Create annotated tag using -F to read message from file
     execSync(`git tag -a "${safeTag}" -F "${tempFile}"`, { stdio: 'pipe' });
     
-    // Push to origin
-    execSync(`git push origin "${safeTag}"`, { stdio: 'pipe' });
+    // Push to remote
+    execSync(`git push "${safeRemote}" "${safeTag}"`, { stdio: 'pipe' });
     
     if (!quiet) {
       console.log(`Tag ${tagName} created and pushed successfully.`);

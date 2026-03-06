@@ -12,7 +12,7 @@ Usage:
 
 Commands:
   <none>   Prints the current version, next version, commits, and changelog
-  push     Push a semantic version tag to the remote repository
+  push [remote]  Push a semantic version tag to the remote repository (default: origin)
   gitlab   Create a semantic version tag via GitLab API (for GitLab CI)
   github   Create a semantic version tag via GitHub API (for GitHub Actions)
 
@@ -93,7 +93,7 @@ function displayVersionInfo(info, quiet) {
  * @param {string} pushType - 'push', 'gitlab', or 'github'
  * @param {{quiet: boolean}} options
  */
-async function handlePushCommand(pushType, options) {
+async function handlePushCommand(pushType, options, remote = 'origin') {
   const info = await processVersionInfo();
   
   // Display version info
@@ -125,7 +125,7 @@ async function handlePushCommand(pushType, options) {
     console.log(`\nCreating tag ${info.newVersion}...`);
   }
   
-  await pushModule.pushTag(info.newVersion, tagMessage, options.quiet);
+  await pushModule.pushTag(info.newVersion, tagMessage, options.quiet, remote);
 }
 
 async function main() {
@@ -156,7 +156,8 @@ async function main() {
 
   // Handle push commands
   if (cmd === 'push' || cmd === 'gitlab' || cmd === 'github') {
-    await handlePushCommand(cmd, options);
+    const remote = rest.find(arg => !arg.startsWith('-')) || 'origin';
+    await handlePushCommand(cmd, options, remote);
     return;
   }
 

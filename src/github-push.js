@@ -130,7 +130,7 @@ function makeRequest({ method, path, accessToken, body }) {
  * @param {boolean} quiet - If true, suppress success message
  * @returns {Promise<void>}
  */
-async function pushTag(tagName, message, quiet = false) {
+async function pushTag(tagName, message, quiet = false, remote = 'origin') {
   const accessToken = process.env.AGILEFLOW_TOKEN;
   const repository = process.env.GITHUB_REPOSITORY;
   const commitSha = process.env.GITHUB_SHA;

@@ -1,9 +1,13 @@
 'use strict';
 
 jest.mock('child_process', () => ({ execSync: jest.fn() }));
+jest.mock('fs', () => ({ writeFileSync: jest.fn(), unlinkSync: jest.fn() }));
+jest.mock('os', () => ({ tmpdir: () => '/tmp' }));
+jest.mock('crypto', () => ({ randomBytes: () => ({ toString: () => 'deadbeef' }) }));
 
 const { execSync } = require('child_process');
 const { getAllBranchCommits, getCurrentBranch, fetchTags, ensureGitRepo } = require('../src/utils');
+const { pushTag } = require('../src/git-push');
 
 // Record separator and commit separator matching utils.js
 const RS = '\x1E';
@@ -16,6 +20,27 @@ function logBlock(hash, datetime, author, message) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+});
+
+// ---------------------------------------------------------------------------
+// pushTag (git-push.js)
+// ---------------------------------------------------------------------------
+describe('pushTag', () => {
+  test('pushes to origin by default', async () => {
+    execSync.mockReturnValue('');
+    await pushTag('v1.2.3', 'changelog');
+    const pushCall = execSync.mock.calls.find(c => c[0].includes('git push'));
+    expect(pushCall[0]).toContain('"origin"');
+    expect(pushCall[0]).toContain('"v1.2.3"');
+  });
+
+  test('pushes to custom remote when specified', async () => {
+    execSync.mockReturnValue('');
+    await pushTag('v1.2.3', 'changelog', false, 'upstream');
+    const pushCall = execSync.mock.calls.find(c => c[0].includes('git push'));
+    expect(pushCall[0]).toContain('"upstream"');
+    expect(pushCall[0]).toContain('"v1.2.3"');
+  });
 });
 
 // ---------------------------------------------------------------------------
