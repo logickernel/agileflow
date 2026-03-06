@@ -1,6 +1,7 @@
 'use strict';
 
 const { execSync } = require('child_process');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -17,7 +18,7 @@ async function pushTag(tagName, message, quiet = false) {
   const safeTag = String(tagName).replace(/"/g, '\\"');
   
   // Write message to a temp file to avoid shell escaping issues with special characters
-  const tempFile = path.join(os.tmpdir(), `agileflow-tag-${Date.now()}.txt`);
+  const tempFile = path.join(os.tmpdir(), `agileflow-tag-${crypto.randomBytes(8).toString('hex')}.txt`);
   try {
     fs.writeFileSync(tempFile, message, 'utf8');
     
