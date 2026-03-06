@@ -2,6 +2,7 @@ agileflow:
   image: node:20
   script:
     - npm install -g @logickernel/agileflow
+    - agileflow version
     - agileflow gitlab
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'

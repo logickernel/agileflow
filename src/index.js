@@ -15,6 +15,7 @@ Commands:
   push [remote]  Push a semantic version tag to the remote repository (default: origin)
   gitlab   Create a semantic version tag via GitLab API (for GitLab CI)
   github   Create a semantic version tag via GitHub API (for GitHub Actions)
+  version  Print the agileflow tool version
 
 Options:
   --quiet        Only output the next version (or empty if no bump)
@@ -33,7 +34,7 @@ const VALID_OPTIONS = ['--quiet', '--help', '-h', '--version', '-v'];
 /**
  * Valid commands.
  */
-const VALID_COMMANDS = ['push', 'gitlab', 'github'];
+const VALID_COMMANDS = ['push', 'gitlab', 'github', 'version'];
 
 /**
  * Parses command line arguments and validates them.
