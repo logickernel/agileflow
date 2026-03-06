@@ -1,6 +1,6 @@
 {
   "name": "@logickernel/agileflow",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "description": "Automatic semantic versioning and changelog generation based on conventional commits",
   "main": "src/index.js",
   "bin": {
@@ -14,8 +14,11 @@
     "README.md"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "prepack": "chmod +x bin/agileflow"
+  },
+  "jest": {
+    "testEnvironment": "node"
   },
   "keywords": [
     "semantic-versioning",
@@ -37,5 +40,8 @@
     "url": "git@code.logickernel.com:kernel/agileflow.git"
   },
   "author": "Víctor Valle <victor.valle@logickernel.com>",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^30.2.0"
+  }
 }
