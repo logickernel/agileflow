@@ -183,10 +183,24 @@ describe('getAllBranchCommits', () => {
     expect(commits).toHaveLength(1);
   });
 
-  test('returns empty array when both local and origin resolution fail', () => {
+  test('resolves via HEAD when local and origin/ both fail (detached HEAD in CI)', () => {
+    const sha = 'e'.repeat(40);
+    execSync
+      .mockImplementationOnce(() => { throw new Error('no local'); })  // local fails
+      .mockImplementationOnce(() => { throw new Error('no origin'); }) // origin/ fails
+      .mockReturnValueOnce(`${sha}\n`)   // HEAD succeeds
+      .mockReturnValueOnce('')            // buildTagMap
+      .mockReturnValueOnce(logBlock(sha, '2024-01-01', 'Alice', 'fix: ci') + CS);
+
+    const commits = getAllBranchCommits('main');
+    expect(commits).toHaveLength(1);
+  });
+
+  test('returns empty array when local, origin, and HEAD resolution all fail', () => {
     execSync
       .mockImplementationOnce(() => { throw new Error('no local'); })
-      .mockImplementationOnce(() => { throw new Error('no origin'); });
+      .mockImplementationOnce(() => { throw new Error('no origin'); })
+      .mockImplementationOnce(() => { throw new Error('no HEAD'); });
     expect(getAllBranchCommits('main')).toEqual([]);
   });
 });

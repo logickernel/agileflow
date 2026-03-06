@@ -413,7 +413,12 @@ function getAllBranchCommits(branch) {
     try {
       resolvedSha = runWithOutput(`git rev-parse --verify -- origin/${branch}`).trim();
     } catch {
-      return [];
+      // Last resort: use HEAD (detached HEAD in CI where remote tracking isn't set up)
+      try {
+        resolvedSha = runWithOutput('git rev-parse HEAD').trim();
+      } catch {
+        return [];
+      }
     }
   }
 
