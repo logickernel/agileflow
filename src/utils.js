@@ -106,16 +106,28 @@ function fetchTags() {
 }
 
 /**
- * Gets all tags pointing to a specific commit.
- * @param {string} commitSha - The commit SHA to check for tags
- * @returns {Array<string>} Array of tag names, empty array if none
+ * Builds a map of commit SHA → tag names for all tags in the repository.
+ * Uses a single git call instead of one per commit.
+ * @returns {Map<string, string[]>}
  */
-function getTagsForCommit(commitSha) {
+function buildTagMap() {
   try {
-    const output = runWithOutput(`git tag --points-at ${commitSha}`).trim();
-    return output ? output.split('\n').map(t => t.trim()).filter(Boolean) : [];
+    const output = runWithOutput('git tag --format=%(refname:short)|%(*objectname)|%(objectname)').trim();
+    if (!output) return new Map();
+    const map = new Map();
+    for (const line of output.split('\n')) {
+      const [name, deref, obj] = line.split('|');
+      // Annotated tags dereference to the commit via %(*objectname);
+      // lightweight tags point directly via %(objectname).
+      const sha = (deref || obj || '').trim();
+      const tagName = (name || '').trim();
+      if (!sha || !tagName) continue;
+      if (!map.has(sha)) map.set(sha, []);
+      map.get(sha).push(tagName);
+    }
+    return map;
   } catch {
-    return [];
+    return new Map();
   }
 }
 
@@ -405,6 +417,7 @@ function getAllBranchCommits(branch) {
     }
   }
 
+  const tagMap = buildTagMap();
   const RS = '\x1E';
   const COMMIT_SEP = `${RS}${RS}`;
 
@@ -412,7 +425,7 @@ function getAllBranchCommits(branch) {
     const logCmd = `git log --format=%H${RS}%ai${RS}%an${RS}%B${COMMIT_SEP} ${resolvedSha}`;
     const output = runWithOutput(logCmd).trim();
     if (!output) return [];
-    
+
     return output
       .split(COMMIT_SEP)
       .filter(block => block.trim())
@@ -425,7 +438,7 @@ function getAllBranchCommits(branch) {
           datetime: parts[1].trim(),
           author: parts[2].trim(),
           message: parts.slice(3).join(RS).trim(),
-          tags: getTagsForCommit(hash),
+          tags: tagMap.get(hash) || [],
         };
       })
       .filter(Boolean);
