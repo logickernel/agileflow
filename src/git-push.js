@@ -14,7 +14,7 @@ const os = require('os');
  * @param {boolean} quiet - If true, suppress success message
  * @returns {Promise<void>}
  */
-async function pushTag(tagName, message, quiet = false, remote = 'origin') {
+async function pushTag(tagName, message, remote = 'origin') {
   const safeTag = String(tagName).replace(/"/g, '\\"');
   const safeRemote = String(remote).replace(/"/g, '\\"');
   
@@ -29,9 +29,7 @@ async function pushTag(tagName, message, quiet = false, remote = 'origin') {
     // Push to remote
     execSync(`git push "${safeRemote}" "${safeTag}"`, { stdio: 'pipe' });
     
-    if (!quiet) {
-      console.log(`Tag ${tagName} created and pushed successfully.`);
-    }
+    console.log(`Tag ${tagName} created and pushed successfully.`);
   } finally {
     // Clean up temp file
     try {

@@ -36,7 +36,7 @@ describe('pushTag', () => {
 
   test('pushes to custom remote when specified', async () => {
     execSync.mockReturnValue('');
-    await pushTag('v1.2.3', 'changelog', false, 'upstream');
+    await pushTag('v1.2.3', 'changelog', 'upstream');
     const pushCall = execSync.mock.calls.find(c => c[0].includes('git push'));
     expect(pushCall[0]).toContain('"upstream"');
     expect(pushCall[0]).toContain('"v1.2.3"');

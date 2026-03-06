@@ -18,9 +18,7 @@ Commands:
   version  Print the agileflow tool version
 
 Options:
-  --quiet        Only output the next version (or empty if no bump)
   -h, --help     Show this help message
-  -v, --version  Show version number
 
 For more information, visit: https://code.logickernel.com/tools/agileflow
 `);
@@ -29,7 +27,7 @@ For more information, visit: https://code.logickernel.com/tools/agileflow
 /**
  * Valid options that can be passed to commands.
  */
-const VALID_OPTIONS = ['--quiet', '--help', '-h', '--version', '-v'];
+const VALID_OPTIONS = ['--help', '-h'];
 
 /**
  * Valid commands.
@@ -39,11 +37,9 @@ const VALID_COMMANDS = ['push', 'gitlab', 'github', 'version'];
 /**
  * Parses command line arguments and validates them.
  * @param {Array<string>} args - Command line arguments
- * @returns {{quiet: boolean}}
  * @throws {Error} If invalid options are found
  */
 function parseArgs(args) {
-  // Check for invalid options
   for (const arg of args) {
     if (arg.startsWith('--') && !VALID_OPTIONS.includes(arg)) {
       throw new Error(`Unknown option: ${arg}`);
@@ -52,28 +48,15 @@ function parseArgs(args) {
       throw new Error(`Unknown option: ${arg}`);
     }
   }
-  
-  return {
-    quiet: args.includes('--quiet'),
-  };
 }
 
 /**
  * Displays version info to the console.
  * @param {{currentVersion: string|null, newVersion: string|null, commits: Array, changelog: string}} info
- * @param {boolean} quiet - Only output the new version
  */
-function displayVersionInfo(info, quiet) {
+function displayVersionInfo(info) {
   const { currentVersion, newVersion, commits, changelog } = info;
-  
-  if (quiet) {
-    if (newVersion) {
-      console.log(newVersion);
-    }
-    return;
-  }
-  
-  
+
   // List commits
   console.log(`Commits since current version (${commits.length}):`);
   for (const commit of commits) {
@@ -92,20 +75,17 @@ function displayVersionInfo(info, quiet) {
 /**
  * Handles a push command.
  * @param {string} pushType - 'push', 'gitlab', or 'github'
- * @param {{quiet: boolean}} options
+ * @param {string} remote
  */
-async function handlePushCommand(pushType, options, remote = 'origin') {
+async function handlePushCommand(pushType, remote = 'origin') {
   const info = await processVersionInfo();
-  
-  // Display version info
-  displayVersionInfo(info, options.quiet);
-  
-  // Skip push if no version bump needed
+
+  displayVersionInfo(info);
+
   if (!info.newVersion) {
     return;
   }
-  
-  // Get the appropriate push module
+
   let pushModule;
   switch (pushType) {
     case 'push':
@@ -118,23 +98,19 @@ async function handlePushCommand(pushType, options, remote = 'origin') {
       pushModule = require('./github-push');
       break;
   }
-  
-  // Create tag message from changelog
+
   const tagMessage = info.changelog || info.newVersion;
-  
-  if (!options.quiet) {
-    console.log(`\nCreating tag ${info.newVersion}...`);
-  }
-  
-  await pushModule.pushTag(info.newVersion, tagMessage, options.quiet, remote);
+
+  console.log(`\nCreating tag ${info.newVersion}...`);
+
+  await pushModule.pushTag(info.newVersion, tagMessage, remote);
 }
 
 async function main() {
   const [, , cmd, ...rest] = process.argv;
   
-  let options;
   try {
-    options = parseArgs(cmd ? [cmd, ...rest] : rest);
+    parseArgs(cmd ? [cmd, ...rest] : rest);
   } catch (err) {
     console.error(`Error: ${err.message}`);
     console.error();
@@ -150,7 +126,7 @@ async function main() {
   }
 
   // Handle version
-  if (cmd === '-v' || cmd === '--version' || cmd === 'version') {
+  if (cmd === 'version') {
     console.log(version);
     process.exit(0);
   }
@@ -158,7 +134,7 @@ async function main() {
   // Handle push commands
   if (cmd === 'push' || cmd === 'gitlab' || cmd === 'github') {
     const remote = rest.find(arg => !arg.startsWith('-')) || 'origin';
-    await handlePushCommand(cmd, options, remote);
+    await handlePushCommand(cmd, remote);
     return;
   }
 
@@ -181,7 +157,7 @@ async function main() {
 
   // Default: show version info
   const info = await processVersionInfo();
-  displayVersionInfo(info, options.quiet);
+  displayVersionInfo(info);
 }
 
 process.on('unhandledRejection', (err) => {

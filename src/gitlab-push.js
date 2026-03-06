@@ -96,7 +96,7 @@ function createTagViaAPI(tagName, message, projectPath, serverHost, accessToken,
  * @param {string} message - The tag message
  * @returns {Promise<void>}
  */
-async function pushTag(tagName, message, quiet = false, remote = 'origin') {
+async function pushTag(tagName, message, remote = 'origin') {
   const accessToken = process.env.AGILEFLOW_TOKEN;
   const serverHost = process.env.CI_SERVER_HOST;
   const projectPath = process.env.CI_PROJECT_PATH;
@@ -134,10 +134,8 @@ async function pushTag(tagName, message, quiet = false, remote = 'origin') {
   
   await createTagViaAPI(tagName, message || tagName, projectPath, serverHost, accessToken, commitSha);
 
-  if (!quiet) {
-    const commitUrl = `https://${process.env.CI_SERVER_HOST}/${process.env.CI_PROJECT_PATH}/-/commit/${process.env.CI_COMMIT_SHA}/pipelines`;
-    console.log(`Tag ${tagName} created and pushed successfully.\nView the build pipelines at: ${commitUrl}`);
-  }
+  const commitUrl = `https://${process.env.CI_SERVER_HOST}/${process.env.CI_PROJECT_PATH}/-/commit/${process.env.CI_COMMIT_SHA}/pipelines`;
+  console.log(`Tag ${tagName} created and pushed successfully.\nView the build pipelines at: ${commitUrl}`);
 }
 
 module.exports = {
