@@ -163,8 +163,8 @@ describe('getAllBranchCommits', () => {
   test('attaches tags to commits from tag map', () => {
     const sha = 'c'.repeat(40);
     execSync.mockReturnValueOnce(`${sha}\n`);
-    // buildTagMap: lightweight tag pointing to sha
-    execSync.mockReturnValueOnce(`v1.0.0||${sha}\n`);
+    // buildTagMap: lightweight tag (objecttype=commit) pointing to sha
+    execSync.mockReturnValueOnce(`v1.0.0|commit||${sha}\n`);
     execSync.mockReturnValueOnce(logBlock(sha, '2024-01-01', 'Alice', 'chore: release') + CS);
 
     const commits = getAllBranchCommits('main');
@@ -213,8 +213,8 @@ describe('buildTagMap (via getAllBranchCommits)', () => {
     const commitSha = 'e'.repeat(40);
     const tagObjSha = 'f'.repeat(40);
     execSync.mockReturnValueOnce(`${commitSha}\n`);
-    // Annotated: deref = commitSha, obj = tagObjSha
-    execSync.mockReturnValueOnce(`v2.0.0|${commitSha}|${tagObjSha}\n`);
+    // Annotated (objecttype=tag): deref = commitSha, obj = tagObjSha
+    execSync.mockReturnValueOnce(`v2.0.0|tag|${commitSha}|${tagObjSha}\n`);
     execSync.mockReturnValueOnce(logBlock(commitSha, '2024-01-01', 'Alice', 'feat!: v2') + CS);
 
     const commits = getAllBranchCommits('main');
@@ -224,18 +224,32 @@ describe('buildTagMap (via getAllBranchCommits)', () => {
   test('handles multiple tags on the same commit', () => {
     const sha = 'a1b2'.repeat(10);
     execSync.mockReturnValueOnce(`${sha}\n`);
-    execSync.mockReturnValueOnce(`v1.0.0||${sha}\nv1.0.0-hotfix||${sha}\n`);
+    execSync.mockReturnValueOnce(`v1.0.0|commit||${sha}\nv1.0.0-hotfix|commit||${sha}\n`);
     execSync.mockReturnValueOnce(logBlock(sha, '2024-01-01', 'Alice', 'fix: patch') + CS);
 
     const commits = getAllBranchCommits('main');
     expect(commits[0].tags).toEqual(expect.arrayContaining(['v1.0.0', 'v1.0.0-hotfix']));
   });
 
+  test('resolves annotated tag via rev-parse when peeling unavailable (shallow clone)', () => {
+    const commitSha = '2'.repeat(40);
+    const tagObjSha = '3'.repeat(40);
+    execSync.mockReturnValueOnce(`${commitSha}\n`);
+    // Annotated tag with empty deref (shallow clone — peeling not computed)
+    execSync.mockReturnValueOnce(`v3.0.0|tag||${tagObjSha}\n`);
+    // rev-parse fallback returns the commit SHA
+    execSync.mockReturnValueOnce(`${commitSha}\n`);
+    execSync.mockReturnValueOnce(logBlock(commitSha, '2024-01-01', 'Alice', 'feat!: v3') + CS);
+
+    const commits = getAllBranchCommits('main');
+    expect(commits[0].tags).toContain('v3.0.0');
+  });
+
   test('returns empty tags for commits with no matching tag', () => {
     const sha = '0'.repeat(40);
     const otherSha = '1'.repeat(40);
     execSync.mockReturnValueOnce(`${sha}\n`);
-    execSync.mockReturnValueOnce(`v1.0.0||${otherSha}\n`); // tag on a different commit
+    execSync.mockReturnValueOnce(`v1.0.0|commit||${otherSha}\n`); // tag on a different commit
     execSync.mockReturnValueOnce(logBlock(sha, '2024-01-01', 'Alice', 'fix: thing') + CS);
 
     const commits = getAllBranchCommits('main');

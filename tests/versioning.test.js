@@ -62,6 +62,21 @@ describe('expandCommitInfo', () => {
     expect(result.latestVersion).toBe('v1.0.0');
     expect(result.commits).toHaveLength(0);
   });
+
+  test('ignores lower version tag on newer commit — uses highest version in history', () => {
+    // Simulates a CI error that tagged a recent commit as v0.1.0 while v0.15.1 exists deeper
+    const commits = [
+      commit('fix: new fix'),
+      commit('chore: bump version', ['v0.1.0']),  // wrong tag created by failed CI
+      commit('feat: feature'),
+      commit('chore: release', ['v0.15.1']),       // real latest version
+      commit('chore: older'),
+    ];
+    const result = expandCommitInfo(commits);
+    expect(result.latestVersion).toBe('v0.15.1');
+    // Commits since v0.15.1: fix, the v0.1.0-tagged commit, and feat
+    expect(result.commits).toHaveLength(3);
+  });
 });
 
 describe('calculateNextVersionAndChangelog', () => {

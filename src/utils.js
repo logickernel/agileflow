@@ -98,7 +98,9 @@ function fetchTags() {
   try {
     const remotes = runWithOutput('git remote').trim();
     if (!remotes) return false;
-    runWithOutput('git fetch --tags --prune --prune-tags');
+    // --force allows updating local tags that conflict with remote tags.
+    // Avoid --prune-tags which can fail in shallow CI clones.
+    runWithOutput('git fetch --tags --force');
     return true;
   } catch {
     return false;
@@ -112,16 +114,35 @@ function fetchTags() {
  */
 function buildTagMap() {
   try {
-    const output = runWithOutput('git tag --format=%(refname:short)|%(*objectname)|%(objectname)').trim();
+    // %(objecttype) distinguishes lightweight (commit) from annotated (tag) refs.
+    // %(*objectname) is the peeled commit SHA for annotated tags, but may be empty
+    // in shallow clones where git has not computed the peeled ref.
+    const output = runWithOutput('git tag --format=%(refname:short)|%(objecttype)|%(*objectname)|%(objectname)').trim();
     if (!output) return new Map();
     const map = new Map();
     for (const line of output.split('\n')) {
-      const [name, deref, obj] = line.split('|');
-      // Annotated tags dereference to the commit via %(*objectname);
-      // lightweight tags point directly via %(objectname).
-      const sha = (deref || obj || '').trim();
+      const [name, type, deref, obj] = line.split('|');
       const tagName = (name || '').trim();
-      if (!sha || !tagName) continue;
+      if (!tagName) continue;
+
+      let sha;
+      if (type === 'commit') {
+        // Lightweight tag: %(objectname) is the commit SHA directly.
+        sha = (obj || '').trim();
+      } else {
+        // Annotated tag: use peeled commit SHA if available.
+        sha = (deref || '').trim();
+        if (!sha) {
+          // Peeling unavailable (shallow clone) — dereference via rev-parse.
+          try {
+            sha = runWithOutput(`git rev-parse "${tagName}^{}"`).trim();
+          } catch {
+            continue;
+          }
+        }
+      }
+
+      if (!sha) continue;
       if (!map.has(sha)) map.set(sha, []);
       map.get(sha).push(tagName);
     }
@@ -158,28 +179,50 @@ function expandCommitInfo(commits) {
   if (!commits?.length) {
     return { latestVersion: null, commits: [] };
   }
-  
-  const taggedIndex = commits.findIndex(commit => 
-    commit.tags?.some(tag => SEMVER_PATTERN.test(tag))
-  );
-  
-  if (taggedIndex === -1) {
-    return { latestVersion: null, commits };
-  }
-  
-  const latestVersion = commits[taggedIndex].tags
-    .filter(tag => SEMVER_PATTERN.test(tag))
-    .sort((a, b) => {
+
+  // Find the commit tagged with the highest semver version in the history.
+  // Using highest-version (not first-found) handles the case where a lower version
+  // was accidentally tagged on a recent commit (e.g. a failed CI run).
+  let bestIndex = -1;
+  let bestVersion = null;
+
+  for (let i = 0; i < commits.length; i++) {
+    const semverTags = commits[i].tags?.filter(tag => SEMVER_PATTERN.test(tag));
+    if (!semverTags?.length) continue;
+
+    const highest = semverTags.sort((a, b) => {
       const pa = parseVersion(a);
       const pb = parseVersion(b);
       if (pb.major !== pa.major) return pb.major - pa.major;
       if (pb.minor !== pa.minor) return pb.minor - pa.minor;
       return pb.patch - pa.patch;
     })[0];
-  // Exclude the tagged commit itself - only return commits since the tag
+
+    if (!bestVersion) {
+      bestVersion = highest;
+      bestIndex = i;
+    } else {
+      const pBest = parseVersion(bestVersion);
+      const pCand = parseVersion(highest);
+      const isHigher =
+        pCand.major > pBest.major ||
+        (pCand.major === pBest.major && pCand.minor > pBest.minor) ||
+        (pCand.major === pBest.major && pCand.minor === pBest.minor && pCand.patch > pBest.patch);
+      if (isHigher) {
+        bestVersion = highest;
+        bestIndex = i;
+      }
+    }
+  }
+
+  if (bestIndex === -1) {
+    return { latestVersion: null, commits };
+  }
+
+  // Return only commits newer than the highest-version tag
   return {
-    latestVersion,
-    commits: commits.slice(0, taggedIndex),
+    latestVersion: bestVersion,
+    commits: commits.slice(0, bestIndex),
   };
 }
 
