@@ -154,7 +154,15 @@ function expandCommitInfo(commits) {
     return { latestVersion: null, commits };
   }
   
-  const latestVersion = commits[taggedIndex].tags.find(tag => SEMVER_PATTERN.test(tag));
+  const latestVersion = commits[taggedIndex].tags
+    .filter(tag => SEMVER_PATTERN.test(tag))
+    .sort((a, b) => {
+      const pa = parseVersion(a);
+      const pb = parseVersion(b);
+      if (pb.major !== pa.major) return pb.major - pa.major;
+      if (pb.minor !== pa.minor) return pb.minor - pa.minor;
+      return pb.patch - pa.patch;
+    })[0];
   // Exclude the tagged commit itself - only return commits since the tag
   return {
     latestVersion,
