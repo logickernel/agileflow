@@ -1,7 +1,6 @@
 'use strict';
 
 const { execSync } = require('child_process');
-const fs = require('fs');
 
 /**
  * Executes a shell command and returns the output.
@@ -44,8 +43,10 @@ function run(command, options = {}) {
  * @throws {Error} If the current directory is not a git repository
  */
 function ensureGitRepo() {
-  if (!fs.existsSync('.git')) {
-    throw new Error('Current directory is not a git repository (missing .git directory).');
+  try {
+    runWithOutput('git rev-parse --is-inside-work-tree');
+  } catch {
+    throw new Error('Current directory is not a git repository.');
   }
 }
 
