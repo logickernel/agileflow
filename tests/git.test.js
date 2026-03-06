@@ -123,7 +123,9 @@ describe('getAllBranchCommits', () => {
 
   test('returns empty array when log output is empty', () => {
     execSync.mockReturnValueOnce('abc1234\n');  // git rev-parse (resolve branch)
-    execSync.mockReturnValueOnce('');            // git tag --format (buildTagMap)
+    execSync.mockReturnValueOnce('');            // git tag --format (local, empty)
+    execSync.mockReturnValueOnce('origin\n');   // git remote (buildTagMapFromRemote)
+    execSync.mockReturnValueOnce('');            // git ls-remote (remote, empty)
     execSync.mockReturnValueOnce('');            // git log
     expect(getAllBranchCommits('main')).toEqual([]);
   });
@@ -131,7 +133,9 @@ describe('getAllBranchCommits', () => {
   test('parses a single commit correctly', () => {
     const sha = 'a'.repeat(40);
     execSync.mockReturnValueOnce(`${sha}\n`);   // git rev-parse
-    execSync.mockReturnValueOnce('');            // git tag --format (no tags)
+    execSync.mockReturnValueOnce('');            // git tag --format (local, empty)
+    execSync.mockReturnValueOnce('origin\n');   // git remote (buildTagMapFromRemote)
+    execSync.mockReturnValueOnce('');            // git ls-remote (remote, empty)
     execSync.mockReturnValueOnce(logBlock(sha, '2024-01-01', 'Alice', 'feat: add button') + CS);
 
     const commits = getAllBranchCommits('main');
@@ -149,7 +153,9 @@ describe('getAllBranchCommits', () => {
     const sha1 = 'a'.repeat(40);
     const sha2 = 'b'.repeat(40);
     execSync.mockReturnValueOnce(`${sha1}\n`);
-    execSync.mockReturnValueOnce('');
+    execSync.mockReturnValueOnce('');            // git tag --format (local, empty)
+    execSync.mockReturnValueOnce('origin\n');   // git remote (buildTagMapFromRemote)
+    execSync.mockReturnValueOnce('');            // git ls-remote (remote, empty)
     const log = logBlock(sha1, '2024-02-01', 'Alice', 'feat: new') + CS +
                 logBlock(sha2, '2024-01-01', 'Bob', 'fix: old') + CS;
     execSync.mockReturnValueOnce(log);
@@ -176,7 +182,9 @@ describe('getAllBranchCommits', () => {
     execSync
       .mockImplementationOnce(() => { throw new Error('unknown ref'); }) // local fails
       .mockReturnValueOnce(`${sha}\n`)   // origin/ succeeds
-      .mockReturnValueOnce('')            // buildTagMap
+      .mockReturnValueOnce('')            // git tag --format (local, empty)
+      .mockReturnValueOnce('origin\n')   // git remote (buildTagMapFromRemote)
+      .mockReturnValueOnce('')            // git ls-remote (remote, empty)
       .mockReturnValueOnce(logBlock(sha, '2024-01-01', 'Alice', 'fix: thing') + CS);
 
     const commits = getAllBranchCommits('main');
@@ -189,7 +197,9 @@ describe('getAllBranchCommits', () => {
       .mockImplementationOnce(() => { throw new Error('no local'); })  // local fails
       .mockImplementationOnce(() => { throw new Error('no origin'); }) // origin/ fails
       .mockReturnValueOnce(`${sha}\n`)   // HEAD succeeds
-      .mockReturnValueOnce('')            // buildTagMap
+      .mockReturnValueOnce('')            // git tag --format (local, empty)
+      .mockReturnValueOnce('origin\n')   // git remote (buildTagMapFromRemote)
+      .mockReturnValueOnce('')            // git ls-remote (remote, empty)
       .mockReturnValueOnce(logBlock(sha, '2024-01-01', 'Alice', 'fix: ci') + CS);
 
     const commits = getAllBranchCommits('main');
@@ -254,5 +264,21 @@ describe('buildTagMap (via getAllBranchCommits)', () => {
 
     const commits = getAllBranchCommits('main');
     expect(commits[0].tags).toEqual([]);
+  });
+
+  test('falls back to ls-remote when local tags are absent (shallow CI clone)', () => {
+    const sha = '4'.repeat(40);
+    const tagObjSha = '5'.repeat(40);
+    execSync.mockReturnValueOnce(`${sha}\n`);  // git rev-parse (branch)
+    execSync.mockReturnValueOnce('');           // git tag --format (local empty — no git fetch)
+    execSync.mockReturnValueOnce('origin\n');  // git remote
+    // git ls-remote: annotated tag v1.2.3 — tag obj SHA + peeled commit SHA
+    execSync.mockReturnValueOnce(
+      `${tagObjSha}\trefs/tags/v1.2.3\n${sha}\trefs/tags/v1.2.3^{}\n`
+    );
+    execSync.mockReturnValueOnce(logBlock(sha, '2024-01-01', 'Alice', 'feat: initial') + CS);
+
+    const commits = getAllBranchCommits('main');
+    expect(commits[0].tags).toContain('v1.2.3');
   });
 });

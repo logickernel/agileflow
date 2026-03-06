@@ -108,11 +108,10 @@ function fetchTags() {
 }
 
 /**
- * Builds a map of commit SHA → tag names for all tags in the repository.
- * Uses a single git call instead of one per commit.
+ * Builds a tag map from locally stored tags.
  * @returns {Map<string, string[]>}
  */
-function buildTagMap() {
+function buildTagMapFromLocal() {
   try {
     // %(objecttype) distinguishes lightweight (commit) from annotated (tag) refs.
     // %(*objectname) is the peeled commit SHA for annotated tags, but may be empty
@@ -150,6 +149,60 @@ function buildTagMap() {
   } catch {
     return new Map();
   }
+}
+
+/**
+ * Builds a tag map by reading tags directly from the remote via ls-remote.
+ * Used as a fallback when git fetch --tags fails (e.g. in shallow CI clones).
+ * Does not store anything locally.
+ * @returns {Map<string, string[]>}
+ */
+function buildTagMapFromRemote() {
+  try {
+    const remotes = runWithOutput('git remote').trim();
+    if (!remotes) return new Map();
+    const remote = remotes.split('\n')[0].trim();
+    const output = runWithOutput(`git ls-remote --tags ${remote}`).trim();
+    if (!output) return new Map();
+
+    const map = new Map();
+    const direct = new Map(); // tagName -> SHA (tag obj or commit)
+    const peeled = new Map(); // tagName -> commit SHA (from ^{} entries)
+
+    for (const line of output.split('\n')) {
+      const tabIdx = line.indexOf('\t');
+      if (tabIdx === -1) continue;
+      const sha = line.slice(0, tabIdx).trim();
+      const ref = line.slice(tabIdx + 1).trim();
+      if (ref.endsWith('^{}')) {
+        // Annotated tag: peeled entry gives the commit SHA
+        peeled.set(ref.slice('refs/tags/'.length, -3), sha);
+      } else if (ref.startsWith('refs/tags/')) {
+        direct.set(ref.slice('refs/tags/'.length), sha);
+      }
+    }
+
+    for (const [name, sha] of direct) {
+      const commitSha = peeled.get(name) || sha;
+      if (!map.has(commitSha)) map.set(commitSha, []);
+      map.get(commitSha).push(name);
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
+
+/**
+ * Builds a map of commit SHA → tag names for all tags in the repository.
+ * Tries local tags first; falls back to reading from the remote when local
+ * tags are absent (common in shallow CI clones where git fetch --tags fails).
+ * @returns {Map<string, string[]>}
+ */
+function buildTagMap() {
+  const local = buildTagMapFromLocal();
+  if (local.size > 0) return local;
+  return buildTagMapFromRemote();
 }
 
 /**
