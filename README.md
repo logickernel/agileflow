@@ -2,63 +2,59 @@
 
 # AgileFlow
 
-In today's fast-paced software development landscape, maintaining clarity, consistency, and efficiency in the release process is essential. AgileFlow is a streamlined yet powerful versioning system designed for software teams of all sizes and projects of any scale.
-
-AgileFlow enforces Semantic Versioning and integrates seamlessly with your CI/CD pipeline to ensure a structured, efficient, and predictable development lifecycle. **All versions are calculated from the main branch's commit history** using [Conventional Commits](https://www.conventionalcommits.org/), ensuring consistent versioning and release notes. Whether for small projects or large-scale deployments, AgileFlow simplifies versioning and release management.
+AgileFlow reads your commit history and automatically creates a semantic version tag on every merge to main. Your build and deploy pipelines then trigger on the tag — keeping versioning completely separate from everything else.
 
 ![AgileFlow workflow example diagram](./media/diagram.jpg)
 
-AgileFlow works with your CI/CD engine to **automatically create a new version tag** every time there's a merge into the main branch. Your existing build and deploy pipelines then trigger on tag creation, creating a clean separation between versioning and release processes. This decoupled architecture means AgileFlow focuses solely on versioning, while your build and deploy workflows remain independent.
+No config files. No servers. Versions are calculated from your [Conventional Commits](https://www.conventionalcommits.org/) and pushed as annotated git tags.
 
 ---
 
 ## Quick Start
 
-Install the tool
+Preview your next version in any git repository:
 
 ```bash
-npm install -g @logickernel/agileflow
+npx @logickernel/agileflow
 ```
 
-### Preview Your Next Version
+```
+Commits since current version (3):
+  a1b2c3d feat: add dark mode
+  d4e5f6a fix: resolve login timeout
+  7g8h9i0 docs: update README
 
-```bash
-agileflow
+Current version: v1.4.2
+New version:     v1.5.0
+
+Changelog:
+
+### Features
+- add dark mode
+
+### Bug fixes
+- resolve login timeout
 ```
 
-### Create a Version Tag
-
-
-**Push to Remote Git Repository:**
-```bash
-agileflow push
-```
-
-#### CD/CI
-
-**GitHub Actions:**
-```bash
-agileflow github
-```
-
-**GitLab CI:**
-```bash
-agileflow gitlab
-```
-
-**Learn More**: [Getting Started Guide](./docs/getting-started.md) • [CLI Reference](./docs/cli-reference.md)
+This is read-only — it never creates tags or modifies anything.
 
 ---
 
 ## CI/CD Integration
 
-AgileFlow uses a **two-step decoupled approach**:
+AgileFlow uses a **decoupled two-step approach**:
 
-### Step 1: Version Creation (AgileFlow)
+1. **Versioning** — AgileFlow runs on merge to main and creates a version tag
+2. **Release** — Your existing build and deploy pipelines trigger on the tag
 
-Create a workflow that runs AgileFlow when code is merged to main:
+```
+Merge to main → AgileFlow → Tag v1.5.0 → Your build/deploy
+```
 
-**GitHub Actions** (`.github/workflows/version.yml`):
+### GitHub Actions
+
+`.github/workflows/version.yml`:
+
 ```yaml
 name: Version
 on:
@@ -83,16 +79,11 @@ jobs:
         run: npx @logickernel/agileflow github
 ```
 
-**GitLab CI** (`.gitlab-ci.yml`):
+Requires an `AGILEFLOW_TOKEN` secret — a Personal Access Token with `Contents: Read and write` permission.
 
-For a job tagged with `agileflow` for a GitLab Runner:
+### GitLab CI
 
-```yaml
-include:
-  - remote: https://code.logickernel.com/tools/agileflow/-/raw/main/.gitlab-ci.yml
-```
-
-Or manually:
+`.gitlab-ci.yml`:
 
 ```yaml
 agileflow:
@@ -104,114 +95,50 @@ agileflow:
     - if: '$CI_COMMIT_BRANCH == "main"'
 ```
 
-### Step 2: Build & Deploy (Your Pipelines)
+Requires an `AGILEFLOW_TOKEN` CI/CD variable — a Project Access Token with `api` scope and `Maintainer` role.
 
-Configure your existing build and deploy pipelines to trigger on tag creation. When AgileFlow creates a version tag (e.g., `v1.2.3`), your CI/CD platform triggers your release workflow. Use the tag name as the version identifier for your builds and deployments.
+### Other platforms
 
-**Learn More**: [Installation Guide](./docs/installation.md) for detailed setup instructions and examples.
-
-### Benefits of Decoupled Architecture
-
-- **Separation of concerns** — Versioning is independent from build/deploy
-- **Flexibility** — Hook any process to tag creation
-- **Reusability** — Same build pipeline works for any version
-- **Simplicity** — Each pipeline has a single responsibility
-
-**Learn More**: [Installation Guide](./docs/installation.md) • [Configuration](./docs/configuration.md)
+```bash
+agileflow push           # creates tag and pushes to origin
+agileflow push upstream  # pushes to a different remote
+```
 
 ---
 
 ## Conventional Commits
 
-AgileFlow uses [Conventional Commits](https://www.conventionalcommits.org/) to automatically determine version bumps and generate release notes. Commit messages follow a structured format that encodes the intent of each change:
+AgileFlow determines the version bump from commit types:
 
-```text
-type(scope): description
-```
+| Commit | Example | Before v1.0.0 | v1.0.0 and after |
+|--------|---------|---------------|------------------|
+| Breaking change | `feat!: redesign API` | minor bump | major bump |
+| `feat` | `feat: add login` | minor bump | minor bump |
+| `fix` | `fix: resolve crash` | patch bump | patch bump |
+| Everything else | `docs: update README` | no bump | no bump |
 
-The commit type (`feat`, `fix`, `perf`, etc.) indicates what kind of change was made, while the optional scope identifies the area affected. Breaking changes are marked with `!` or a `BREAKING CHANGE:` footer.
+The highest-priority bump across all commits since the last tag wins. If no bump-triggering commits exist, AgileFlow exits without creating a tag.
 
-**Learn More**: [Conventional Commits Guide](./docs/conventional-commits.md)
+### v1.0.0 — First stable release
 
----
-
-## Release Management
-
-### Automatic Versioning
-
-Each merge to main triggers automatic version generation based on commit types. See the [Version Calculation](#version-calculation) table below for details on how versions are bumped in 0.x.x vs 1.0.0+.
-
-New projects start at **v0.0.0** and automatically increment based on commits. AgileFlow will keep automatically generating versions as you develop (0.0.1, 0.0.2, 0.1.0, etc.). When your product has reached maturity and you have a stable API ready for production, create version 1.0.0 manually.
-
-### Version 1.0.0 — First Stable Release
-
-Version 1.0.0 represents your first stable API and marks the transition from initial development to a stable, production-ready release. This version **must be created manually** when your team decides the API is stable and ready for production use.
-
-Create it when ready:
+New projects start at `v0.0.0`. AgileFlow increments automatically from there. When your API is stable and ready for production, create `v1.0.0` manually:
 
 ```bash
 git tag -a v1.0.0 -m "First stable release"
 git push origin v1.0.0
 ```
 
-After 1.0.0, AgileFlow continues automatic versioning with standard semantic versioning rules: features bump minor, fixes bump patch, and breaking changes bump major.
-
-
-**Learn More**: [Release Management Guide](./docs/release-management.md)
-
----
-
-## Version Calculation
-
-AgileFlow analyzes commits since the last version tag to determine the appropriate version bump:
-
-| Commit Type | Example | Changelog | 0.x.x | 1.0.0+ |
-|-------------|---------|-----------|-------|--------|
-| Breaking change | `feat!: redesign API` | Add entry | **Minor** (0.1.0 → 0.2.0) | **Major** (1.0.0 → 2.0.0) |
-| Feature | `feat: add login` | Add entry | **Minor** | **Minor** |
-| Fix | `fix: resolve crash` | Add entry | **Patch** | **Patch** |
-| Chore | `chore: update dependencies` | **No** entry | No bump | No bump |
-| Everything else | `docs: update README` | Add entry | No bump | No bump |
-
----
-
-## Core Principles
-
-### Main Branch Strategy
-
-The main branch is the single source of truth for all releases:
-
-- **Single Version Sequence** — All versions created from the same branch
-- **Simplified Workflow** — No release branches needed
-- **Consistent History** — All releases share the same commit history
-- **Easy Rollbacks** — Deploy any previous version tag
-
-### Version-Centric Deployments
-
-Every environment runs the same immutable version:
-
-```
-Tag v1.2.3 ──▶ Build ──▶ Staging
-                    ──▶ Production
-                    ──▶ Any environment
-```
-
-**Learn More**: [Branching Strategy](./docs/branching-strategy.md) • [Version-Centric CI/CD](./docs/version-centric-cicd.md)
+After `v1.0.0`, breaking changes bump the major version.
 
 ---
 
 ## Documentation
 
-| Guide | Description |
-|-------|-------------|
-| [Getting Started](./docs/getting-started.md) | Quick start for new users |
-| [Installation](./docs/installation.md) | Setup for GitHub Actions and GitLab CI |
-| [CLI Reference](./docs/cli-reference.md) | Command-line options and usage |
-| [Configuration](./docs/configuration.md) | Environment variables and options |
-| [Conventional Commits](./docs/conventional-commits.md) | Commit message formatting |
-| [Branching Strategy](./docs/branching-strategy.md) | Development workflow |
-| [Version-Centric CI/CD](./docs/version-centric-cicd.md) | Pipeline methodology |
-| [Release Management](./docs/release-management.md) | Managing releases effectively |
-| [Migration Guide](./docs/migration-guide.md) | Transitioning from other approaches |
-| [Best Practices](./docs/best-practices.md) | Recommended patterns |
-| [Troubleshooting](./docs/troubleshooting.md) | Common issues and solutions |
+| | |
+|-|-|
+| [Getting Started](./docs/start-here/getting-started.md) | Run locally, understand the output, first CI setup |
+| [GitHub Actions](./docs/guides/github-actions.md) | Token setup, workflow files, troubleshooting |
+| [GitLab CI](./docs/guides/gitlab-ci.md) | Token setup, pipeline config, troubleshooting |
+| [Other CI/CD](./docs/guides/other-ci.md) | Git-push integration for any platform |
+| [CLI Reference](./docs/reference/cli.md) | All commands and options |
+| [Conventional Commits](./docs/reference/conventional-commits.md) | Commit format and changelog behavior |
