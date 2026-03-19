@@ -224,9 +224,57 @@ function parseConventionalCommit(message) {
 }
 
 /**
- * Expands commit information by finding the latest version and filtering commits.
- * @param {Array} commits - Array of commit objects (newest to oldest)
- * @returns {{latestVersion: string|null, commits: Array}} Filtered commits since last version
+ * Finds the highest semver version tag in a list of commits.
+ * @param {Array} commits - The commits to scan
+ * @returns {{latestVersion: string|null, taggedCommitHash: string|null}}
+ */
+function findLatestVersionTag(commits) {
+  if (!commits?.length) {
+    return { latestVersion: null, taggedCommitHash: null };
+  }
+
+  let bestHash = null;
+  let bestVersion = null;
+
+  for (let i = 0; i < commits.length; i++) {
+    const semverTags = commits[i].tags?.filter(tag => SEMVER_PATTERN.test(tag));
+    if (!semverTags?.length) continue;
+
+    const highest = semverTags.sort((a, b) => {
+      const pa = parseVersion(a);
+      const pb = parseVersion(b);
+      if (pb.major !== pa.major) return pb.major - pa.major;
+      if (pb.minor !== pa.minor) return pb.minor - pa.minor;
+      return pb.patch - pa.patch;
+    })[0];
+
+    if (!bestVersion) {
+      bestVersion = highest;
+      bestHash = commits[i].hash;
+    } else {
+      const pBest = parseVersion(bestVersion);
+      const pCand = parseVersion(highest);
+      const isHigher =
+        pCand.major > pBest.major ||
+        (pCand.major === pBest.major && pCand.minor > pBest.minor) ||
+        (pCand.major === pBest.major && pCand.minor === pBest.minor && pCand.patch > pBest.patch);
+      if (isHigher) {
+        bestVersion = highest;
+        bestHash = commits[i].hash;
+      }
+    }
+  }
+
+  return { latestVersion: bestVersion, taggedCommitHash: bestHash };
+}
+
+/**
+ * Expands commit info by finding the latest version tag and returning
+ * only commits since that tag. Uses positional slicing from a date-sorted
+ * commit list — for accurate results with merge commits, prefer using
+ * findLatestVersionTag + getCommitsSinceTag (as processVersionInfo does).
+ * @param {Array} commits - All commits (date-sorted, newest first)
+ * @returns {{latestVersion: string|null, commits: Array}}
  */
 function expandCommitInfo(commits) {
   if (!commits?.length) {
@@ -549,6 +597,45 @@ function getAllBranchCommits(branch) {
 }
 
 /**
+ * Retrieves commits reachable from the branch but not from the given tag,
+ * using git's native range selection so that date ordering cannot cause
+ * commits from merged branches to be missed.
+ * @param {string} tagHash - The commit hash of the version tag
+ * @param {string} branchSha - The resolved SHA of the branch tip
+ * @returns {Array<{hash: string, datetime: string, author: string, message: string, tags: Array<string>}>}
+ */
+function getCommitsSinceTag(tagHash, branchSha) {
+  const tagMap = buildTagMap();
+  const RS = '\x1E';
+  const COMMIT_SEP = `${RS}${RS}`;
+
+  try {
+    const logCmd = `git log --format=%H${RS}%ai${RS}%an${RS}%B${COMMIT_SEP} ${tagHash}..${branchSha}`;
+    const output = runWithOutput(logCmd).trim();
+    if (!output) return [];
+
+    return output
+      .split(COMMIT_SEP)
+      .filter(block => block.trim())
+      .map(block => {
+        const parts = block.split(RS);
+        if (parts.length < 4) return null;
+        const hash = parts[0].trim();
+        return {
+          hash,
+          datetime: parts[1].trim(),
+          author: parts[2].trim(),
+          message: parts.slice(3).join(RS).trim(),
+          tags: tagMap.get(hash) || [],
+        };
+      })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Processes version information for the current branch.
  * @returns {Promise<{currentVersion: string|null, newVersion: string|null, commits: Array, changelog: string}>}
  */
@@ -556,12 +643,25 @@ async function processVersionInfo() {
   ensureGitRepo();
   const branch = getCurrentBranch();
   fetchTags();
-  
+
   const allCommits = getAllBranchCommits(branch);
-  const expandedInfo = expandCommitInfo(allCommits);
-  const { latestVersion, commits } = expandedInfo;
+  const { latestVersion, taggedCommitHash } = findLatestVersionTag(allCommits);
+
+  let commits;
+  if (taggedCommitHash) {
+    // Use git's range selection (tag..HEAD) to correctly identify all commits
+    // since the tag, regardless of commit date ordering. This fixes an issue
+    // where commits from merged feature branches could be missed because their
+    // dates are older than the tagged commit.
+    const branchSha = allCommits[0]?.hash;
+    commits = branchSha ? getCommitsSinceTag(taggedCommitHash, branchSha) : [];
+  } else {
+    commits = allCommits;
+  }
+
+  const expandedInfo = { latestVersion, commits };
   const { newVersion, changelog } = calculateNextVersionAndChangelog(expandedInfo);
-  
+
   return {
     currentVersion: latestVersion,
     newVersion,
@@ -577,6 +677,8 @@ module.exports = {
   getCurrentBranch,
   fetchTags,
   getAllBranchCommits,
+  findLatestVersionTag,
+  getCommitsSinceTag,
   expandCommitInfo,
   calculateNextVersionAndChangelog,
   processVersionInfo,
