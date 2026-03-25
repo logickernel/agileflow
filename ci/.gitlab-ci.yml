@@ -1,0 +1,16 @@
+include:
+  - local: .gitlab-ci.yml
+
+build-image:
+  stage: build
+  image: docker:27
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker buildx create --name agileflow-builder --driver docker-container --use 2>/dev/null || docker buildx use agileflow-builder
+    - >-
+      docker buildx build
+      --tag ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG#v}
+      --tag ${CI_REGISTRY_IMAGE}:latest
+      --push .
+  rules:
+    - if: $CI_COMMIT_TAG
