@@ -131,17 +131,20 @@ function makeRequest({ method, path, accessToken, body }) {
  * @returns {Promise<void>}
  */
 async function pushTag(tagName, message, remote = 'origin') {
-  const accessToken = process.env.AGILEFLOW_TOKEN;
+  const accessToken = process.env.AGILEFLOW_TOKEN || process.env.GITHUB_TOKEN;
   const repository = process.env.GITHUB_REPOSITORY;
   const commitSha = process.env.GITHUB_SHA;
-  
+
   if (!accessToken) {
     throw new Error(
-      `AGILEFLOW_TOKEN environment variable is required but not set.\n\n` +
-      `To fix this:\n` +
-      `1. Create a Personal Access Token with "contents: write" permission\n` +
-      `2. Add it as a repository secret named AGILEFLOW_TOKEN\n` +
-      `3. In your workflow, add: env: AGILEFLOW_TOKEN: \${{ secrets.AGILEFLOW_TOKEN }}`
+      `No authentication token found.\n\n` +
+      `AgileFlow looks for AGILEFLOW_TOKEN or GITHUB_TOKEN (in that order).\n\n` +
+      `In GitHub Actions, GITHUB_TOKEN is available automatically — just add\n` +
+      `permissions to your workflow:\n` +
+      `  permissions:\n` +
+      `    contents: write\n\n` +
+      `Or use a Personal Access Token with "contents: write" permission\n` +
+      `and store it as a secret named AGILEFLOW_TOKEN.`
     );
   }
   

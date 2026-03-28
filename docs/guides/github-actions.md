@@ -4,23 +4,7 @@ Two workflows: one that runs AgileFlow on push to main and creates a version tag
 
 ---
 
-## Step 1: Create an access token
-
-1. Go to **Settings → Developer settings → Personal access tokens → Fine-grained tokens**
-2. Click **Generate new token**
-3. Set:
-   - **Name**: `AgileFlow`
-   - **Repository access**: your repository
-   - **Permissions**: `Contents: Read and write`
-4. Copy the token
-
-## Step 2: Add the token as a secret
-
-1. In your repository: **Settings → Secrets and variables → Actions**
-2. Click **New repository secret**
-3. Name: `AGILEFLOW_TOKEN`, value: your token
-
-## Step 3: Create the versioning workflow
+## Step 1: Create the versioning workflow
 
 `.github/workflows/version.yml`:
 
@@ -29,6 +13,9 @@ name: Version
 on:
   push:
     branches: [main]
+
+permissions:
+  contents: write
 
 jobs:
   version:
@@ -43,14 +30,31 @@ jobs:
           node-version: '20'
 
       - name: Create version tag
-        env:
-          AGILEFLOW_TOKEN: ${{ secrets.AGILEFLOW_TOKEN }}
         run: npx @logickernel/agileflow github
 ```
 
+That's it. AgileFlow automatically picks up the `GITHUB_TOKEN` that GitHub Actions provides. The `permissions: contents: write` block grants it permission to create tags.
+
 `fetch-depth: 0` is required — without it, AgileFlow can only see a shallow clone and cannot find the last version tag.
 
-## Step 4: Create the release workflow
+### Using a Personal Access Token instead
+
+If your organization restricts `GITHUB_TOKEN` permissions or you need cross-repository tagging, use a PAT:
+
+1. Go to **Settings → Developer settings → Personal access tokens → Fine-grained tokens**
+2. Click **Generate new token**
+3. Set:
+   - **Name**: `AgileFlow`
+   - **Repository access**: your repository
+   - **Permissions**: `Contents: Read and write`
+4. Copy the token
+5. In your repository: **Settings → Secrets and variables → Actions**
+6. Click **New repository secret**
+7. Name: `AGILEFLOW_TOKEN`, value: your token
+
+AgileFlow checks `AGILEFLOW_TOKEN` first, then falls back to `GITHUB_TOKEN`. When `AGILEFLOW_TOKEN` is set, no `permissions` block is needed.
+
+## Step 3: Create the release workflow
 
 `.github/workflows/release.yml`:
 
@@ -99,9 +103,9 @@ If no bump is needed (all commits are `chore`, `docs`, etc.), AgileFlow exits wi
 
 ## Troubleshooting
 
-**"AGILEFLOW_TOKEN not set"** — The secret is missing or not passed via `env:`. Verify the secret exists and the `env:` block is present in the step.
+**"No authentication token found"** — Neither `AGILEFLOW_TOKEN` nor `GITHUB_TOKEN` is available. If running in GitHub Actions, ensure the workflow has `permissions: contents: write`. If using a PAT, verify the `AGILEFLOW_TOKEN` secret exists.
 
-**"Resource not accessible by integration" / 403** — The token lacks `Contents: Read and write` permission. Regenerate with the correct scope.
+**"Resource not accessible by integration" / 403** — The token lacks `contents: write` permission. Add `permissions: contents: write` to your workflow, or regenerate your PAT with the correct scope.
 
 **"Bad credentials" / 401** — The token has expired or was revoked. Regenerate and update the secret.
 
