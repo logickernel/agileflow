@@ -77,10 +77,12 @@ jobs:
           node-version: '20'
 
       - name: Create version tag
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: npx @logickernel/agileflow github
 ```
 
-AgileFlow automatically uses the built-in `GITHUB_TOKEN` — no secrets or custom tokens needed. Just grant `contents: write` permission in the workflow. You can also use a [Personal Access Token](./docs/guides/github-actions.md) if your organization restricts `GITHUB_TOKEN` permissions.
+Uses the built-in `GITHUB_TOKEN` — no custom tokens or secrets setup needed. Just grant `contents: write` permission and pass the token via `env`. You can also use a [Personal Access Token](./docs/guides/github-actions.md) if your organization restricts `GITHUB_TOKEN` permissions.
 
 ### GitLab CI
 

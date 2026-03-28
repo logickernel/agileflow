@@ -30,10 +30,12 @@ jobs:
           node-version: '20'
 
       - name: Create version tag
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: npx @logickernel/agileflow github
 ```
 
-That's it. AgileFlow automatically picks up the `GITHUB_TOKEN` that GitHub Actions provides. The `permissions: contents: write` block grants it permission to create tags.
+That's it. The `permissions: contents: write` block grants the token permission to create tags, and the `env` block makes it available to AgileFlow. No custom tokens or secrets setup needed.
 
 `fetch-depth: 0` is required — without it, AgileFlow can only see a shallow clone and cannot find the last version tag.
 
