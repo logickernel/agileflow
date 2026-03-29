@@ -11,7 +11,7 @@ const { execSync } = require('child_process');
  */
 function runWithOutput(command, options = {}) {
   try {
-    return execSync(command, { stdio: 'pipe', encoding: 'utf8', ...options });
+    return execSync(command, { stdio: 'pipe', encoding: 'utf8', maxBuffer: 50 * 1024 * 1024, ...options });
   } catch (error) {
     const captured = {
       stdout: error?.stdout ? String(error.stdout) : '',
