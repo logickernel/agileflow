@@ -1,5 +1,7 @@
 agileflow:
   image: node:20
+  variables:
+    GIT_DEPTH: 0
   script:
     - npm install -g --prefer-online @logickernel/agileflow
     - agileflow version
