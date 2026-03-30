@@ -1,5 +1,5 @@
 agileflow:
-  image: node:20
+  image: ${DOCKER_MIRROR}/library/node:20
   variables:
     GIT_DEPTH: 0
   script:
