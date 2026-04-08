@@ -1,5 +1,5 @@
 agileflow:
-  image: ${DOCKER_MIRROR}/library/node:20
+  image: us-central1-docker.pkg.dev/logickernel-fleet/registry/node:20-slim
   variables:
     GIT_DEPTH: 0
   script:
@@ -8,5 +8,3 @@ agileflow:
     - agileflow gitlab
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
-  tags:
-    - agileflow
