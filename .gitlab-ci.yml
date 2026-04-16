@@ -1,5 +1,4 @@
 agileflow:
-  stage: .post
   image: us-central1-docker.pkg.dev/logickernel-fleet/registry/node:20-slim
   variables:
     GIT_DEPTH: 0
