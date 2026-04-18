@@ -69,12 +69,28 @@ Types not in this table appear under "Other changes" in the changelog.
 
 ## Choosing the right type
 
-1. **Adds new functionality users can use?** → `feat`
-2. **Fixes broken functionality?** → `fix`
-3. **Work in progress or maintenance with no user impact?** → `chore` (excluded from changelog)
-4. **Performance improvement?** → `perf`
-5. **Refactoring internal code?** → `refactor`
-6. **Breaking any existing behavior?** → add `!` after the type (e.g., `feat!:`, `fix!:`)
+```mermaid
+flowchart TD
+  Start([Start]) --> A{Does it add functionality?}
+
+  A -- "yes" --> F[feat:]
+  A -- "no" --> B{Does it fix functionality?}
+
+  B -- "yes" --> X[fix:]
+  B -- "no" --> C{Is it worth an entry in the changelog?}
+
+  C -- "yes" --> W[Choose best: docs, ci, style, etc.]
+  C -- "no" --> D[chore:]
+
+  W --> E{Is it a breaking change?}
+  F --> E
+  X --> E
+  D --> E
+
+  E -- "no" --> Z([Commit])
+  E -- "yes" --> G[Add ! to type/scope or BREAKING CHANGE: in body]
+  G --> Z
+```
 
 ---
 
